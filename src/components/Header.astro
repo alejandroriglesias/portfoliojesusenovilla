@@ -11,6 +11,7 @@ interface Props {
 
 import { getEntradasBlog } from '../lib/contenido';
 import { rutaLimpia } from '../lib/rutas';
+import Firma from './marca/Firma.astro';
 
 const { variante = 'solida' } = Astro.props;
 // El enlace al blog solo aparece cuando hay entradas publicadas.
@@ -33,9 +34,8 @@ const activo = (href: string) => {
 <header class:list={['cabecera', `cabecera--${variante}`]}>
   <div class="cabecera__barra">
     <a class="cabecera__marca" href="/">
-      {variante === 'solida' && <span class="cabecera__punto" aria-hidden="true" />}
-      {variante === 'solida' ? 'Jesús Senovilla' : 'J. Senovilla'}
-      <span class="sr-only"> — Inicio</span>
+      <Firma alto="var(--alto-firma)" />
+      <span class="sr-only">Jesús Senovilla — Inicio</span>
     </a>
     <nav aria-label="Principal" class="cabecera__nav">
       {
@@ -57,10 +57,17 @@ const activo = (href: string) => {
 </header>
 
 <style>
+  .cabecera {
+    /* Alto de la firma manuscrita (el ancho sale de su proporción, ≈ 1.5). */
+    --alto-firma: 72px;
+  }
+  .cabecera--superpuesta {
+    --alto-firma: 68px;
+  }
   .cabecera__barra {
     max-width: var(--container);
     margin: 0 auto;
-    padding: 16px var(--gutter);
+    padding: 8px var(--gutter);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -79,13 +86,6 @@ const activo = (href: string) => {
     letter-spacing: -0.01em;
     text-decoration: none;
     color: inherit;
-  }
-
-  .cabecera__punto {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--accent);
   }
 
   .cabecera__nav {
@@ -161,7 +161,7 @@ const activo = (href: string) => {
     color: #ffffff;
   }
   .cabecera--superpuesta .cabecera__barra {
-    padding-block: 18px;
+    padding-block: 10px;
   }
   .cabecera--superpuesta .cabecera__marca {
     font-size: 20px;
@@ -183,14 +183,14 @@ const activo = (href: string) => {
   /* Móvil: marca arriba y navegación en una sola fila (desplazable si no cabe). */
   @media (max-width: 600px) {
     .cabecera__barra {
-      padding-block: 8px;
+      padding-block: 4px;
       row-gap: 0;
     }
     .cabecera--superpuesta .cabecera__barra {
-      padding-block: 10px;
+      padding-block: 6px;
     }
-    .cabecera__marca {
-      font-size: 19px;
+    .cabecera {
+      --alto-firma: 52px;
     }
     .cabecera__nav {
       flex-wrap: nowrap;

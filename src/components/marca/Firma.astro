@@ -1,0 +1,36 @@
+---
+/**
+ * Firma manuscrita de Jesús Senovilla, vectorizada desde el antiguo WordPress
+ * (scripts/vectorizar-firma.mjs). Toma el color del texto (currentColor),
+ * así sirve en la cabecera clara, en la oscura y en la superpuesta (difference).
+ * Es decorativa: el texto accesible lo pone quien la usa.
+ */
+import trazado from './firma-trazado.json';
+
+interface Props {
+  class?: string;
+  /** Alto en CSS (p. ej. «48px» o «3rem»). El ancho sale de la proporción. */
+  alto?: string;
+}
+
+const { class: clase, alto = '48px' } = Astro.props;
+---
+
+<svg
+  class:list={['firma', clase]}
+  viewBox={trazado.viewBox}
+  style={`height: ${alto}; width: calc(${alto} * ${trazado.proporcion})`}
+  aria-hidden="true"
+  focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path fill="currentColor" d={trazado.d}></path>
+</svg>
+
+<style>
+  .firma {
+    display: block;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+</style>

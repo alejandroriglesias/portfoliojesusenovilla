@@ -19,6 +19,8 @@ export default defineConfig({
     // Las imágenes se optimizan al compilar (con sharp), no en el CDN de
     // Netlify: así la web no depende del proveedor y se puede probar en local.
     imageCDN: false,
+    // No usamos Edge Functions; su emulación en local fallaba al arrancar `npm run dev`.
+    devFeatures: { environmentVariables: false, images: true, edgeFunctions: false },
   }),
   integrations: [
     // React solo lo usa el panel de Keystatic; la web pública no envía React.
