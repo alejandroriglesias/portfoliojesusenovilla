@@ -24,7 +24,7 @@ const { class: clase, alto = '48px' } = Astro.props;
   focusable="false"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <path fill="currentColor" d={trazado.d}></path>
+  <path fill="currentColor" fill-rule="evenodd" d={trazado.d}></path>
 </svg>
 
 <style>

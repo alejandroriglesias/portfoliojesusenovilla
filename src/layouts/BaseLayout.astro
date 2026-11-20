@@ -78,7 +78,10 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
     {descripcion && <meta name="description" content={descripcion} />}
     {canonica && <link rel="canonical" href={canonica} />}
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+    <!-- Emblema «J · SENOVILLA» del artista (scripts/generar-favicon.mjs) -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href={fuenteSyne} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={fuenteInter} as="font" type="font/woff2" crossorigin />
     <link rel="sitemap" href="/sitemap-index.xml" />

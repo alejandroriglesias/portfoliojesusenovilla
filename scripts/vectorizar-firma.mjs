@@ -55,6 +55,6 @@ await writeFile(destino, JSON.stringify({ viewBox, d, proporcion: +(w / h).toFix
 await mkdir(join(raiz, 'migracion/logos'), { recursive: true });
 await writeFile(
   join(raiz, 'migracion/logos/firma.svg'),
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}"><path fill="#141414" d="${d}"/></svg>\n`
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}"><path fill="#141414" fill-rule="evenodd" d="${d}"/></svg>\n`
 );
 console.log(`viewBox ${viewBox} · proporción ${(w / h).toFixed(2)} · ${d.length} caracteres de trazado`);
