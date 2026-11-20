@@ -10,11 +10,12 @@ interface Props {
 }
 
 import { getEntradasBlog } from '../lib/contenido';
+import { rutaLimpia } from '../lib/rutas';
 
 const { variante = 'solida' } = Astro.props;
 // El enlace al blog solo aparece cuando hay entradas publicadas.
 const hayBlog = (await getEntradasBlog()).length > 0;
-const ruta = Astro.url.pathname.replace(/\/$/, '') || '/';
+const ruta = rutaLimpia(Astro.url.pathname);
 
 const enlaces = [
   { href: '/obra', texto: 'Obra' },

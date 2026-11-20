@@ -7,6 +7,7 @@ import { getImage } from 'astro:assets';
 import { getAjustes } from '../lib/ajustes';
 import { getObrasDestacadas } from '../lib/contenido';
 import { personaJsonLd } from '../lib/datos-estructurados';
+import { rutaLimpia } from '../lib/rutas';
 // Fuentes que se ven nada más cargar: se precargan (mismo archivo que usa el CSS).
 import fuenteSyne from '@fontsource-variable/syne/files/syne-latin-wght-normal.woff2?url';
 import fuenteInter from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
@@ -49,7 +50,7 @@ if (!og) {
 const ogAbsoluta = og ? new URL(og, Astro.site ?? Astro.url).href : undefined;
 const bloquesJsonLd = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 // En la portada y en «Sobre mí», la ficha del artista (Person) y del sitio (WebSite).
-const ruta = Astro.url.pathname.replace(/\/$/, '') || '/';
+const ruta = rutaLimpia(Astro.url.pathname);
 if (Astro.site && !noindex && (ruta === '/' || ruta === '/sobre-mi')) {
   bloquesJsonLd.push(await personaJsonLd(Astro.site));
   if (ruta === '/') {
@@ -65,7 +66,7 @@ if (Astro.site && !noindex && (ruta === '/' || ruta === '/sobre-mi')) {
 }
 
 const tituloFinal = titulo ? `${titulo} — Jesús Senovilla` : ajustes.seoTitulo;
-const canonica = Astro.site ? new URL(canonicaProp ?? Astro.url.pathname, Astro.site).href : undefined;
+const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathname), Astro.site).href : undefined;
 ---
 
 <!doctype html>

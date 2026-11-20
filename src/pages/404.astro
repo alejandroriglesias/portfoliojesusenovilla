@@ -1,0 +1,45 @@
+---
+/** Página no encontrada. */
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout titulo="Página no encontrada" descripcion="Esta página no existe." noindex>
+  <section class="contenedor no-encontrada" aria-labelledby="h1-404">
+    <p class="etiqueta">Error 404</p>
+    <h1 id="h1-404" class="no-encontrada__h1" data-ajustar>Aquí no hay<br />ninguna obra<span class="acento">.</span></h1>
+    <p class="no-encontrada__texto">La página que buscas no existe o ha cambiado de dirección.</p>
+    <div class="no-encontrada__botones">
+      <a class="boton boton--acento" href="/obra">Ver toda la obra</a>
+      <a class="boton boton--borde" href="/">Ir al inicio</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .no-encontrada {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-block: clamp(72px, 10vw, 144px);
+  }
+  .no-encontrada__h1 {
+    font-weight: 800;
+    font-size: clamp(40px, 8vw, 132px);
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+  }
+  .acento {
+    color: var(--accent);
+  }
+  .no-encontrada__texto {
+    margin: 0;
+    max-width: 520px;
+    font-size: 20px;
+    color: var(--text-soft);
+  }
+  .no-encontrada__botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+</style>

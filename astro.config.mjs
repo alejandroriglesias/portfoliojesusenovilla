@@ -33,6 +33,9 @@ export default defineConfig({
     vigilarEjemplos(),
   ],
   trailingSlash: 'never',
+  // Genera obra/rosa.html (no obra/rosa/index.html): así Netlify sirve /obra/rosa
+  // sin redirigir a /obra/rosa/ y coincide con las canónicas y el sitemap.
+  build: { format: 'file' },
   // 301 desde las URL del antiguo WordPress (fase 6).
   redirects: redirecciones,
   image: {
