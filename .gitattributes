@@ -1,0 +1,7 @@
+# Finales de línea LF en el repositorio (igual que escribe Keystatic y usa Netlify).
+* text=auto eol=lf
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.woff2 binary

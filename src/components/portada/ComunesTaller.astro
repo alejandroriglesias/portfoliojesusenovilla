@@ -1,0 +1,304 @@
+---
+/**
+ * Secciones comunes de las portadas 04–06 (Muro, Boceto, Bandas):
+ * presentación, obra con filtros, técnicas, sobre mí y contacto.
+ */
+import { Image } from 'astro:assets';
+import FiltroTecnicas from '../obra/FiltroTecnicas.astro';
+import SobreMiPortada from './SobreMiPortada.astro';
+import ContactoPortada from './ContactoPortada.astro';
+import type { DatosPortada } from '../../lib/portada';
+
+interface Props {
+  datos: DatosPortada;
+}
+
+const { datos } = Astro.props;
+const { obras, etiquetas, principales, sobreMi, ajustes } = datos;
+
+const opciones = [
+  { id: 'todo', label: 'Todo', count: obras.length },
+  ...principales.map((t) => ({
+    id: t.id,
+    label: `${t.data.nombre}s`,
+    count: obras.filter((o) => o.data.tecnica.discriminant === t.id).length,
+  })),
+];
+---
+
+<section id="intro" class="intro" aria-labelledby="intro-titulo">
+  <h2 id="intro-titulo" class="intro__h2" data-ajustar>Óleo, acuarela y grabado<span class="acento">.</span></h2>
+  <div class="intro__texto">
+    <p>{ajustes.frasePortada}</p>
+    <div class="intro__botones">
+      <a class="boton boton--acento" href="#obra">Ver la obra</a>
+      <a class="boton boton--borde" href="#sobre">Sobre mí</a>
+    </div>
+  </div>
+</section>
+
+<section id="obra" class="obra" aria-labelledby="obra-titulo">
+  <div class="obra__cabeza">
+    <h2 id="obra-titulo" class="obra__h2">Obra</h2>
+    <FiltroTecnicas opciones={opciones} objetivo="portada" />
+  </div>
+  <div class="obra__rejilla" data-filtro-objetivo="portada">
+    {
+      obras.map((o, i) => (
+        <a class="wk" href={`/obra/${o.id}`} data-filtrable data-tecnica={o.data.tecnica.discriminant}>
+          <span class="wk__marco">
+            <Image
+              src={o.data.imagen}
+              alt={o.data.alt ?? o.data.titulo}
+              widths={[240, 360, 560].filter((w) => w <= o.data.imagen.width)}
+              sizes="(max-width: 640px) 80vw, 300px"
+              class="wk__img"
+            />
+          </span>
+          <span class="wk__pie">
+            <span class="wk__titulo">{o.data.titulo}</span>
+            <span class="wk__meta">
+              {etiquetas[i]}
+              {o.data.anio && `, ${o.data.anio}`}
+            </span>
+          </span>
+        </a>
+      ))
+    }
+  </div>
+  <p class="obra__mas"><a href="/obra">Ver el índice completo →</a></p>
+</section>
+
+<section id="tecnicas" class="tecs" aria-labelledby="tecs-titulo">
+  <div class="tecs__in">
+    <div class="tecs__cabeza">
+      <h2 id="tecs-titulo" class="obra__h2" data-ajustar>Técnicas</h2>
+      <p>Elige una técnica para filtrar la obra.</p>
+    </div>
+    <div class="tecs__rejilla">
+      {
+        principales.map((t, i) => (
+          <a class="tc" href={`?tecnica=${t.id}#obra`} data-filtrar={t.id}>
+            <span class="tc__n">{String(i + 1).padStart(2, '0')}</span>
+            <span class="tc__nombre" data-ajustar>{t.data.nombre}</span>
+            <span class="tc__desc">{t.data.resumen}</span>
+            <span class="tc__ver">
+              Ver obra <span class="tc__flecha" aria-hidden="true">→</span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<SobreMiPortada sobreMi={sobreMi} variante="taller" />
+<ContactoPortada ajustes={ajustes} variante="taller" />
+
+<style>
+  .acento {
+    color: var(--accent);
+  }
+  .intro {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(72px, 9vw, 128px) var(--gutter);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: 32px 80px;
+    align-items: end;
+  }
+  .intro__h2 {
+    font-weight: 800;
+    font-size: clamp(40px, 6vw, 96px);
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+  }
+  .intro__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .intro__texto p {
+    margin: 0;
+    max-width: 520px;
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .intro__botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .obra {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--gutter) clamp(80px, 10vw, 136px);
+  }
+  .obra__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 48px;
+    border-top: 1px solid var(--line);
+    padding-top: 48px;
+    margin-bottom: 56px;
+  }
+  .obra__h2 {
+    font-weight: 800;
+    font-size: clamp(48px, 7.5vw, 120px);
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+  }
+  .obra__rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 56px 40px;
+    align-items: end;
+  }
+  .wk {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .wk[hidden] {
+    display: none;
+  }
+  .wk__marco {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 340px;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .wk:hover .wk__marco {
+    transform: translateY(-8px);
+  }
+  .wk :global(.wk__img) {
+    display: block;
+    width: auto;
+    height: auto;
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    box-shadow:
+      0 2px 4px rgba(20, 16, 10, 0.1),
+      0 20px 40px rgba(20, 16, 10, 0.14);
+  }
+  .wk__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  .wk__titulo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+  }
+  .wk__meta {
+    font-size: 14px;
+    color: var(--muted);
+    text-align: right;
+  }
+  .wk:focus-visible {
+    outline-offset: 6px;
+  }
+  .obra__mas {
+    margin: 56px 0 0;
+  }
+  .obra__mas a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: var(--ink);
+    font-weight: 600;
+    text-underline-offset: 5px;
+  }
+
+  .tecs {
+    background: var(--band);
+  }
+  .tecs__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(80px, 10vw, 136px) var(--gutter);
+  }
+  .tecs__cabeza > h2 {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .tecs__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 48px;
+    margin-bottom: 48px;
+  }
+  .tecs__cabeza p {
+    margin: 0;
+    max-width: 360px;
+    color: var(--muted);
+  }
+  .tecs__rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  }
+  .tc {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 32px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      background 0.3s ease,
+      color 0.3s ease;
+  }
+  .tc:hover,
+  .tc:focus-visible {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .tc__n {
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.7;
+  }
+  .tc__nombre {
+    display: block;
+    max-width: 100%;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(40px, 4.5vw, 64px);
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+  .tc__desc {
+    font-size: 16px;
+    line-height: 1.6;
+    opacity: 0.8;
+    min-height: 78px;
+  }
+  .tc__ver {
+    font-weight: 600;
+  }
+  .tc__flecha {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  .tc:hover .tc__flecha {
+    transform: translateX(8px);
+  }
+</style>

@@ -1,0 +1,184 @@
+---
+/** Blog: lista con el estilo tipográfico de la portada Revista (03). */
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getEntradasBlog } from '../../lib/contenido';
+import { fechaISO, fechaLarga } from '../../lib/fechas';
+
+const entradas = await getEntradasBlog();
+---
+
+<BaseLayout titulo="Blog" descripcion="Notas de taller, procesos y exposiciones de Jesús Senovilla." paleta="revista">
+  <section class="blog" aria-labelledby="blog-h1">
+    <div class="blog__barra">
+      <span>Blog · Notas de taller</span>
+      <span>{entradas.length} {entradas.length === 1 ? 'entrada' : 'entradas'}</span>
+    </div>
+    <h1 id="blog-h1" class="blog__h1">Blog<span class="acento">.</span></h1>
+
+    {
+      entradas.length === 0 ? (
+        <p class="blog__vacio">Todavía no hay entradas publicadas.</p>
+      ) : (
+        <ol class="lista">
+          {entradas.map((e, i) => (
+            <li>
+              <a class="entrada" href={`/blog/${e.id}`}>
+                <span class="entrada__n" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                {e.data.portada ? (
+                  <Image src={e.data.portada} alt="" width={160} class="entrada__img" />
+                ) : (
+                  <span class="entrada__img entrada__img--vacia" aria-hidden="true" />
+                )}
+                <span class="entrada__textos">
+                  <span class="entrada__titulo">{e.data.titulo}</span>
+                  {e.data.extracto && <span class="entrada__extracto">{e.data.extracto}</span>}
+                </span>
+                <time class="entrada__fecha" datetime={fechaISO(e.data.fecha)}>
+                  {fechaLarga(e.data.fecha)}
+                  {e.data.borrador && <span class="borrador"> · borrador</span>}
+                </time>
+              </a>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .blog {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(48px, 7vw, 96px) var(--gutter) clamp(80px, 10vw, 144px);
+  }
+  .blog__barra {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--ink);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .blog__h1 {
+    margin: clamp(32px, 5vw, 56px) 0 clamp(40px, 6vw, 72px);
+    font-weight: 800;
+    font-size: clamp(64px, 11vw, 188px);
+    line-height: 0.84;
+    letter-spacing: -0.05em;
+  }
+  .acento {
+    color: var(--accent);
+  }
+  .blog__vacio {
+    font-size: 20px;
+    color: var(--muted);
+    border-top: 1px solid var(--ink);
+    padding-top: 32px;
+  }
+  .lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--ink);
+  }
+  .entrada {
+    display: grid;
+    grid-template-columns: 72px 96px minmax(0, 1fr) 220px;
+    align-items: center;
+    gap: 16px 32px;
+    padding: 24px 16px;
+    border-top: 1px solid var(--ink);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+  .entrada:hover,
+  .entrada:focus-visible {
+    background: var(--ink);
+    color: #f5f4f0;
+  }
+  .entrada:focus-visible {
+    outline-offset: 2px;
+  }
+  .entrada__n {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .entrada :global(.entrada__img) {
+    display: block;
+    width: 96px;
+    height: 72px;
+    object-fit: cover;
+    background: #e6e4df;
+  }
+  .entrada__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .entrada__titulo {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(24px, 3vw, 44px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .entrada:hover .entrada__titulo {
+    transform: translateX(12px);
+  }
+  .entrada__extracto {
+    font-size: 15px;
+    opacity: 0.75;
+    max-width: 640px;
+  }
+  .entrada__fecha {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    text-align: right;
+  }
+  .borrador {
+    color: var(--accent);
+  }
+  .entrada:hover .borrador {
+    color: var(--accent-on-dark);
+  }
+  @media (max-width: 860px) {
+    .entrada {
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 12px 20px;
+      padding: 20px 0;
+    }
+    .entrada__n {
+      display: none;
+    }
+    .entrada :global(.entrada__img) {
+      width: 72px;
+      height: 72px;
+      grid-row: span 2;
+      align-self: start;
+    }
+    .entrada__fecha {
+      grid-column: 2;
+      text-align: left;
+    }
+  }
+</style>

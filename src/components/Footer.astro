@@ -1,0 +1,57 @@
+---
+import { getAjustes } from '../lib/ajustes';
+import { getEntradasBlog } from '../lib/contenido';
+
+const ajustes = await getAjustes();
+const hayBlog = (await getEntradasBlog()).length > 0;
+const anio = new Date().getFullYear();
+---
+
+<footer class="pie">
+  <div class="pie__barra">
+    <span>© {anio} Jesús Senovilla</span>
+    <nav aria-label="Pie" class="pie__nav">
+      {ajustes.instagram && <a href={ajustes.instagram} rel="me noopener">Instagram</a>}
+      {hayBlog && <a href="/blog">Blog</a>}
+      <a href="/contacto">Contacto</a>
+      <a href="#arriba">Volver arriba ↑</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .pie {
+    background: var(--footer-bg);
+    color: var(--footer-text);
+  }
+  .pie__barra {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 32px var(--gutter);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 32px;
+    font-size: 14px;
+  }
+  .pie__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 28px;
+  }
+  .pie__nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: var(--footer-link);
+    text-decoration: none;
+  }
+  .pie__nav a:hover {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+  }
+  .pie :focus-visible {
+    outline-color: var(--accent-on-dark);
+  }
+</style>

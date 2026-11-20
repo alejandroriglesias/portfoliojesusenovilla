@@ -1,0 +1,87 @@
+---
+/** Estilos tipográficos para texto enriquecido (blog, descripciones largas). Estilo «revista». */
+interface Props {
+  capitular?: boolean;
+}
+const { capitular = false } = Astro.props;
+---
+
+<div class:list={['prosa', { 'prosa--capitular': capitular }]}>
+  <slot />
+</div>
+
+<style>
+  .prosa {
+    max-width: 680px;
+    font-size: 18px;
+    line-height: 1.7;
+    color: #2b2a27;
+  }
+  .prosa :global(p),
+  .prosa :global(ul),
+  .prosa :global(ol),
+  .prosa :global(blockquote),
+  .prosa :global(figure) {
+    margin: 0 0 1.1em;
+  }
+  .prosa :global(h2),
+  .prosa :global(h3) {
+    font-family: var(--font-display);
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 1.8em 0 0.6em;
+  }
+  .prosa :global(h2) {
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 700;
+  }
+  .prosa :global(h3) {
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .prosa :global(a) {
+    color: var(--ink);
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .prosa :global(blockquote) {
+    padding: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(24px, 2.6vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .prosa :global(blockquote p) {
+    margin: 0;
+  }
+  .prosa :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 1.6em 0;
+  }
+  .prosa :global(ul),
+  .prosa :global(ol) {
+    padding-left: 1.3em;
+  }
+  .prosa :global(hr) {
+    border: 0;
+    border-top: 2px solid var(--ink);
+    margin: 2em 0;
+  }
+  /* Markdoc envuelve el contenido en <article>. */
+  .prosa--capitular > :global(p:first-child)::first-letter,
+  .prosa--capitular > :global(article > p:first-child)::first-letter {
+    float: left;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 92px;
+    line-height: 0.78;
+    margin: 8px 12px 0 0;
+    color: var(--ink);
+  }
+</style>

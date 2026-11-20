@@ -1,0 +1,193 @@
+---
+/** Entrada del blog con estilo de reportaje (prototipo 03). */
+import type { GetStaticPaths } from 'astro';
+import { Image, getImage } from 'astro:assets';
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Prosa from '../../components/Prosa.astro';
+import { getEntradasBlog, type EntradaBlog } from '../../lib/contenido';
+import { fechaISO, fechaLarga } from '../../lib/fechas';
+
+export const getStaticPaths = (async () => {
+  const entradas = await getEntradasBlog();
+  return entradas.map((entrada, i) => ({
+    params: { slug: entrada.id },
+    props: { entrada, anterior: entradas[i + 1], siguiente: entradas[i - 1] },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  entrada: EntradaBlog;
+  anterior?: EntradaBlog;
+  siguiente?: EntradaBlog;
+}
+
+const { entrada, anterior, siguiente } = Astro.props;
+const d = entrada.data;
+const { Content } = await render(entrada);
+const og = d.portada ? await getImage({ src: d.portada, width: 1200, format: 'jpg', quality: 78 }) : undefined;
+---
+
+<BaseLayout titulo={d.titulo} descripcion={d.extracto} paleta="revista" imagenOg={og?.src}>
+  <article class="articulo">
+    <header class="articulo__cab">
+      <div class="articulo__barra">
+        <a href="/blog"><span aria-hidden="true">←</span> Blog</a>
+        <time datetime={fechaISO(d.fecha)}>{fechaLarga(d.fecha)}</time>
+      </div>
+      {d.borrador && <p class="articulo__borrador">Borrador — no se publica</p>}
+      <h1 class="articulo__h1">{d.titulo}</h1>
+      {d.extracto && <p class="articulo__extracto">{d.extracto}</p>}
+    </header>
+
+    {
+      d.portada && (
+        <figure class="articulo__portada">
+          <Image
+            src={d.portada}
+            alt=""
+            widths={[480, 800, 1200, 1600].filter((w) => w <= d.portada!.width)}
+            sizes="(max-width: 1100px) 100vw, 1000px"
+            loading="eager"
+          />
+        </figure>
+      )
+    }
+
+    <div class="articulo__cuerpo">
+      <Prosa capitular>
+        <Content />
+      </Prosa>
+    </div>
+  </article>
+
+  {
+    (anterior || siguiente) && (
+      <nav class="mas" aria-label="Otras entradas">
+        {anterior ? (
+          <a class="mas__enlace" href={`/blog/${anterior.id}`} rel="prev">
+            <span class="mas__etiqueta">← Anterior</span>
+            <span class="mas__titulo">{anterior.data.titulo}</span>
+          </a>
+        ) : (
+          <span />
+        )}
+        {siguiente && (
+          <a class="mas__enlace mas__enlace--sig" href={`/blog/${siguiente.id}`} rel="next">
+            <span class="mas__etiqueta">Siguiente →</span>
+            <span class="mas__titulo">{siguiente.data.titulo}</span>
+          </a>
+        )}
+      </nav>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .articulo {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(40px, 6vw, 80px) var(--gutter) clamp(72px, 9vw, 128px);
+  }
+  .articulo__barra {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 24px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--ink);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .articulo__barra a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--tap);
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .articulo__barra a:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .articulo__borrador {
+    margin: 24px 0 0;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .articulo__h1 {
+    margin: clamp(32px, 5vw, 56px) 0 28px;
+    max-width: 14ch;
+    font-weight: 800;
+    font-size: clamp(40px, 7vw, 120px);
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .articulo__extracto {
+    margin: 0;
+    max-width: 720px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(20px, 1.8vw, 26px);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .articulo__portada {
+    margin: clamp(40px, 6vw, 72px) 0;
+  }
+  .articulo__portada :global(img) {
+    display: block;
+    width: 100%;
+    max-height: 80vh;
+    height: auto;
+    object-fit: contain;
+    background: #e6e4df;
+  }
+  .articulo__cuerpo {
+    display: flex;
+    justify-content: center;
+    margin-top: clamp(40px, 6vw, 72px);
+  }
+
+  .mas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    border-top: 2px solid var(--ink);
+  }
+  .mas__enlace {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: clamp(40px, 5vw, 72px) var(--gutter);
+    color: var(--ink);
+    text-decoration: none;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .mas__enlace--sig {
+    align-items: flex-end;
+    text-align: right;
+  }
+  .mas__enlace:hover {
+    background: var(--ink);
+    color: #f5f4f0;
+  }
+  .mas__etiqueta {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .mas__titulo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(28px, 3.5vw, 56px);
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+</style>

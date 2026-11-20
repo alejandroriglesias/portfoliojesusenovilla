@@ -1,0 +1,220 @@
+---
+/**
+ * Cabecera común.
+ * - variante "solida": fija arriba con fondo (portadas 01, 04–06, páginas interiores).
+ * - variante "superpuesta": flota sobre el contenido con mix-blend-mode: difference
+ *   (portadas 02, 03 y ficha de obra v2).
+ */
+interface Props {
+  variante?: 'solida' | 'superpuesta';
+}
+
+import { getEntradasBlog } from '../lib/contenido';
+
+const { variante = 'solida' } = Astro.props;
+// El enlace al blog solo aparece cuando hay entradas publicadas.
+const hayBlog = (await getEntradasBlog()).length > 0;
+const ruta = Astro.url.pathname.replace(/\/$/, '') || '/';
+
+const enlaces = [
+  { href: '/obra', texto: 'Obra' },
+  { href: '/obra#tecnicas', texto: 'Técnicas' },
+  { href: '/sobre-mi', texto: 'Sobre mí' },
+  ...(hayBlog ? [{ href: '/blog', texto: 'Blog' }] : []),
+];
+
+const activo = (href: string) => {
+  if (href === '/obra#tecnicas') return ruta.startsWith('/tecnicas');
+  return !href.includes('#') && (ruta === href || ruta.startsWith(href + '/'));
+};
+---
+
+<header class:list={['cabecera', `cabecera--${variante}`]}>
+  <div class="cabecera__barra">
+    <a class="cabecera__marca" href="/">
+      {variante === 'solida' && <span class="cabecera__punto" aria-hidden="true" />}
+      {variante === 'solida' ? 'Jesús Senovilla' : 'J. Senovilla'}
+      <span class="sr-only"> — Inicio</span>
+    </a>
+    <nav aria-label="Principal" class="cabecera__nav">
+      {
+        enlaces.map((e) => (
+          <a class="cabecera__enlace" href={e.href} aria-current={activo(e.href) ? 'page' : undefined}>
+            {e.texto}
+          </a>
+        ))
+      }
+      <a
+        class="cabecera__cta"
+        href="/contacto"
+        aria-current={activo('/contacto') ? 'page' : undefined}
+      >
+        Contacto
+      </a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .cabecera__barra {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 16px var(--gutter);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 32px;
+  }
+
+  .cabecera__marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tap);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .cabecera__punto {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .cabecera__nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 28px;
+  }
+
+  .cabecera__enlace {
+    position: relative;
+    padding: 12px 2px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .cabecera__cta {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    border-radius: var(--radius-pill);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  /* ---------- Sólida ---------- */
+  .cabecera--solida {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--header-bg);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .cabecera--solida .cabecera__enlace::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    bottom: 6px;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s ease;
+  }
+  .cabecera--solida .cabecera__enlace:hover::after,
+  .cabecera--solida .cabecera__enlace[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+  .cabecera--solida .cabecera__cta {
+    padding: 12px 22px;
+    background: var(--ink);
+    color: var(--bg);
+    transition: transform 0.2s ease;
+  }
+  .cabecera--solida .cabecera__cta:hover {
+    transform: translateY(-2px);
+  }
+
+  /* ---------- Superpuesta (difference) ---------- */
+  .cabecera--superpuesta {
+    position: sticky;
+    top: 0;
+    height: 0;
+    z-index: 40;
+    mix-blend-mode: difference;
+    color: #ffffff;
+  }
+  .cabecera--superpuesta .cabecera__barra {
+    padding-block: 18px;
+  }
+  .cabecera--superpuesta .cabecera__marca {
+    font-size: 20px;
+  }
+  .cabecera--superpuesta .cabecera__enlace:hover,
+  .cabecera--superpuesta .cabecera__enlace[aria-current='page'] {
+    text-decoration: underline;
+    text-underline-offset: 6px;
+  }
+  .cabecera--superpuesta .cabecera__cta {
+    padding: 10px 20px;
+    border: 1px solid #ffffff;
+    color: #ffffff;
+  }
+  .cabecera--superpuesta :focus-visible {
+    outline-color: #ffffff;
+  }
+
+  /* Móvil: marca arriba y navegación en una sola fila (desplazable si no cabe). */
+  @media (max-width: 600px) {
+    .cabecera__barra {
+      padding-block: 8px;
+      row-gap: 0;
+    }
+    .cabecera--superpuesta .cabecera__barra {
+      padding-block: 10px;
+    }
+    .cabecera__marca {
+      font-size: 19px;
+    }
+    .cabecera__nav {
+      flex-wrap: nowrap;
+      gap: 0 clamp(8px, 3vw - 1px, 14px);
+      width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+      /* deja sitio al anillo de foco */
+      padding: 3px;
+      margin: -3px;
+    }
+    .cabecera__nav::-webkit-scrollbar {
+      display: none;
+    }
+    .cabecera__enlace {
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .cabecera__cta,
+    .cabecera--solida .cabecera__cta,
+    .cabecera--superpuesta .cabecera__cta {
+      margin-left: auto;
+      padding: 8px 14px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+  }
+</style>

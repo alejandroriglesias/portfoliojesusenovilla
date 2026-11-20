@@ -1,0 +1,149 @@
+---
+/** Índice completo de obra: filtros por técnica y conmutador Índice / Mosaico. */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FiltroTecnicas from '../../components/obra/FiltroTecnicas.astro';
+import IndiceObras from '../../components/obra/IndiceObras.astro';
+import TarjetaObra from '../../components/obra/TarjetaObra.astro';
+import TarjetasTecnica from '../../components/obra/TarjetasTecnica.astro';
+import { etiquetaTecnica, getObras, getTecnicas } from '../../lib/contenido';
+
+const obras = await getObras();
+const etiquetas = await Promise.all(obras.map(etiquetaTecnica));
+const principales = await getTecnicas('principal');
+
+const opciones = [
+  { id: 'todo', label: 'Todo', count: obras.length },
+  ...principales.map((t) => ({
+    id: t.id,
+    label: `${t.data.nombre}s`,
+    count: obras.filter((o) => o.data.tecnica.discriminant === t.id).length,
+  })),
+];
+---
+
+<BaseLayout
+  titulo="Obra"
+  descripcion="Índice de la obra de Jesús Senovilla: óleo, acuarela y grabado."
+>
+  <section class="obra" aria-labelledby="obra-titulo">
+    <div class="obra__cabeza">
+      <div class="obra__titulos">
+        <p class="etiqueta">Obra · {obras.length} {obras.length === 1 ? 'obra' : 'obras'}</p>
+        <h1 id="obra-titulo" class="obra__h1">Índice<span class="acento">.</span></h1>
+      </div>
+      <div class="obra__controles">
+        <FiltroTecnicas opciones={opciones} objetivo="obra" />
+        <div role="group" aria-label="Vista" class="vistas" data-vistas>
+          <button type="button" class="vistas__boton" data-vista-boton="indice" aria-pressed="true">Índice</button>
+          <button type="button" class="vistas__boton" data-vista-boton="mosaico" aria-pressed="false">Mosaico</button>
+        </div>
+      </div>
+    </div>
+
+    {
+      obras.length === 0 ? (
+        <p class="obra__vacio">Todavía no hay obras publicadas.</p>
+      ) : (
+        <>
+          <div data-vista="indice" data-filtro-objetivo="obra">
+            <IndiceObras obras={obras} etiquetas={etiquetas} />
+          </div>
+          <div data-vista="mosaico" data-filtro-objetivo="obra" class="mosaico" hidden>
+            {obras.map((o, i) => (
+              <TarjetaObra obra={o} etiqueta={etiquetas[i]} />
+            ))}
+          </div>
+        </>
+      )
+    }
+  </section>
+
+  <TarjetasTecnica tecnicas={principales} />
+</BaseLayout>
+
+<style>
+  .obra {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(56px, 8vw, 112px) var(--gutter) clamp(80px, 10vw, 144px);
+  }
+  .obra__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 48px;
+    margin-bottom: 48px;
+  }
+  .obra__titulos {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .obra__h1 {
+    font-weight: 800;
+    font-size: clamp(56px, 9vw, 152px);
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+  }
+  .acento {
+    color: var(--accent);
+  }
+  .obra__controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+  }
+  .vistas {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid #cfccc5;
+    border-radius: var(--radius-pill);
+  }
+  .vistas__boton {
+    min-height: var(--tap);
+    padding: 10px 18px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink);
+    font: 600 14px/1 var(--font-body);
+    cursor: pointer;
+  }
+  .vistas__boton[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .mosaico {
+    columns: 3 320px;
+    column-gap: 40px;
+  }
+  .obra__vacio {
+    font-size: 20px;
+    color: var(--muted);
+  }
+</style>
+
+<script>
+  const CLAVE = 'obra:vista';
+  const botones = document.querySelectorAll<HTMLButtonElement>('[data-vista-boton]');
+  const paneles = document.querySelectorAll<HTMLElement>('[data-vista]');
+  const elegir = (vista: string) => {
+    botones.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vistaBoton === vista)));
+    paneles.forEach((p) => (p.hidden = p.dataset.vista !== vista));
+    try {
+      localStorage.setItem(CLAVE, vista);
+    } catch {
+      /* almacenamiento no disponible */
+    }
+  };
+  botones.forEach((b) => b.addEventListener('click', () => elegir(b.dataset.vistaBoton ?? 'indice')));
+  try {
+    const guardada = localStorage.getItem(CLAVE);
+    if (guardada === 'mosaico' || guardada === 'indice') elegir(guardada);
+  } catch {
+    /* sin almacenamiento: vista por defecto */
+  }
+</script>

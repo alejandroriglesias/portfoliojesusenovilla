@@ -1,0 +1,166 @@
+---
+/** Filas grandes de técnicas sobre negro (prototipos 01 y 02). */
+import type { Tecnica } from '../../lib/contenido';
+
+interface Props {
+  tecnicas: Tecnica[];
+  etiqueta?: string;
+  titulo?: string;
+  texto?: string;
+  id?: string;
+  /** Si se indica, los enlaces filtran la obra de la propia página (#ancla). */
+  filtrarEn?: string;
+}
+
+const {
+  tecnicas,
+  etiqueta = 'Técnicas',
+  titulo = 'Por técnica',
+  texto = 'Elige una técnica para ver sus obras.',
+  id = 'tecnicas',
+  filtrarEn,
+} = Astro.props;
+---
+
+<section {id} class="tecnicas" aria-labelledby={`${id}-titulo`}>
+  <div class="tecnicas__in">
+    <div class="tecnicas__cabeza">
+      <div class="tecnicas__titulos">
+        {
+          titulo ? (
+            <>
+              <p class="etiqueta tecnicas__etiqueta">{etiqueta}</p>
+              <h2 id={`${id}-titulo`} class="tecnicas__h2">{titulo}</h2>
+            </>
+          ) : (
+            <h2 id={`${id}-titulo`} class="etiqueta tecnicas__etiqueta">{etiqueta}</h2>
+          )
+        }
+      </div>
+      {texto && <p class="tecnicas__texto">{texto}</p>}
+    </div>
+    <ul class="tecnicas__lista">
+      {
+        tecnicas.map((t, i) => (
+          <li>
+            <a
+              class="tecnica"
+              href={filtrarEn ? `?tecnica=${t.id}#${filtrarEn}` : `/tecnicas/${t.id}`}
+              data-filtrar={filtrarEn ? t.id : undefined}
+            >
+              <span class="tecnica__nombre">
+                <span class="tecnica__n">{String(i + 1).padStart(2, '0')}</span>
+                <span class="tecnica__titulo" data-ajustar>{t.data.nombre}s</span>
+              </span>
+              <span class="tecnica__desc">
+                <span>{t.data.resumen}</span>
+                <svg class="tecnica__flecha" aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .tecnicas {
+    background: #111111;
+    color: var(--paper);
+  }
+  .tecnicas__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(72px, 9vw, 128px) var(--gutter);
+  }
+  .tecnicas__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .tecnicas__titulos {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .tecnicas__etiqueta {
+    color: #a8a59e;
+  }
+  .tecnicas__h2 {
+    font-weight: 700;
+    font-size: var(--fs-h2);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .tecnicas__texto {
+    margin: 0;
+    max-width: 380px;
+    color: #c9c6bf;
+  }
+  .tecnicas__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tecnica {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 16px 48px;
+    align-items: center;
+    padding: 40px 0;
+    border-top: 1px solid #333331;
+    color: var(--paper);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  .tecnica:hover {
+    color: var(--accent-on-dark);
+  }
+  .tecnica:focus-visible {
+    outline-color: var(--accent-on-dark);
+  }
+  .tecnica__nombre {
+    display: flex;
+    align-items: baseline;
+    gap: 28px;
+    min-width: 0;
+  }
+  .tecnica__n {
+    font-size: 14px;
+    color: #a8a59e;
+    font-variant-numeric: tabular-nums;
+  }
+  .tecnica__titulo {
+    display: block;
+    min-width: 0;
+    flex: 1 1 auto;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(40px, 7.5vw, 112px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+  .tecnica__desc {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    color: #c9c6bf;
+  }
+  .tecnica__desc > span {
+    max-width: 460px;
+  }
+  .tecnica__flecha {
+    flex-shrink: 0;
+    color: currentColor;
+    transition: transform 0.35s ease;
+  }
+  .tecnica:hover .tecnica__flecha {
+    transform: translateX(12px);
+    color: var(--accent-on-dark);
+  }
+</style>

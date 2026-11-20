@@ -1,0 +1,238 @@
+---
+/**
+ * Bloque «Sobre mí» de las portadas.
+ * - galeria (01): retrato a la izquierda; texto, firma y trayectoria a la derecha.
+ * - luz (02): frase grande y botón; retrato girado con la firma superpuesta.
+ * - taller (04–06): como galería, con los colores de la paleta.
+ */
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import type { DatosPortada } from '../../lib/portada';
+
+interface Props {
+  sobreMi: DatosPortada['sobreMi'];
+  variante?: 'galeria' | 'luz' | 'taller';
+  etiqueta?: string;
+}
+
+const { sobreMi, variante = 'galeria', etiqueta = 'Sobre mí' } = Astro.props;
+const d = sobreMi.data;
+const { Content: Bio } = await render(sobreMi);
+const tieneBio = !!sobreMi.body?.trim();
+---
+
+<section id="sobre" class:list={['sobre', `sobre--${variante}`]} aria-labelledby="sobre-titulo">
+  {
+    variante !== 'luz' && (
+      <div class="sobre__retrato-caja">
+        {d.retrato ? (
+          <Image src={d.retrato} alt="Jesús Senovilla en su taller" widths={[400, 560, 800]} sizes="(max-width: 900px) 100vw, 540px" class="sobre__retrato" />
+        ) : (
+          <div class="sobre__retrato sobre__hueco">Retrato en el taller</div>
+        )}
+      </div>
+    )
+  }
+
+  <div class="sobre__texto">
+    <p class="etiqueta">{etiqueta}</p>
+    {
+      variante === 'luz' ? (
+        <>
+          <h2 id="sobre-titulo" class="sr-only">Sobre mí</h2>
+          {d.frase && <p class="sobre__frase">{d.frase}</p>}
+        </>
+      ) : (
+        <h2 id="sobre-titulo" class="sobre__h2">{variante === 'galeria' ? 'Sobre mí' : 'Jesús Senovilla'}</h2>
+      )
+    }
+    {
+      tieneBio && (
+        <div class="sobre__bio">
+          <Bio />
+        </div>
+      )
+    }
+    {
+      variante === 'luz' ? (
+        <a class="boton boton--borde sobre__boton" href="/sobre-mi">Trayectoria completa</a>
+      ) : (
+        <>
+          {d.firma ? (
+            <Image src={d.firma} alt="Firma de Jesús Senovilla" width={400} class="sobre__firma" />
+          ) : (
+            <div class="sobre__firma sobre__firma--hueco">Firma</div>
+          )}
+          {d.trayectoria.length > 0 && (
+            <div class="sobre__tray">
+              {variante === 'galeria' && <h3 class="etiqueta sobre__tray-titulo">Trayectoria</h3>}
+              <dl>
+                {d.trayectoria.slice(0, 4).map((h) => (
+                  <div class="hito">
+                    <dt>{h.anio}</dt>
+                    <dd>{h.texto}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+        </>
+      )
+    }
+  </div>
+
+  {
+    variante === 'luz' && (
+      <div class="sobre__collage">
+        {d.retrato ? (
+          <Image src={d.retrato} alt="Jesús Senovilla en su taller" widths={[400, 560, 800]} sizes="(max-width: 900px) 100vw, 520px" class="sobre__retrato sobre__retrato--girado" />
+        ) : (
+          <div class="sobre__retrato sobre__retrato--girado sobre__hueco">Retrato en el taller</div>
+        )}
+        {d.firma ? (
+          <Image src={d.firma} alt="Firma de Jesús Senovilla" width={400} class="sobre__firma sobre__firma--flotante" />
+        ) : (
+          <div class="sobre__firma sobre__firma--flotante sobre__firma--hueco">Firma</div>
+        )}
+      </div>
+    )
+  }
+</section>
+
+<style>
+  .sobre {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(72px, 9vw, 136px) var(--gutter);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: 56px 80px;
+    align-items: center;
+  }
+  .sobre__texto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 26px;
+  }
+  .sobre__h2 {
+    font-weight: 700;
+    font-size: clamp(40px, 5vw, 76px);
+    line-height: 0.96;
+    letter-spacing: -0.035em;
+  }
+  .sobre--taller .sobre__h2 {
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+  .sobre__frase {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(30px, 3.6vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+  .sobre__bio {
+    max-width: 560px;
+    font-size: 18px;
+    line-height: 1.62;
+    color: var(--text-soft);
+  }
+  .sobre--taller .sobre__bio {
+    color: var(--muted);
+  }
+  .sobre__bio :global(p) {
+    margin: 0 0 1em;
+  }
+  .sobre__bio :global(p:last-child) {
+    margin: 0;
+  }
+  .sobre__retrato-caja {
+    width: 100%;
+    max-width: 560px;
+  }
+  .sobre :global(.sobre__retrato) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  .sobre__hueco {
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+    background: var(--card, #d8d4cc);
+    color: var(--text-soft);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .sobre :global(.sobre__firma) {
+    width: 200px;
+    height: auto;
+  }
+  .sobre__firma--hueco {
+    height: 72px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #a8a59e;
+    border-radius: 4px;
+    color: var(--muted);
+    font-size: 13px;
+    background: var(--bg);
+  }
+  .sobre__tray {
+    width: 100%;
+    margin-top: 8px;
+  }
+  .sobre__tray-titulo {
+    margin-bottom: 8px;
+    font-family: var(--font-body);
+  }
+  .sobre__tray dl {
+    margin: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .hito {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+  }
+  .hito dt {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .hito dd {
+    margin: 0;
+  }
+  /* Luz */
+  .sobre__collage {
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: 520px;
+  }
+  .sobre :global(.sobre__retrato--girado) {
+    transform: rotate(2deg);
+    border-radius: 0;
+  }
+  .sobre :global(.sobre__firma--flotante) {
+    position: absolute;
+    left: -24px;
+    bottom: 32px;
+    transform: rotate(-3deg);
+  }
+  @media (max-width: 520px) {
+    .sobre :global(.sobre__firma--flotante) {
+      left: -6px;
+      width: 160px;
+    }
+  }
+</style>

@@ -1,0 +1,84 @@
+---
+/** Navegación anterior / siguiente a pantalla partida. */
+interface Enlace {
+  href: string;
+  titulo: string;
+  numero: string;
+}
+interface Props {
+  anterior: Enlace;
+  siguiente: Enlace;
+}
+const { anterior, siguiente } = Astro.props;
+---
+
+<nav class="pn" aria-label="Otras obras">
+  <a class="pn__enlace pn__enlace--ant" href={anterior.href} rel="prev">
+    <span class="pn__etiqueta"><span aria-hidden="true">←</span> Anterior · {anterior.numero}</span>
+    <span class="pn__titulo">{anterior.titulo}</span>
+  </a>
+  <a class="pn__enlace pn__enlace--sig" href={siguiente.href} rel="next">
+    <span class="pn__etiqueta">{siguiente.numero} · Siguiente <span aria-hidden="true">→</span></span>
+    <span class="pn__titulo">{siguiente.titulo}</span>
+  </a>
+</nav>
+
+<style>
+  .pn {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    border-top: 1px solid #dad7d0;
+  }
+  .pn__enlace {
+    --dx: -16px;
+    padding: clamp(48px, 6vw, 88px) var(--gutter);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--paper);
+    transition:
+      background 0.35s ease,
+      color 0.35s ease;
+  }
+  .pn__enlace--ant {
+    border-right: 1px solid #dad7d0;
+  }
+  .pn__enlace--sig {
+    --dx: 16px;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .pn__enlace:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .pn__enlace:focus-visible {
+    outline-offset: -6px;
+  }
+  .pn__etiqueta {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .pn__titulo {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(36px, 5.5vw, 92px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .pn__enlace:hover .pn__titulo {
+    transform: translateX(var(--dx));
+  }
+  @media (max-width: 860px) {
+    .pn__enlace--ant {
+      border-right: 0;
+      border-bottom: 1px solid #dad7d0;
+    }
+  }
+</style>

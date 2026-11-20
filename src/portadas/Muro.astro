@@ -1,0 +1,705 @@
+---
+/**
+ * Portada 04 · Muro — «muro de taller».
+ * Lienzo infinito que se arrastra: una tesela de 1800×1200 repetida 3×3
+ * alrededor de la cámara (la cámara se «envuelve» al cruzar una tesela, así
+ * que nunca se ve el borde). Obras con cinta y giradas, notas, zoom (−/+),
+ * Centrar, coordenadas y visor a pantalla completa con anterior/siguiente.
+ */
+import { getImage } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ComunesTaller from '../components/portada/ComunesTaller.astro';
+import { getDatosPortada } from '../lib/portada';
+import type { Props as PropsPortada } from './tipos';
+
+type Props = PropsPortada;
+const { canonica, noindex } = Astro.props;
+const datos = await getDatosPortada();
+const { obras, etiquetas, destacada } = datos;
+
+// ---------- Colocación en el muro ----------
+// Huecos del prototipo (el primero, en el centro, para la destacada) y algunos
+// más; con muchas obras se pasa a una rejilla que agranda la tesela.
+const HUECOS = [
+  { x: 790, y: 300, h: 380, rot: -1.2 },
+  { x: 470, y: 150, h: 280, rot: 2.2 },
+  { x: 1190, y: 150, h: 210, rot: -2.4 },
+  { x: 1330, y: 540, h: 230, rot: 1.6 },
+  { x: 360, y: 600, h: 330, rot: -1.4 },
+  { x: 1060, y: 830, h: 250, rot: 2.8 },
+  { x: 60, y: 200, h: 240, rot: -2 },
+  { x: 1560, y: 120, h: 220, rot: 1.8 },
+  { x: 1500, y: 880, h: 220, rot: -1.6 },
+  { x: 40, y: 640, h: 220, rot: 2.4 },
+];
+const orden = destacada ? [destacada, ...obras.filter((o) => o !== destacada)] : obras;
+const enRejilla = orden.length > HUECOS.length;
+const columnas = enRejilla ? Math.ceil(Math.sqrt(orden.length * 1.5)) : 0;
+const TW = enRejilla ? Math.max(1800, columnas * 330 + 120) : 1800;
+const TH = enRejilla ? Math.max(1200, Math.ceil(orden.length / columnas) * 460 + 160) : 1200;
+
+const piezas = await Promise.all(
+  orden.map(async (o, i) => {
+    const img = o.data.imagen;
+    const ratio = img.width / img.height;
+    let pos: { x: number; y: number; h: number; rot: number };
+    if (o.data.muro) {
+      pos = { x: o.data.muro.x, y: o.data.muro.y, h: 280, rot: o.data.muro.rotacion };
+    } else if (!enRejilla) {
+      pos = HUECOS[i];
+    } else {
+      const c = i % columnas;
+      const f = Math.floor(i / columnas);
+      // Pequeño desorden determinista para que no parezca una cuadrícula.
+      const r = (Math.sin(i * 12.9898) * 43758.5453) % 1;
+      pos = { x: 80 + c * 330 + r * 30, y: 100 + f * 460 + r * 40, h: 260, rot: (r - 0.5) * 5 };
+    }
+    const ancho = Math.round(pos.h * ratio);
+    const mini = await getImage({ src: img, width: Math.min(img.width, ancho * 2), format: 'webp' });
+    const grande = await getImage({ src: img, width: Math.min(img.width, 1400), format: 'webp' });
+    const io = obras.indexOf(o);
+    const t = o.data.tecnica;
+    const extra = t.discriminant === 'grabado' ? t.value.edicion : o.data.medidas;
+    return {
+      obra: o,
+      etiqueta: etiquetas[io],
+      ...pos,
+      ancho,
+      mini: mini.src,
+      grande: grande.src,
+      ratio: `${img.width} / ${img.height}`,
+      cinta: [etiquetas[io].split(' · ').pop(), o.data.anio].filter(Boolean).join(', '),
+      extra,
+    };
+  })
+);
+
+const teselas = [-1, 0, 1].flatMap((j) => [-1, 0, 1].map((i) => ({ i, j, principal: i === 0 && j === 0 })));
+---
+
+<BaseLayout paleta="muro" canonica={canonica} noindex={noindex}>
+  <section id="inicio" class="muro" aria-labelledby="muro-titulo">
+    <h1 id="muro-titulo" class="sr-only">Jesús Senovilla — el muro del taller</h1>
+    <muro-taller class="muro__vista" data-tw={TW} data-th={TH} role="region" aria-label="Muro del taller: arrastra o usa las flechas para recorrerlo" tabindex="0">
+      <div class="muro__mundo" data-mundo>
+        {
+          teselas.map(({ i, j, principal }) => (
+            <div class="tesela" style={`left: ${i * TW}px; top: ${j * TH}px; width: ${TW}px; height: ${TH}px`} aria-hidden={principal ? undefined : 'true'}>
+              <span class="palabra" aria-hidden="true">Taller</span>
+              <span class="nota" aria-hidden="true" style="left: 660px; top: 900px; --rot: 2deg">[Nota del taller: una idea, una fecha, una prueba de color]</span>
+              {piezas.map((p, k) => (
+                <>
+                  <button
+                    type="button"
+                    class="pin"
+                    data-pieza={k}
+                    tabindex={principal ? 0 : -1}
+                    aria-label={`${p.obra.data.titulo}, ${p.etiqueta}${p.obra.data.anio ? `, ${p.obra.data.anio}` : ''}`}
+                    style={`left: ${p.x}px; top: ${p.y}px; width: ${p.ancho}px; height: ${p.h}px; --rot: ${p.rot}deg`}
+                  >
+                    <img class="pin__arte" src={p.mini} alt="" draggable="false" loading={principal ? 'eager' : 'lazy'} decoding="async" />
+                    <span class="cinta cinta--i" aria-hidden="true" />
+                    <span class="cinta cinta--d" aria-hidden="true" />
+                  </button>
+                  {p.cinta && (
+                    <span class="etiq" aria-hidden="true" style={`left: ${p.x + 10}px; top: ${p.y + p.h + 18}px; --rot: ${k % 2 ? 1.5 : -2}deg`}>
+                      {p.cinta}
+                    </span>
+                  )}
+                </>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </muro-taller>
+
+    <div class="cartel" aria-hidden="true">
+      <span class="cartel__k">Taller abierto</span>
+      <span class="cartel__t">Arrastra para recorrer el taller.</span>
+      <span class="cartel__s">Pulsa una obra para verla de cerca.</span>
+    </div>
+
+    <div class="mandos">
+      <span class="coords" aria-hidden="true" data-coords>X 0000 · Y 0000</span>
+      <a class="ctl" href="#obra">Ver toda la obra ↓</a>
+      <div role="group" aria-label="Zoom" class="mandos__zoom">
+        <button type="button" class="ctl" data-zoom="-1" aria-label="Alejar">−</button>
+        <span class="mandos__nivel" aria-live="polite" data-nivel>100%</span>
+        <button type="button" class="ctl" data-zoom="1" aria-label="Acercar">+</button>
+        <button type="button" class="ctl" data-centrar>Centrar</button>
+      </div>
+    </div>
+
+    <dialog class="visor" data-visor aria-labelledby="visor-titulo">
+      <button type="button" class="visor__fondo" data-cerrar aria-label="Cerrar" tabindex="-1"></button>
+      <div class="visor__marco">
+        <img class="visor__img" data-visor-img alt="" />
+      </div>
+      <button type="button" class="vbtn visor__cerrar" data-cerrar>Cerrar ✕</button>
+      <button type="button" class="vbtn visor__ant" data-paso="-1" aria-label="Obra anterior">←</button>
+      <button type="button" class="vbtn visor__sig" data-paso="1" aria-label="Obra siguiente">→</button>
+      <div class="visor__pie">
+        <div class="visor__textos">
+          <span id="visor-titulo" class="visor__titulo" data-visor-titulo></span>
+          <span class="visor__meta" data-visor-meta></span>
+        </div>
+        <a class="visor__ficha" data-visor-ficha href="#">Ver ficha →</a>
+      </div>
+    </dialog>
+
+    <script
+      type="application/json"
+      data-piezas
+      set:html={JSON.stringify(
+        piezas.map((p) => ({
+          titulo: p.obra.data.titulo,
+          meta: [p.etiqueta, p.obra.data.anio].filter(Boolean).join(', ') + (p.extra && !p.extra.startsWith('[') ? ` · ${p.extra}` : ''),
+          alt: p.obra.data.alt ?? p.obra.data.titulo,
+          src: p.grande,
+          ratio: p.ratio,
+          href: `/obra/${p.obra.id}`,
+        }))
+      )}
+    />
+  </section>
+
+  <ComunesTaller datos={datos} />
+</BaseLayout>
+
+<style>
+  .muro {
+    position: relative;
+    height: min(100vh - 73px, 860px);
+    min-height: 560px;
+    overflow: hidden;
+    background: #ece8e1;
+    border-bottom: 1px solid var(--line);
+  }
+  .muro__vista {
+    position: absolute;
+    inset: 0;
+    display: block;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+  .muro__vista.is-arrastrando {
+    cursor: grabbing;
+  }
+  .muro__vista:focus-visible {
+    outline-offset: -4px;
+  }
+  .muro__mundo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform;
+  }
+  .is-arrastrando .muro__mundo {
+    transition: none;
+  }
+  .tesela {
+    position: absolute;
+    background-image: radial-gradient(rgba(60, 50, 40, 0.07) 1px, rgba(0, 0, 0, 0) 1.2px);
+    background-size: 6px 6px;
+  }
+  .palabra {
+    position: absolute;
+    left: 40px;
+    top: 990px;
+    transform: rotate(-3deg);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 200px;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: rgba(40, 32, 24, 0.06);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .nota {
+    position: absolute;
+    width: 220px;
+    padding: 16px;
+    background: #fff;
+    font: 500 14px/1.45 var(--font-body);
+    color: #3d3a33;
+    transform: rotate(var(--rot));
+    box-shadow:
+      0 2px 4px rgba(20, 16, 10, 0.1),
+      0 10px 20px rgba(20, 16, 10, 0.1);
+    pointer-events: none;
+  }
+  .etiq {
+    position: absolute;
+    padding: 6px 14px;
+    background: rgba(232, 222, 196, 0.85);
+    font: 500 14px var(--font-body);
+    color: #3d3a33;
+    white-space: nowrap;
+    transform: rotate(var(--rot));
+    pointer-events: none;
+  }
+  .pin {
+    position: absolute;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    transform: rotate(var(--rot));
+  }
+  .pin__arte {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    box-shadow:
+      0 2px 4px rgba(20, 16, 10, 0.12),
+      0 14px 28px rgba(20, 16, 10, 0.14);
+    transition:
+      transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.35s ease;
+  }
+  .pin:hover .pin__arte,
+  .pin:focus-visible .pin__arte {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow:
+      0 4px 8px rgba(20, 16, 10, 0.12),
+      0 30px 50px rgba(20, 16, 10, 0.2);
+  }
+  .pin:focus-visible {
+    outline: 2px solid #141414;
+    outline-offset: 8px;
+  }
+  .cinta {
+    position: absolute;
+    top: -9px;
+    width: 58px;
+    height: 20px;
+    background: rgba(232, 222, 196, 0.82);
+  }
+  .cinta--i {
+    left: -10px;
+    transform: rotate(-14deg);
+  }
+  .cinta--d {
+    right: -10px;
+    transform: rotate(12deg);
+  }
+
+  .cartel {
+    position: absolute;
+    z-index: 5;
+    left: var(--gutter);
+    top: 32px;
+    max-width: 360px;
+    padding: 22px 26px;
+    background: #fff;
+    transform: rotate(-1deg);
+    box-shadow:
+      0 2px 4px rgba(20, 16, 10, 0.1),
+      0 16px 32px rgba(20, 16, 10, 0.12);
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cartel__k {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .cartel__t {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(22px, 2.2vw, 28px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+  .cartel__s {
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .mandos {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0 var(--gutter) 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    pointer-events: none;
+  }
+  .mandos > * {
+    pointer-events: auto;
+  }
+  .coords {
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  .mandos__zoom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mandos__nivel {
+    min-width: 48px;
+    text-align: center;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ctl {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--tap);
+    min-height: var(--tap);
+    padding: 0 16px;
+    background: #fff;
+    border: 1px solid rgba(20, 20, 20, 0.15);
+    border-radius: var(--radius-pill);
+    font: 600 14px var(--font-body);
+    color: #141414;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .ctl:hover {
+    background: #f4f2ee;
+  }
+  @media (max-width: 640px) {
+    .cartel {
+      top: 16px;
+      max-width: 240px;
+      padding: 14px 18px;
+    }
+    .cartel__s {
+      display: none;
+    }
+    .coords {
+      display: none;
+    }
+    .mandos {
+      justify-content: center;
+    }
+  }
+
+  /* Visor a pantalla completa */
+  .visor {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(14, 13, 12, 0.92);
+    color: #f5f4f0;
+  }
+  .visor::backdrop {
+    background: rgba(14, 13, 12, 0.5);
+    backdrop-filter: blur(6px);
+  }
+  .visor[open] .visor__marco {
+    animation: entrar 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes entrar {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  .visor__fondo {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    border: 0;
+    cursor: zoom-out;
+  }
+  .visor__marco {
+    position: absolute;
+    inset: 80px clamp(64px, 8vw, 120px) 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .visor__img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+  }
+  .vbtn {
+    position: absolute;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0 18px;
+    border: 1px solid rgba(245, 244, 240, 0.5);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: #f5f4f0;
+    font: 600 14px var(--font-body);
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+  .vbtn:hover {
+    background: #f5f4f0;
+    color: #141414;
+  }
+  .vbtn:focus-visible,
+  .visor__ficha:focus-visible {
+    outline-color: #fff;
+  }
+  .visor__cerrar {
+    top: 20px;
+    right: clamp(20px, 3.5vw, 40px);
+  }
+  .visor__ant,
+  .visor__sig {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .visor__ant {
+    left: clamp(12px, 2vw, 32px);
+  }
+  .visor__sig {
+    right: clamp(12px, 2vw, 32px);
+  }
+  .visor__pie {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0 clamp(20px, 3.5vw, 40px) 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 32px;
+  }
+  .visor__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .visor__titulo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+  .visor__meta {
+    font-size: 14px;
+    color: #c9c6bf;
+  }
+  .visor__ficha {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 14px 24px;
+    border-radius: var(--radius-pill);
+    background: #f5f4f0;
+    color: #141414;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  @media (max-width: 640px) {
+    .visor__marco {
+      inset: 72px 16px 150px;
+    }
+    .visor__ant,
+    .visor__sig {
+      top: auto;
+      bottom: 96px;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .muro__mundo,
+    .pin__arte {
+      transition: none;
+    }
+    .visor[open] .visor__marco {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  type Pieza = { titulo: string; meta: string; alt: string; src: string; ratio: string; href: string };
+
+  const ZOOMS = [0.6, 0.8, 1, 1.25];
+
+  class MuroTaller extends HTMLElement {
+    private mundo!: HTMLElement;
+    private tw = 1800;
+    private th = 1200;
+    private cx = 900;
+    private cy = 560;
+    private z = 1;
+    private arrastre: { x: number; y: number; cx: number; cy: number; id: number } | null = null;
+    private movido = false;
+
+    connectedCallback() {
+      this.mundo = this.querySelector('[data-mundo]')!;
+      this.tw = Number(this.dataset.tw) || 1800;
+      this.th = Number(this.dataset.th) || 1200;
+      this.cy = Math.round(this.th * 0.47);
+      this.cx = Math.round(this.tw / 2);
+      if (matchMedia('(max-width: 640px)').matches) this.z = 0.6;
+      this.pintar();
+
+      const seccion = this.closest('section')!;
+      const piezas: Pieza[] = JSON.parse(seccion.querySelector('[data-piezas]')?.textContent ?? '[]');
+      const visor = new Visor(seccion, piezas);
+
+      this.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        this.arrastre = { x: e.clientX, y: e.clientY, cx: this.cx, cy: this.cy, id: e.pointerId };
+        this.movido = false;
+      });
+      this.addEventListener('pointermove', (e) => {
+        const a = this.arrastre;
+        if (!a || a.id !== e.pointerId) return;
+        const dx = e.clientX - a.x;
+        const dy = e.clientY - a.y;
+        if (!this.movido && Math.hypot(dx, dy) > 5) {
+          this.movido = true;
+          this.classList.add('is-arrastrando');
+          this.setPointerCapture(e.pointerId);
+        }
+        if (!this.movido) return;
+        this.cx = a.cx - dx / this.z;
+        this.cy = a.cy - dy / this.z;
+        // Envolver la cámara dentro de la tesela central (el muro es periódico).
+        const ox = Math.floor(this.cx / this.tw) * this.tw;
+        const oy = Math.floor(this.cy / this.th) * this.th;
+        if (ox || oy) {
+          this.cx -= ox; a.cx -= ox;
+          this.cy -= oy; a.cy -= oy;
+        }
+        this.pintar();
+      });
+      const soltar = () => {
+        this.arrastre = null;
+        this.classList.remove('is-arrastrando');
+      };
+      this.addEventListener('pointerup', soltar);
+      this.addEventListener('pointercancel', soltar);
+
+      // Clic en una obra (solo si no ha sido un arrastre).
+      this.addEventListener('click', (e) => {
+        const pin = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-pieza]');
+        if (!pin) return;
+        if (this.movido) {
+          e.preventDefault();
+          this.movido = false;
+          return;
+        }
+        visor.abrir(Number(pin.dataset.pieza), pin);
+      });
+
+      // Teclado: flechas para desplazarse, +/− para el zoom.
+      this.addEventListener('keydown', (e) => {
+        if (e.target !== this) return;
+        const paso = 120 / this.z;
+        const mov: Record<string, [number, number]> = {
+          ArrowLeft: [-paso, 0], ArrowRight: [paso, 0], ArrowUp: [0, -paso], ArrowDown: [0, paso],
+        };
+        if (mov[e.key]) {
+          e.preventDefault();
+          this.cx = (((this.cx + mov[e.key][0]) % this.tw) + this.tw) % this.tw;
+          this.cy = (((this.cy + mov[e.key][1]) % this.th) + this.th) % this.th;
+          this.pintar();
+        } else if (e.key === '+' || e.key === '=') this.zoom(1);
+        else if (e.key === '-') this.zoom(-1);
+      });
+
+      seccion.querySelectorAll<HTMLButtonElement>('[data-zoom]').forEach((b) =>
+        b.addEventListener('click', () => this.zoom(Number(b.dataset.zoom)))
+      );
+      seccion.querySelector('[data-centrar]')?.addEventListener('click', () => {
+        this.cx = Math.round(this.tw / 2);
+        this.cy = Math.round(this.th * 0.47);
+        this.z = matchMedia('(max-width: 640px)').matches ? 0.6 : 1;
+        this.pintar();
+      });
+    }
+
+    private zoom(d: number) {
+      const i = ZOOMS.indexOf(this.z);
+      this.z = ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, (i < 0 ? 2 : i) + d))];
+      this.pintar();
+    }
+
+    private pintar() {
+      this.mundo.style.transform = `scale(${this.z}) translate(${-this.cx}px, ${-this.cy}px)`;
+      const s = this.closest('section')!;
+      const pad = (v: number) => (v < 0 ? '−' : '') + String(Math.abs(Math.round(v))).padStart(4, '0');
+      const c = s.querySelector('[data-coords]');
+      if (c) c.textContent = `X ${pad(this.cx - this.tw / 2)} · Y ${pad(this.cy - this.th * 0.47)}`;
+      const n = s.querySelector('[data-nivel]');
+      if (n) n.textContent = `${Math.round(this.z * 100)}%`;
+    }
+  }
+
+  class Visor {
+    private dlg: HTMLDialogElement;
+    private i = 0;
+    private origen: HTMLElement | null = null;
+    constructor(
+      raiz: HTMLElement,
+      private piezas: Pieza[]
+    ) {
+      this.dlg = raiz.querySelector('[data-visor]')!;
+      this.dlg.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', () => this.dlg.close()));
+      this.dlg.querySelectorAll<HTMLButtonElement>('[data-paso]').forEach((b) =>
+        b.addEventListener('click', () => this.mostrar(this.i + Number(b.dataset.paso)))
+      );
+      this.dlg.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') this.mostrar(this.i + 1);
+        if (e.key === 'ArrowLeft') this.mostrar(this.i - 1);
+      });
+      this.dlg.addEventListener('close', () => this.origen?.focus());
+    }
+    abrir(i: number, origen: HTMLElement) {
+      this.origen = origen;
+      this.mostrar(i);
+      this.dlg.showModal();
+    }
+    private mostrar(i: number) {
+      const n = this.piezas.length;
+      this.i = ((i % n) + n) % n;
+      const p = this.piezas[this.i];
+      const img = this.dlg.querySelector<HTMLImageElement>('[data-visor-img]')!;
+      img.src = p.src;
+      img.alt = p.alt;
+      img.style.aspectRatio = p.ratio;
+      this.dlg.querySelector('[data-visor-titulo]')!.textContent = p.titulo;
+      this.dlg.querySelector('[data-visor-meta]')!.textContent = p.meta;
+      this.dlg.querySelector<HTMLAnchorElement>('[data-visor-ficha]')!.href = p.href;
+    }
+  }
+
+  if (!customElements.get('muro-taller')) customElements.define('muro-taller', MuroTaller);
+</script>

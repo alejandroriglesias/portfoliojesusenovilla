@@ -1,0 +1,296 @@
+---
+/**
+ * Portada 06 · Bandas — franjas verticales con los 3 colores dominantes de
+ * cada obra. Suben al cargar; al pasar el ratón (o enfocar) la franja se
+ * ensancha (flex-grow) y aparece la obra; la cartela inferior cambia.
+ * En móvil las franjas son horizontales. La paleta sale del CMS o se calcula
+ * al compilar a partir de la imagen.
+ */
+import { getImage } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ComunesTaller from '../components/portada/ComunesTaller.astro';
+import { getDatosPortada, paletaDe, tintaSobre } from '../lib/portada';
+import type { Props as PropsPortada } from './tipos';
+
+type Props = PropsPortada;
+const { canonica, noindex } = Astro.props;
+const datos = await getDatosPortada();
+const { obras, etiquetas } = datos;
+
+const bandas = await Promise.all(
+  obras.map(async (o, i) => {
+    const paleta = await paletaDe(o);
+    const src = o.data.imagenPlancha ?? o.data.imagen;
+    const img = await getImage({ src, width: Math.min(src.width, 900), format: 'webp' });
+    const t = o.data.tecnica;
+    const extra = t.discriminant === 'grabado' ? t.value.edicion : undefined;
+    return {
+      obra: o,
+      paleta,
+      tinta: tintaSobre(paleta),
+      img: img.src,
+      ratio: `${src.width} / ${src.height}`,
+      n: String(i + 1).padStart(2, '0'),
+      titulo: o.data.titulo,
+      texto: [etiquetas[i], o.data.anio].filter(Boolean).join(', ') + (extra ? ` · ${extra}` : ''),
+    };
+  })
+);
+const n = bandas.length;
+const resumenTitulo = n === 1 ? 'Una obra, una paleta' : `${n} obras, ${n} paletas`;
+const resumenTexto = 'Pasa por los colores para ver cada obra';
+---
+
+<BaseLayout paleta="bandas" canonica={canonica} noindex={noindex}>
+  <section id="inicio" class="bandas" aria-labelledby="bandas-titulo">
+    <h1 id="bandas-titulo" class="sr-only">Jesús Senovilla — obras por color</h1>
+    <nav class="bandas__lista" aria-label="Obras por color" data-bandas>
+      {
+        bandas.map((b, i) => (
+          <a
+            class="banda"
+            href={`/obra/${b.obra.id}`}
+            data-titulo={b.titulo}
+            data-texto={b.texto}
+            aria-label={`${b.titulo}, ${b.texto}`}
+            style={`--c1: ${b.paleta[0]}; --c2: ${b.paleta[1]}; --c3: ${b.paleta[2]}; color: ${b.tinta}; animation-delay: ${i * 70}ms`}
+          >
+            <span class="banda__arte" aria-hidden="true">
+              <img src={b.img} alt="" style={`aspect-ratio: ${b.ratio}`} loading="lazy" decoding="async" />
+            </span>
+            <span class="banda__etiqueta" aria-hidden="true">
+              <span class="banda__n">{b.n}</span>
+              <span class="banda__titulo">{b.titulo}</span>
+            </span>
+          </a>
+        ))
+      }
+    </nav>
+    <div class="cartela">
+      <span class="cartela__textos" aria-live="polite">
+        <span class="cartela__titulo" data-cartela-titulo>{resumenTitulo}</span>
+        <span class="cartela__texto" data-cartela-texto>{resumenTexto}</span>
+      </span>
+      <a class="cartela__enlace" href="#obra">Ver toda la obra ↓</a>
+    </div>
+    <script type="application/json" data-resumen set:html={JSON.stringify([resumenTitulo, resumenTexto])} />
+  </section>
+
+  <ComunesTaller datos={datos} />
+</BaseLayout>
+
+<style>
+  .bandas {
+    position: relative;
+    height: min(100vh - 73px, 860px);
+    min-height: 560px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+  }
+  .bandas__lista {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 88px;
+    display: flex;
+  }
+  .banda {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    display: block;
+    text-decoration: none;
+    background: linear-gradient(
+      to bottom,
+      var(--c1) 0%,
+      var(--c1) 38%,
+      var(--c2) 38%,
+      var(--c2) 74%,
+      var(--c3) 74%,
+      var(--c3) 100%
+    );
+    transform-origin: 50% 100%;
+    animation: subir 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transition: flex-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes subir {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  .banda.is-activa {
+    flex-grow: 7;
+  }
+  .banda:focus-visible {
+    outline: 2px solid #141414;
+    outline-offset: -6px;
+  }
+  .banda__arte {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    height: 62%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
+    transition:
+      opacity 0.6s ease 0s,
+      transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .banda__arte img {
+    display: block;
+    height: 100%;
+    width: auto;
+    max-width: 60vw;
+    object-fit: contain;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+  .banda.is-activa .banda__arte {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    transition-delay: 0.3s, 0s;
+  }
+  .banda__etiqueta {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    margin-left: -10px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    font-size: 12px;
+    white-space: nowrap;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    transition: opacity 0.4s ease;
+  }
+  .banda.is-activa .banda__etiqueta {
+    opacity: 0;
+  }
+  .banda__n {
+    font-variant-numeric: tabular-nums;
+    opacity: 0.7;
+  }
+  .banda__titulo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .cartela {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 88px;
+    padding: 0 var(--gutter);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 32px;
+  }
+  .cartela__textos {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    min-width: 0;
+  }
+  .cartela__titulo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+  .cartela__texto {
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .cartela__enlace {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  /* Móvil: franjas horizontales. */
+  @media (max-width: 760px) {
+    .bandas__lista {
+      flex-direction: column;
+      bottom: 128px;
+    }
+    .banda {
+      transform-origin: 0 50%;
+      animation-name: subir-h;
+    }
+    @keyframes subir-h {
+      from {
+        transform: scaleX(0);
+      }
+    }
+    .banda__etiqueta {
+      writing-mode: horizontal-tb;
+      transform: translateY(50%);
+      left: var(--gutter);
+      bottom: 50%;
+      margin-left: 0;
+    }
+    .banda__arte {
+      height: 80%;
+    }
+    .cartela {
+      height: 128px;
+      align-content: center;
+      padding-block: 8px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .banda {
+      animation: none;
+      transition: none;
+    }
+    .banda__arte,
+    .banda__etiqueta {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const lista = document.querySelector<HTMLElement>('[data-bandas]');
+  const titulo = document.querySelector<HTMLElement>('[data-cartela-titulo]');
+  const texto = document.querySelector<HTMLElement>('[data-cartela-texto]');
+  const [resT, resX]: string[] = JSON.parse(document.querySelector('[data-resumen]')?.textContent ?? '["",""]');
+
+  if (lista) {
+    const bandas = [...lista.querySelectorAll<HTMLAnchorElement>('.banda')];
+    const activar = (b: HTMLAnchorElement | null) => {
+      bandas.forEach((x) => x.classList.toggle('is-activa', x === b));
+      if (titulo) titulo.textContent = b?.dataset.titulo ?? resT;
+      if (texto) texto.textContent = b?.dataset.texto ?? resX;
+    };
+    bandas.forEach((b) => {
+      b.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'mouse' || e.pointerType === 'pen') activar(b);
+      });
+      b.addEventListener('focus', () => activar(b));
+      // Táctil: el primer toque abre la franja; el segundo lleva a la ficha.
+      b.addEventListener('click', (e) => {
+        if (!b.classList.contains('is-activa')) {
+          e.preventDefault();
+          activar(b);
+        }
+      });
+    });
+    lista.addEventListener('pointerleave', () => activar(null));
+    lista.addEventListener('focusout', (e) => {
+      if (!lista.contains(e.relatedTarget as Node)) activar(null);
+    });
+  }
+</script>

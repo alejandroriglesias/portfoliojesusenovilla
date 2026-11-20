@@ -1,0 +1,16 @@
+---
+/**
+ * Las seis portadas, siempre accesibles para compararlas.
+ * No se indexan y su canónica es «/» (evita contenido duplicado).
+ */
+import type { GetStaticPaths } from 'astro';
+import { PORTADAS, type Portada } from '../../lib/portada';
+import { componenteDe } from '../../portadas';
+
+export const getStaticPaths = (() => PORTADAS.map((portada) => ({ params: { portada } }))) satisfies GetStaticPaths;
+
+const { portada } = Astro.params as { portada: Portada };
+const Componente = componenteDe(portada);
+---
+
+<Componente canonica="/" noindex />

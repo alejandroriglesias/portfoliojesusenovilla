@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Jesús Senovilla — Inicio (bandas de color)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Syne:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F2EE}
+a{color:#141414}a:hover{color:#000}
+
+.g{background-size:cover;background-position:center;background-repeat:no-repeat}
+.g-repollo{background-image:url(../assets/ejemplos/repollo-EJEMPLO.jpg)}
+.g-paisaje{background-image:url(../assets/ejemplos/paisaje-abstracto-EJEMPLO.jpg)}
+.g-arbol{background-image:url(../assets/ejemplos/arbol-aguafuerte-EJEMPLO.jpg)}
+.g-membrillos{background-image:url(../assets/ejemplos/membrillos-EJEMPLO.jpg)}
+.g-trigal{background-image:url(../assets/ejemplos/trigal-acuarela-EJEMPLO.jpg)}
+.g-noche{background-image:url(../assets/ejemplos/noche-carborundo-EJEMPLO.jpg)}
+.g-mar{background-image:url(../assets/ejemplos/mar-gris-EJEMPLO.jpg)}
+.pg *{box-sizing:border-box}
+.navl{color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;padding:12px 2px;position:relative}
+.navl::after{content:"";position:absolute;left:2px;right:2px;bottom:6px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .35s ease}
+.navl:hover{color:var(--ink)}
+.navl:hover::after{transform:scaleX(1)}
+.btn{transition:transform .2s ease}
+.btn:hover{transform:translateY(-2px)}
+.pill{cursor:pointer;transition:background .2s ease,color .2s ease,border-color .2s ease}
+.wk{text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:14px}
+.wk:hover{color:var(--ink)}
+.wk .fr{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.wk:hover .fr{transform:translateY(-8px)}
+.tc{text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:16px;padding:32px;border:1px solid var(--line);background:var(--bg);transition:background .3s ease,color .3s ease}
+.tc:hover{background:var(--ink);color:var(--bg)}
+.tc .go{transition:transform .3s ease;display:inline-block}
+.tc:hover .go{transform:translateX(8px)}
+.mail-big{color:var(--ink);text-decoration:none;background-image:linear-gradient(currentColor,currentColor);background-size:0% 4px;background-repeat:no-repeat;background-position:0 100%;transition:background-size .5s ease}
+.mail-big:hover{color:var(--ink);background-size:100% 4px}
+@media (prefers-reduced-motion: reduce){.wk .fr,.btn,.tc .go{transition:none}}
+
+.bands{display:flex}
+.band{position:relative;min-width:0;overflow:hidden;text-decoration:none;display:block;transform-origin:50% 100%;animation:bd-rise 1s cubic-bezier(.2,.8,.2,1) both;transition:flex-grow .9s cubic-bezier(.2,.8,.2,1)}
+@keyframes bd-rise{from{transform:scaleY(0)}to{transform:none}}
+.band:focus-visible{outline:2px solid #141414;outline-offset:-6px}
+.vlabel{writing-mode:vertical-rl;transform:rotate(180deg)}
+@media (max-width: 760px){.bands{flex-direction:column}.vlabel{writing-mode:horizontal-tb;transform:none}}
+@media (prefers-reduced-motion: reduce){.band{animation:none;transition:none}}
+
+</style>
+</helmet>
+<div class="pg" style="--accent: {{accent}}; --bg: #F4F2EE; --ink: #141414; --muted: #5F5C55; --line: rgba(20, 20, 20, 0.14); --band: #ECE9E3; --card: #DAD6CE; width: 100%; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; font-size: 16px; line-height: 1.55; overflow-x: clip">
+<header style="position: sticky; top: 0; z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line)">
+<div style="max-width: 1360px; margin: 0 auto; padding: 14px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 32px">
+<a href="#inicio" style="color: var(--ink); text-decoration: none; font-family: Syne, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; min-height: 44px; display: flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: {{accent}}; display: inline-block"></span>Jesús Senovilla</a>
+<nav aria-label="Principal" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 28px">
+<a class="navl" href="#obra">Obra</a>
+<a class="navl" href="#tecnicas">Técnicas</a>
+<a class="navl" href="#sobre">Sobre mí</a>
+<a class="navl" href="#">Blog</a>
+<a class="btn" href="#contacto" style="text-decoration: none; background: var(--ink); color: var(--bg); padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">Contacto</a>
+</nav>
+</div>
+</header>
+
+<section id="inicio" aria-label="Portada: bandas de color" style="position: relative; height: min(100vh, 860px); min-height: 620px; overflow: hidden; border-bottom: 1px solid var(--line)">
+<nav class="bands" aria-label="Obras por color" onPointerLeave="{{leave}}" style="position: absolute; left: 0; right: 0; top: 0; bottom: 88px">
+<sc-for list="{{bands}}" as="b" hint-placeholder-count="8">
+<a class="band" href="11-ficha-v2.dc.html" onPointerEnter="{{b.enter}}" onFocus="{{b.enter}}" aria-label="{{b.aria}}" style="{{b.style}}">
+<span aria-hidden="true" style="{{b.artWrap}}">
+<sc-if value="{{b.isImg}}" hint-placeholder-val="{{ false }}"><img src="../assets/obras/rosa-plancha.jpg" alt="" style="display: block; height: 100%; width: auto; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45)"></sc-if>
+<sc-if value="{{b.noImg}}" hint-placeholder-val="{{ true }}"><span class="g {{b.cls}}" style="{{b.phStyle}}"></span></sc-if>
+</span>
+<span aria-hidden="true" class="vlabel" style="{{b.labelStyle}}"><span style="font-variant-numeric: tabular-nums; opacity: 0.7">{{b.n}}</span><span style="font-family: Syne, sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -0.01em">{{b.title}}</span></span>
+</a>
+</sc-for>
+</nav>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 88px; padding: 0 clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 16px 32px; flex-wrap: wrap">
+<span aria-live="polite" style="display: flex; align-items: baseline; gap: 12px; min-width: 0">
+<span style="font-family: Syne, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em">{{capTitle}}</span>
+<span style="font-size: 14px; color: var(--muted)">{{capText}}</span>
+</span>
+<a href="#obra" style="color: var(--ink); font-weight: 600; text-decoration: none; padding: 12px 0">Ver toda la obra ↓</a>
+</div>
+</section>
+
+<section id="intro" aria-label="Presentación" style="max-width: 1360px; margin: 0 auto; padding: clamp(72px, 9vw, 128px) clamp(20px, 4vw, 48px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 32px 80px; align-items: end">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(44px, 6vw, 96px); line-height: 0.92; letter-spacing: -0.045em">Óleo, acuarela y grabado<span style="color: {{accent}}">.</span></h2>
+<div style="display: flex; flex-direction: column; gap: 24px">
+<p style="margin: 0; font-size: 19px; line-height: 1.6; color: var(--muted); max-width: 520px">[Presentación breve: qué pintas y grabas, desde dónde y cómo trabajas. Dos o tres líneas.]</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<a class="btn" href="#obra" style="text-decoration: none; background: {{accent}}; color: #FFFFFF; padding: 16px 28px; border-radius: 999px; font-weight: 600; font-size: 15px; min-height: 52px; display: inline-flex; align-items: center">Ver la obra</a>
+<a class="btn" href="#sobre" style="text-decoration: none; color: var(--ink); border: 1px solid var(--ink); padding: 16px 28px; border-radius: 999px; font-weight: 600; font-size: 15px; min-height: 52px; display: inline-flex; align-items: center">Sobre mí</a>
+</div>
+</div>
+</section>
+
+<section id="obra" aria-label="Obra" style="max-width: 1360px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px) clamp(80px, 10vw, 136px)">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px; border-top: 1px solid var(--line); padding-top: 48px; margin-bottom: 56px">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(52px, 7.5vw, 120px); line-height: 0.88; letter-spacing: -0.045em">Obra</h2>
+<div role="group" aria-label="Filtrar por técnica" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button type="button" class="pill" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.label}}<span style="opacity: 0.6; margin-left: 8px">{{f.count}}</span></button>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 56px 40px; align-items: end">
+<sc-for list="{{shown}}" as="w" hint-placeholder-count="6">
+<a class="wk" href="11-ficha-v2.dc.html">
+<span class="fr" style="display: flex; align-items: flex-end; justify-content: center; height: 340px">
+<sc-if value="{{w.isImg}}" hint-placeholder-val="{{ false }}"><img src="../assets/obras/rosa-estampa.jpg" alt="Rosa, grabado a la manera negra, estampa 1/50" style="display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; box-shadow: 0 2px 4px rgba(20,16,10,0.1), 0 20px 40px rgba(20,16,10,0.14)"></sc-if>
+<sc-if value="{{w.noImg}}" hint-placeholder-val="{{ true }}"><span role="img" aria-label="{{w.title}}, {{w.tech}}" class="g {{w.cls}}" style="{{w.phStyle}}"></span></sc-if>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-top: 1px solid var(--line); padding-top: 12px">
+<span style="font-family: Syne, sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em">{{w.title}}</span>
+<span style="font-size: 14px; color: var(--muted)">{{w.tech}}, {{w.year}}</span>
+</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+<section id="tecnicas" aria-label="Técnicas" style="background: var(--band)">
+<div style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px)">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 48px; margin-bottom: 48px">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(52px, 7.5vw, 120px); line-height: 0.88; letter-spacing: -0.045em">Técnicas</h2>
+<p style="margin: 0; max-width: 360px; color: var(--muted)">Elige una técnica para filtrar la obra.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 0">
+<sc-for list="{{techs}}" as="t" hint-placeholder-count="3">
+<a class="tc" href="#obra" onClick="{{t.pick}}">
+<span style="font-size: 14px; font-variant-numeric: tabular-nums; opacity: 0.7">{{t.n}}</span>
+<span style="font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(40px, 4.5vw, 64px); line-height: 1; letter-spacing: -0.04em">{{t.name}}</span>
+<span style="font-size: 16px; line-height: 1.6; opacity: 0.8; min-height: 78px">{{t.desc}}</span>
+<span style="font-weight: 600">Ver obra <span class="go">→</span></span>
+</a>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section id="sobre" aria-label="Sobre mí" style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 56px 80px; align-items: center">
+<div role="img" aria-label="Retrato del artista en el taller (pendiente)" style="aspect-ratio: 4 / 5; width: 100%; max-width: 540px; background: var(--card); display: flex; align-items: flex-end; padding: 20px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Retrato en el taller</div>
+<div style="display: flex; flex-direction: column; gap: 26px">
+<p style="margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Sobre mí</p>
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(40px, 5vw, 76px); line-height: 0.95; letter-spacing: -0.04em">Jesús Senovilla</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.65; color: var(--muted); max-width: 560px">[Presentación: formación, trayectoria, qué buscas en tu obra y cómo trabajas. Tres o cuatro líneas.]</p>
+<div style="width: 200px; height: 72px; border: 1px dashed var(--muted); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px">Firma</div>
+<div style="display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+</div>
+</div>
+</section>
+
+<section id="contacto" aria-label="Contacto" style="border-top: 1px solid var(--line)">
+<div style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px 48px">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<p style="margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Consultas y encargos</p>
+<a class="mail-big" href="mailto:" style="font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(48px, 8vw, 132px); line-height: 0.95; letter-spacing: -0.045em">Escríbeme →</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 18px">
+<a href="mailto:" style="color: var(--ink); padding: 8px 0">[TU EMAIL]</a>
+<a href="https://www.instagram.com/jesusenovilla/" style="color: var(--ink); padding: 8px 0">Instagram · @jesusenovilla</a>
+</div>
+</div>
+</section>
+
+<footer style="background: #141414; color: #C9C6BF">
+<div style="max-width: 1360px; margin: 0 auto; padding: 28px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 32px; font-size: 14px">
+<span>© 2026 Jesús Senovilla</span>
+<span style="display: flex; gap: 28px"><a href="https://www.instagram.com/jesusenovilla/" style="color: #F5F4F0; text-decoration: none; padding: 12px 0">Instagram</a><a href="#inicio" style="color: #F5F4F0; text-decoration: none; padding: 12px 0">Volver arriba ↑</a></span>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8371A","options":["#C8371A","#1F4FB8","#1E6B4F","#141414"]},"$preview":{"width":1440,"height":4300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = Object.assign({ filter: 'todo' }, { active: -1 });
+
+  }
+
+  renderVals() {
+    const s = this.state;
+    const accent = this.props.accent ?? '#C8371A';
+
+    const works = [
+      { title: 'Rosa', tech: 'Manera negra', year: '2010', cat: 'grabado', img: true },
+      { title: 'Repollo', tech: 'Óleo', year: '2019', cat: 'oleo', cls: 'g-repollo', r: '4 / 5', h: 300, bg: '#33402C', fg: '#D9D6CF' },
+      { title: 'Paisaje abstracto', tech: 'Acuarela', year: '2019', cat: 'acuarela', cls: 'g-paisaje', r: '4 / 3', h: 210, bg: '#B7C6CB', fg: '#2B2A27' },
+      { title: 'Árbol', tech: 'Aguafuerte', year: '[Año]', cat: 'grabado', cls: 'g-arbol', r: '1 / 1', h: 250, bg: '#3A3633', fg: '#D9D6CF' },
+      { title: 'Membrillos', tech: 'Óleo', year: '[Año]', cat: 'oleo', cls: 'g-membrillos', r: '3 / 4', h: 320, bg: '#8C5A3C', fg: '#F3EEE6' },
+      { title: 'Trigal', tech: 'Acuarela', year: '[Año]', cat: 'acuarela', cls: 'g-trigal', r: '4 / 5', h: 290, bg: '#D9CBB0', fg: '#2B2A27' }
+    ];
+    const cats = [{ id: 'todo', label: 'Todo' }, { id: 'oleo', label: 'Óleos' }, { id: 'acuarela', label: 'Acuarelas' }, { id: 'grabado', label: 'Grabados' }];
+    const pillBase = 'font-family: Inter, sans-serif; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 999px; min-height: 44px; ';
+    const filters = cats.map((c) => {
+      const on = s.filter === c.id;
+      return {
+        label: c.label,
+        count: c.id === 'todo' ? works.length : works.filter((w) => w.cat === c.id).length,
+        pressed: on ? 'true' : 'false',
+        style: pillBase + (on ? 'background: var(--ink); color: var(--bg); border: 1px solid var(--ink);' : 'background: transparent; color: var(--ink); border: 1px solid var(--line);'),
+        pick: () => this.setState({ filter: c.id })
+      };
+    });
+    const shown = works.filter((w) => s.filter === 'todo' || w.cat === s.filter).map((w) => ({
+      ...w,
+      isImg: !!w.img,
+      noImg: !w.img,
+      phStyle: w.img ? '' : 'display: flex; align-items: flex-end; padding: 12px; height: ' + w.h + 'px; max-width: 100%; aspect-ratio: ' + w.r + '; background-color: ' + w.bg + '; color: ' + w.fg + '; font: 600 10px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; box-shadow: 0 2px 4px rgba(20,16,10,0.1), 0 20px 40px rgba(20,16,10,0.14)'
+    }));
+    const techs = [
+      { n: '01', name: 'Óleo', desc: '[Temas y formatos de tu pintura al óleo]', cat: 'oleo' },
+      { n: '02', name: 'Acuarela', desc: '[Temas de tus acuarelas]', cat: 'acuarela' },
+      { n: '03', name: 'Grabado', desc: 'Aguafuerte, aguatinta, manera negra, punta seca, carborundo, alcograbado, zieglerografía y stock-gum.', cat: 'grabado' }
+    ].map((t) => ({ ...t, pick: () => this.setState({ filter: t.cat }) }));
+
+    const a = s.active;
+    const bandList = [
+      { title: 'Rosa', tech: 'Manera negra', year: '2010', extra: 'Estampa 1/50', pal: ['#27272D', '#38383D', '#797A83'], fg: '#F4F2EE', img: true },
+      { title: 'Repollo', tech: 'Óleo', year: '2019', extra: '', cls: 'g-repollo', pal: ['#2A2C1E', '#425B2D', '#314121'], fg: '#F4F2EE', r: '4 / 5' },
+      { title: 'Paisaje abstracto', tech: 'Acuarela', year: '2019', extra: '', cls: 'g-paisaje', pal: ['#C7C8BE', '#BAB9A9', '#869088'], fg: '#141414', r: '4 / 3' },
+      { title: 'Árbol', tech: 'Aguafuerte', year: '[Año]', extra: '', cls: 'g-arbol', pal: ['#F3F0E7', '#EEEADF', '#CECAC0'], fg: '#141414', r: '1 / 1' },
+      { title: 'Membrillos', tech: 'Óleo', year: '[Año]', extra: '', cls: 'g-membrillos', pal: ['#6B4327', '#8B6628', '#533320'], fg: '#F4F2EE', r: '3 / 4' },
+      { title: 'Trigal', tech: 'Acuarela', year: '[Año]', extra: '', cls: 'g-trigal', pal: ['#E3E3E1', '#E1CEA9', '#D3B681'], fg: '#141414', r: '4 / 5' },
+      { title: 'Noche', tech: 'Carborundo', year: '[Año]', extra: '', cls: 'g-noche', pal: ['#1E1E21', '#242427', '#7D7B7E'], fg: '#F4F2EE', r: '4 / 3' },
+      { title: 'Mar gris', tech: 'Óleo', year: '[Año]', extra: '', cls: 'g-mar', pal: ['#B4BCBD', '#A6AEB6', '#3E4D5F'], fg: '#F4F2EE', r: '1 / 1' }
+    ];
+    const bands = bandList.map((w, i) => {
+      const on = i === a;
+      const p = w.pal;
+      return {
+        ...w,
+        n: String(i + 1).padStart(2, '0'),
+        isImg: !!w.img,
+        noImg: !w.img,
+        aria: w.title + ', ' + w.tech + ', ' + w.year,
+        cls: w.cls || '',
+        enter: () => this.setState({ active: i }),
+        style: 'flex: ' + (on ? 7 : 1) + ' 1 0; animation-delay: ' + (i * 70) + 'ms; background: linear-gradient(to bottom, ' + p[0] + ' 0%, ' + p[0] + ' 38%, ' + p[1] + ' 38%, ' + p[1] + ' 74%, ' + p[2] + ' 74%, ' + p[2] + ' 100%); color: ' + w.fg,
+        artWrap: 'position: absolute; left: 50%; top: 50%; height: 62%; display: flex; align-items: center; justify-content: center; transition: opacity .6s ease ' + (on ? '.3s' : '0s') + ', transform 1s cubic-bezier(.2,.8,.2,1); opacity: ' + (on ? 1 : 0) + '; transform: translate(-50%, -50%) scale(' + (on ? 1 : 0.94) + ')',
+        phStyle: 'display: flex; align-items: flex-end; padding: 14px; height: 100%; aspect-ratio: ' + (w.r || '4 / 5') + '; max-width: 60vw; background-color: ' + p[1] + '; color: ' + w.fg + '; outline: 1px solid ' + (w.fg === '#141414' ? 'rgba(20,20,20,0.25)' : 'rgba(255,255,255,0.25)') + '; font: 600 10px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3)',
+        labelStyle: 'position: absolute; left: 50%; bottom: 24px; margin-left: -10px; display: flex; gap: 14px; align-items: center; font-size: 12px; white-space: nowrap; transition: opacity .4s ease; opacity: ' + (on ? 0 : 1)
+      };
+    });
+    const cur = a >= 0 ? bandList[a] : null;
+
+    return Object.assign({ accent, filters, shown, techs }, {
+      bands,
+      capTitle: cur ? cur.title : 'Ocho obras, ocho paletas',
+      capText: cur ? cur.tech + ', ' + cur.year + (cur.extra ? ' · ' + cur.extra : '') : 'Pasa por los colores para ver cada obra',
+      leave: () => this.setState({ active: -1 })
+    });
+  }
+}
+</script>
+</body>
+</html>

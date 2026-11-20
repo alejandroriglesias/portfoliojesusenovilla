@@ -1,0 +1,87 @@
+/* Tokens del sistema visual (BRIEF §4). */
+:root {
+  /* Tipografías (autoalojadas con @fontsource-variable) */
+  --font-display: 'Syne Variable', 'Syne', system-ui, sans-serif;
+  --font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
+
+  /* Colores base */
+  --ink: #141414;
+  --paper: #fafaf8;
+  --black: #0b0b0b;
+  --muted: #5f5e5a; /* AA sobre --paper */
+  --line: rgba(20, 20, 20, 0.14);
+  --accent: #c8371a; /* bermellón "tinta" */
+  --accent-on-dark: #f2714f; /* AA sobre negro */
+  --on-accent: #ffffff;
+
+  /* Superficies derivadas */
+  --bg: var(--paper);
+  --text-soft: #3d3c39;
+  --footer-bg: #111111;
+  --footer-text: #c9c6bf;
+  --footer-link: #fafaf8;
+  --header-bg: rgba(250, 250, 248, 0.9);
+
+  /* Escala */
+  --container: 1360px;
+  --gutter: clamp(20px, 4vw, 48px);
+  --fs-hero: clamp(64px, 9.5vw, 156px);
+  --fs-h2: clamp(44px, 6vw, 88px);
+  --fs-label: 13px;
+  --track-label: 0.16em;
+  --track-tight: -0.045em;
+  --radius-pill: 999px;
+  --tap: 44px;
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Syne es muy ancha: en móvil el titular gigante debe caber ("Senovilla" ≈ 6.9em). */
+@media (max-width: 640px) {
+  :root {
+    --fs-hero: clamp(40px, 13.4vw, 64px);
+    --fs-h2: clamp(36px, 10vw, 44px);
+  }
+}
+
+/* Paletas por portada (se aplican con data-paleta en <html>) */
+[data-paleta='muro'] {
+  --bg: #f3f0ea;
+  --band: #ece8e1;
+  --card: #ddd8cf;
+  --muted: #5f5c55;
+  --footer-bg: #141414;
+  --header-bg: var(--bg);
+}
+[data-paleta='boceto'] {
+  --bg: #f6f4ef;
+  --band: #ece9e2;
+  --card: #dad6cc;
+  --muted: #5f5c55;
+  --footer-bg: #141414;
+  --header-bg: var(--bg);
+}
+[data-paleta='bandas'] {
+  --bg: #f4f2ee;
+  --band: #ece9e3;
+  --card: #dad6ce;
+  --muted: #5f5c55;
+  --footer-bg: #141414;
+  --header-bg: var(--bg);
+}
+[data-paleta='oscura'] {
+  --bg: var(--black);
+  --footer-bg: var(--black);
+  --container: 1440px;
+}
+[data-paleta='ficha'],
+[data-paleta='luz'] {
+  --footer-bg: var(--black);
+  --container: 1440px;
+}
+[data-paleta='revista'] {
+  --bg: #f5f4f0;
+  --header-bg: rgba(245, 244, 240, 0.9);
+  --footer-bg: #0a0a0a;
+  --container: 1440px;
+}

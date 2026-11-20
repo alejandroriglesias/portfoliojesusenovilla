@@ -1,0 +1,209 @@
+---
+/**
+ * Índice de obras con títulos gigantes (prototipo 02). Al pasar el ratón por
+ * una fila, una vista previa de la obra flota junto al cursor.
+ * En pantallas táctiles cada fila muestra una miniatura fija.
+ */
+import { getImage } from 'astro:assets';
+import type { Obra } from '../../lib/contenido';
+
+interface Props {
+  obras: Obra[];
+  etiquetas: string[];
+}
+
+const { obras, etiquetas } = Astro.props;
+
+const filas = await Promise.all(
+  obras.map(async (o, i) => {
+    const prev = await getImage({ src: o.data.imagen, width: Math.min(600, o.data.imagen.width), format: 'webp' });
+    const mini = await getImage({ src: o.data.imagen, width: Math.min(120, o.data.imagen.width), format: 'webp' });
+    return {
+      obra: o,
+      etiqueta: etiquetas[i],
+      n: String(i + 1).padStart(2, '0'),
+      preview: prev.src,
+      mini: mini.src,
+      ratio: `${o.data.imagen.width} / ${o.data.imagen.height}`,
+    };
+  })
+);
+---
+
+<indice-obras class="indice">
+  <ul class="indice__lista">
+    {
+      filas.map((f) => (
+        <li data-filtrable data-tecnica={f.obra.data.tecnica.discriminant}>
+          <a class="fila" href={`/obra/${f.obra.id}`} data-preview={f.preview} data-ratio={f.ratio}>
+            <span class="fila__n" data-num>
+              {f.n}
+            </span>
+            <img class="fila__mini" src={f.mini} alt="" width="44" height="58" loading="lazy" decoding="async" />
+            <span class="fila__titulo">{f.obra.data.titulo}</span>
+            <span class="fila__meta">
+              {f.etiqueta}
+              {f.obra.data.anio && ` · ${f.obra.data.anio}`}
+              {import.meta.env.DEV && (f.obra.data.ejemplo || !f.obra.data.publicada) && <span class="fila__ejemplo"> · {f.obra.data.ejemplo ? 'ejemplo' : 'oculta'}</span>}
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <img class="indice__preview" data-preview-img alt="" aria-hidden="true" />
+</indice-obras>
+
+<style>
+  .indice {
+    display: block;
+    position: relative;
+    border-bottom: 1px solid #dad7d0;
+  }
+  .indice__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .indice__lista li[hidden] {
+    display: none;
+  }
+  .fila {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 8px 24px;
+    padding: 26px 0;
+    border-top: 1px solid #dad7d0;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .fila__n {
+    font-size: 14px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .fila__mini {
+    display: none;
+  }
+  .fila__titulo {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(32px, 5.2vw, 84px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+    transition:
+      transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+      color 0.3s ease;
+  }
+  .fila:hover .fila__titulo,
+  .fila:focus-visible .fila__titulo {
+    transform: translateX(24px);
+    color: var(--accent);
+  }
+  .fila__meta {
+    color: var(--muted);
+    font-size: 15px;
+    text-align: right;
+  }
+  .fila__ejemplo {
+    color: var(--accent);
+  }
+  .fila:focus-visible {
+    outline-offset: -2px;
+  }
+
+  .indice__preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    width: 300px;
+    height: auto;
+    pointer-events: none;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transform: translate(-30%, -50%) rotate(-3deg);
+    transition: opacity 0.25s ease;
+  }
+  .indice__preview.is-visible {
+    opacity: 1;
+  }
+
+  /* Táctil o estrecho: sin vista previa flotante; miniatura en cada fila. */
+  @media (hover: none), (max-width: 760px) {
+    .indice__preview {
+      display: none;
+    }
+    .fila {
+      grid-template-columns: 44px minmax(0, 1fr);
+      grid-template-areas:
+        'mini titulo'
+        'mini meta';
+      align-items: center;
+      gap: 4px 16px;
+      padding: 16px 0;
+    }
+    .fila__n {
+      display: none;
+    }
+    .fila__mini {
+      grid-area: mini;
+      display: block;
+      width: 44px;
+      height: 58px;
+      object-fit: cover;
+      background: #e6e4df;
+    }
+    .fila__titulo {
+      grid-area: titulo;
+      font-size: clamp(26px, 7vw, 40px);
+    }
+    .fila__meta {
+      grid-area: meta;
+      text-align: left;
+      font-size: 14px;
+    }
+  }
+</style>
+
+<script>
+  class IndiceObras extends HTMLElement {
+    connectedCallback() {
+      const img = this.querySelector<HTMLImageElement>('[data-preview-img]');
+      if (!img || !matchMedia('(hover: hover) and (min-width: 761px)').matches) return;
+
+      const mostrar = (fila: HTMLAnchorElement) => {
+        if (img.dataset.actual !== fila.dataset.preview) {
+          img.src = fila.dataset.preview ?? '';
+          img.style.aspectRatio = fila.dataset.ratio ?? '';
+          img.dataset.actual = fila.dataset.preview;
+        }
+        img.classList.add('is-visible');
+      };
+      const mover = (x: number, y: number) => {
+        img.style.left = `${x}px`;
+        img.style.top = `${y}px`;
+      };
+
+      this.querySelectorAll<HTMLAnchorElement>('.fila').forEach((fila) => {
+        fila.addEventListener('pointerenter', () => mostrar(fila));
+        // Con teclado: la vista previa aparece a la derecha de la fila enfocada.
+        fila.addEventListener('focus', () => {
+          const c = this.getBoundingClientRect();
+          const f = fila.getBoundingClientRect();
+          mover(c.width * 0.62, f.top - c.top + f.height / 2);
+          mostrar(fila);
+        });
+        fila.addEventListener('blur', () => img.classList.remove('is-visible'));
+      });
+      this.addEventListener('pointermove', (e) => {
+        const c = this.getBoundingClientRect();
+        mover(e.clientX - c.left, e.clientY - c.top);
+      });
+      this.addEventListener('pointerleave', () => img.classList.remove('is-visible'));
+    }
+  }
+  if (!customElements.get('indice-obras')) customElements.define('indice-obras', IndiceObras);
+</script>

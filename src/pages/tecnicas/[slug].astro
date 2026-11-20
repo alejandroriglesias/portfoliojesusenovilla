@@ -1,0 +1,193 @@
+---
+/** Página de técnica: obras de la técnica + bloque «Sobre la técnica». */
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TarjetaObra from '../../components/obra/TarjetaObra.astro';
+import SobreLaTecnica from '../../components/ficha/SobreLaTecnica.astro';
+import { etiquetaTecnica, getObrasDeTecnica, getTecnicas, type Tecnica } from '../../lib/contenido';
+
+export const getStaticPaths = (async () => {
+  const tecnicas = await getTecnicas();
+  return tecnicas.map((tecnica) => ({ params: { slug: tecnica.id }, props: { tecnica } }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  tecnica: Tecnica;
+}
+
+const { tecnica } = Astro.props;
+const t = tecnica.data;
+const esGrabado = t.grupo === 'grabado';
+const esPrincipalGrabado = tecnica.id === 'grabado';
+
+const obras = await getObrasDeTecnica(tecnica.id);
+const etiquetas = await Promise.all(obras.map(etiquetaTecnica));
+const subtecnicas = esPrincipalGrabado ? await getTecnicas('grabado') : [];
+const nombrePlural = esGrabado ? t.nombre : `${t.nombre}s`;
+---
+
+<BaseLayout
+  titulo={t.nombre}
+  descripcion={t.resumen && !t.resumen.startsWith('[') ? t.resumen : `Obras de Jesús Senovilla en ${t.nombre.toLowerCase()}.`}
+>
+  <section class="cab" aria-labelledby="tecnica-h1">
+    <nav class="migas" aria-label="Ruta">
+      <a href="/obra">Obra</a>
+      <span aria-hidden="true">/</span>
+      {
+        esGrabado && (
+          <>
+            <a href="/tecnicas/grabado">Grabado</a>
+            <span aria-hidden="true">/</span>
+          </>
+        )
+      }
+      <span aria-current="page">{t.nombre}</span>
+    </nav>
+    <div class="cab__fila">
+      <div class="cab__titulos">
+        <p class="etiqueta">{esGrabado ? 'Técnica de grabado' : 'Técnica'} · {obras.length} {obras.length === 1 ? 'obra' : 'obras'}</p>
+        <h1 id="tecnica-h1" class="cab__h1" style={`--n: ${nombrePlural.length + 1}`} data-ajustar>{nombrePlural}<span class="acento">.</span></h1>
+      </div>
+      {t.resumen && <p class="cab__resumen">{t.resumen}</p>}
+    </div>
+
+    {
+      esPrincipalGrabado && (
+        <ul class="subtecnicas" aria-label="Técnicas de grabado">
+          {subtecnicas.map((s) => (
+            <li>
+              <a class="subtecnica" href={`/tecnicas/${s.id}`}>
+                {s.data.nombre}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <section class="obras" aria-label={`Obras en ${t.nombre.toLowerCase()}`}>
+    {
+      obras.length === 0 ? (
+        <div class="vacio">
+          <p>Todavía no hay obras publicadas en esta técnica.</p>
+          <a class="boton boton--borde" href="/obra">
+            Ver toda la obra
+          </a>
+        </div>
+      ) : (
+        <>
+          <div class="mosaico">
+            {obras.map((o, i) => (
+              <TarjetaObra obra={o} etiqueta={etiquetas[i]} />
+            ))}
+          </div>
+        </>
+      )
+    }
+  </section>
+
+  <SobreLaTecnica tecnica={tecnica} numero="" enlace={false} />
+</BaseLayout>
+
+<style>
+  .cab {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(40px, 6vw, 72px) var(--gutter) 48px;
+  }
+  .migas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    margin-bottom: clamp(32px, 5vw, 64px);
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .migas a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: var(--ink);
+    text-underline-offset: 4px;
+  }
+  .cab__fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 64px;
+  }
+  .cab__titulos {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .cab__h1 {
+    font-weight: 800;
+    /* Estimación por letras (Syne 800 ≈ 0.95em) para que el JS apenas tenga que corregir (evita CLS). */
+    font-size: clamp(28px, min(9vw, calc((min(100vw, var(--container)) - 2 * var(--gutter)) / (var(--n) * 0.95))), 152px);
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+    white-space: nowrap;
+  }
+  .acento {
+    color: var(--accent);
+  }
+  .cab__resumen {
+    margin: 0;
+    max-width: 460px;
+    font-size: 18px;
+    color: var(--text-soft);
+  }
+  .subtecnicas {
+    list-style: none;
+    margin: 40px 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .subtecnica {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 10px 18px;
+    border: 1px solid #cfccc5;
+    border-radius: var(--radius-pill);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.2s ease;
+  }
+  .subtecnica:hover {
+    border-color: var(--ink);
+  }
+  .obras {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 24px var(--gutter) clamp(80px, 10vw, 144px);
+  }
+  .mosaico {
+    columns: 3 320px;
+    column-gap: 40px;
+  }
+  .vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 48px 0;
+    border-top: 1px solid var(--line);
+  }
+  .vacio p {
+    margin: 0;
+    font-size: 20px;
+    color: var(--muted);
+  }
+</style>

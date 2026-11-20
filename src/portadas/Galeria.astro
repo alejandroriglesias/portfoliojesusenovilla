@@ -1,0 +1,288 @@
+---
+/** Portada 01 · Galería — limpia, de galería. */
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FiltroTecnicas from '../components/obra/FiltroTecnicas.astro';
+import TarjetaObra from '../components/obra/TarjetaObra.astro';
+import TarjetasTecnica from '../components/obra/TarjetasTecnica.astro';
+import SobreMiPortada from '../components/portada/SobreMiPortada.astro';
+import ContactoPortada from '../components/portada/ContactoPortada.astro';
+import { getDatosPortada } from '../lib/portada';
+import type { Props as PropsPortada } from './tipos';
+
+type Props = PropsPortada;
+const { canonica, noindex } = Astro.props;
+const datos = await getDatosPortada();
+const { obras, etiquetas, principales, sobreMi, ajustes, destacada } = datos;
+const iDest = destacada ? obras.indexOf(destacada) : -1;
+const imgDest = destacada ? (destacada.data.imagenPlancha ?? destacada.data.imagen) : undefined;
+
+const opciones = [
+  { id: 'todo', label: 'Todo', count: obras.length },
+  ...principales.map((t) => ({
+    id: t.id,
+    label: `${t.data.nombre}s`,
+    count: obras.filter((o) => o.data.tecnica.discriminant === t.id).length,
+  })),
+];
+
+// Banda de técnicas en bucle: principales + de grabado.
+const palabras = ['Óleo', 'Acuarela', 'Grabado', 'Manera negra', 'Aguafuerte', 'Aguatinta', 'Punta seca', 'Carborundo', 'Alcograbado', 'Zieglerografía'];
+---
+
+<BaseLayout canonica={canonica} noindex={noindex}>
+  <section class="hero contenedor" aria-labelledby="hero-titulo">
+    <div class="hero__texto">
+      <p class="etiqueta">Portfolio · Óleo, acuarela y grabado</p>
+      <h1 id="hero-titulo" class="hero__h1" data-ajustar>Jesús<br />Senovilla<span class="acento">.</span></h1>
+      <p class="hero__frase">{ajustes.frasePortada}</p>
+      <div class="hero__botones">
+        <a class="boton boton--acento" href="#obra">
+          Ver la obra
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+        </a>
+        <a class="boton boton--borde" href="#sobre">Sobre mí</a>
+      </div>
+    </div>
+    {
+      destacada && imgDest && (
+        <div class="hero__obra">
+          <a class="destacada" href={`/obra/${destacada.id}`}>
+            <span class="destacada__marco">
+              <Image
+                src={imgDest}
+                alt={destacada.data.alt ?? destacada.data.titulo}
+                widths={[400, 600, 900].filter((w) => w <= imgDest.width)}
+                sizes="(max-width: 900px) 100vw, 600px"
+                loading="eager"
+                class="destacada__img"
+              />
+            </span>
+            <span class="destacada__pie">
+              <span class="destacada__titulo">{destacada.data.titulo}</span>
+              <span class="destacada__meta">
+                {etiquetas[iDest]}
+                {destacada.data.anio && ` · ${destacada.data.anio}`}
+              </span>
+            </span>
+          </a>
+          <div class="insignia" aria-hidden="true">
+            <svg class="insignia__texto" viewBox="0 0 132 132" width="132" height="132">
+              <defs>
+                <path id="insignia-circulo" d="M66,66 m-48,0 a48,48 0 1,1 96,0 a48,48 0 1,1 -96,0" />
+              </defs>
+              <text font-family="Inter Variable, Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="2.2" fill="#FFFFFF">
+                <textPath href="#insignia-circulo">OBRA DESTACADA · OBRA DESTACADA · </textPath>
+              </text>
+            </svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9" /></svg>
+          </div>
+        </div>
+      )
+    }
+  </section>
+
+  <div class="banda" aria-hidden="true">
+    <div class="banda__pista">
+      {
+        [...palabras, ...palabras].map((p) => (
+          <span class="banda__palabra">
+            {p}
+            <span class="banda__punto" />
+          </span>
+        ))
+      }
+    </div>
+  </div>
+
+  <section id="obra" class="obra contenedor" aria-labelledby="obra-titulo">
+    <div class="obra__cabeza">
+      <div class="obra__titulos">
+        <p class="etiqueta">01 — Obra</p>
+        <h2 id="obra-titulo" class="h2">Obra seleccionada</h2>
+      </div>
+      <FiltroTecnicas opciones={opciones} objetivo="portada" />
+    </div>
+    <div class="mosaico" data-filtro-objetivo="portada">
+      {obras.map((o, i) => <TarjetaObra obra={o} etiqueta={etiquetas[i]} />)}
+    </div>
+  </section>
+
+  <TarjetasTecnica tecnicas={principales} etiqueta="02 — Técnicas" texto="Elige una técnica para filtrar la obra." filtrarEn="obra" />
+  <SobreMiPortada sobreMi={sobreMi} variante="galeria" etiqueta="03 — Sobre mí" />
+  <ContactoPortada ajustes={ajustes} variante="galeria" etiqueta="04 — Contacto" />
+</BaseLayout>
+
+<style>
+  .acento {
+    color: var(--accent);
+  }
+  .hero {
+    padding-block: clamp(48px, 7vw, 104px) clamp(56px, 7vw, 112px);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+    gap: 64px;
+    align-items: end;
+  }
+  .hero__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    min-width: 0;
+  }
+  .hero__h1 {
+    font-weight: 800;
+    font-size: var(--fs-hero);
+    line-height: 0.9;
+    letter-spacing: var(--track-tight);
+  }
+  .hero__frase {
+    margin: 0;
+    max-width: 520px;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--text-soft);
+  }
+  .hero__botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hero__obra {
+    position: relative;
+  }
+  .destacada {
+    display: block;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .destacada__marco {
+    display: block;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #161616;
+  }
+  .destacada :global(.destacada__img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 0.9s var(--ease-out);
+  }
+  .destacada:hover :global(.destacada__img) {
+    transform: scale(1.04);
+  }
+  .destacada__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding-top: 14px;
+  }
+  .destacada__titulo {
+    font-weight: 600;
+    font-size: 17px;
+  }
+  .destacada__meta {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .insignia {
+    position: absolute;
+    top: -46px;
+    left: -46px;
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .insignia__texto {
+    position: absolute;
+    inset: 0;
+    animation: girar 24s linear infinite;
+    transform-origin: 50% 50%;
+  }
+  @keyframes girar {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (max-width: 640px) {
+    .insignia {
+      top: -36px;
+      left: auto;
+      right: -8px;
+      transform: scale(0.75);
+    }
+  }
+
+  .banda {
+    background: var(--accent);
+    color: #fff;
+    overflow: hidden;
+    padding: 22px 0;
+  }
+  .banda__pista {
+    display: flex;
+    width: max-content;
+    animation: desfilar 40s linear infinite;
+  }
+  @keyframes desfilar {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .banda__palabra {
+    display: inline-flex;
+    align-items: center;
+    gap: 48px;
+    padding-right: 48px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(28px, 3vw, 40px);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .banda__punto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .insignia__texto,
+    .banda__pista {
+      animation: none;
+    }
+  }
+
+  .obra {
+    padding-block: clamp(72px, 9vw, 128px);
+  }
+  .obra__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 48px;
+    margin-bottom: 64px;
+  }
+  .obra__titulos {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .h2 {
+    font-weight: 700;
+    font-size: var(--fs-h2);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .mosaico {
+    columns: 3 320px;
+    column-gap: 40px;
+  }
+</style>

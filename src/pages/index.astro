@@ -1,0 +1,14 @@
+---
+/** Portada activa: la que se elige en Keystatic → Ajustes → Portada activa. */
+import { getAjustes } from '../lib/ajustes';
+import { PORTADAS, type Portada } from '../lib/portada';
+import { componenteDe } from '../portadas';
+
+const ajustes = await getAjustes();
+const activa: Portada = (PORTADAS as readonly string[]).includes(ajustes.portadaActiva)
+  ? (ajustes.portadaActiva as Portada)
+  : 'galeria';
+const Portada = componenteDe(activa);
+---
+
+<Portada />

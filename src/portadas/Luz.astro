@@ -1,0 +1,421 @@
+---
+/**
+ * Portada 02 · Luz — «rompedora».
+ * Hero negro con un círculo de luz que sigue al cursor y descubre las obras
+ * flotando y el apellido en rojo. Debajo: índice / mosaico, técnicas,
+ * sobre mí y contacto a pantalla completa en color de acento.
+ */
+import { getImage } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FiltroTecnicas from '../components/obra/FiltroTecnicas.astro';
+import IndiceObras from '../components/obra/IndiceObras.astro';
+import TarjetaObra from '../components/obra/TarjetaObra.astro';
+import TarjetasTecnica from '../components/obra/TarjetasTecnica.astro';
+import SobreMiPortada from '../components/portada/SobreMiPortada.astro';
+import ContactoPortada from '../components/portada/ContactoPortada.astro';
+import { getDatosPortada } from '../lib/portada';
+import type { Props as PropsPortada } from './tipos';
+
+type Props = PropsPortada;
+const { canonica, noindex } = Astro.props;
+const { obras, etiquetas, principales, sobreMi, ajustes, destacada } = await getDatosPortada();
+
+// Obras flotando: la destacada primero y hasta 5 en total, en posiciones fijas (prototipo).
+const POSICIONES = [
+  { css: 'left: 55%; top: 50%;', ancho: 'clamp(160px, 18vw, 270px)', rot: -2, retardo: -5 },
+  { css: 'left: 6%; top: 13%;', ancho: 'clamp(140px, 17vw, 250px)', rot: -4, retardo: 0 },
+  { css: 'right: 7%; top: 11%;', ancho: 'clamp(170px, 22vw, 320px)', rot: 3, retardo: -3 },
+  { css: 'left: 24%; top: 62%;', ancho: 'clamp(120px, 13vw, 190px)', rot: 5, retardo: -1 },
+  { css: 'right: 5%; bottom: 7%;', ancho: 'clamp(120px, 13vw, 200px)', rot: -6, retardo: -6 },
+];
+const orden = destacada ? [destacada, ...obras.filter((o) => o !== destacada)] : obras;
+const flotantes = await Promise.all(
+  orden.slice(0, POSICIONES.length).map(async (o, i) => {
+    const src = o.data.imagenPlancha ?? o.data.imagen;
+    const img = await getImage({ src, width: Math.min(560, src.width), format: 'webp' });
+    return { img, ratio: `${src.width} / ${src.height}`, pos: POSICIONES[i] };
+  })
+);
+
+const letras = [...'SENOVILLA'].map((ch, i) => ({ ch, retardo: 120 + i * 70 }));
+
+const opciones = [
+  { id: 'todo', label: 'Todo', count: obras.length },
+  ...principales.map((t) => ({
+    id: t.id,
+    label: `${t.data.nombre}s`,
+    count: obras.filter((o) => o.data.tecnica.discriminant === t.id).length,
+  })),
+];
+---
+
+<BaseLayout cabecera="superpuesta" paleta="luz" canonica={canonica} noindex={noindex}>
+  <section class="luz" aria-labelledby="luz-titulo" data-luz>
+    <div class="luz__fondo" aria-hidden="true">
+      {
+        flotantes.map((f) => (
+          <img
+            class="flota"
+            src={f.img.src}
+            alt=""
+            style={`${f.pos.css} width: ${f.pos.ancho}; aspect-ratio: ${f.ratio}; --rot: ${f.pos.rot}deg; animation-delay: ${f.pos.retardo}s`}
+            decoding="async"
+          />
+        ))
+      }
+      <div class="luz__apellido luz__apellido--rojo">
+        {letras.map((l) => <span class="letra" style={`animation-delay: ${l.retardo}ms`}>{l.ch}</span>)}
+      </div>
+    </div>
+
+    <div class="luz__mascara" aria-hidden="true"></div>
+    <div class="luz__aro" aria-hidden="true"></div>
+
+    <div class="luz__textos">
+      <p class="luz__nombre" aria-hidden="true">Jesús</p>
+      <h1 id="luz-titulo" class="luz__apellido luz__apellido--trazo">
+        <span class="sr-only">Jesús Senovilla</span>
+        {letras.map((l) => <span class="letra" aria-hidden="true" style={`animation-delay: ${l.retardo}ms`}>{l.ch}</span>)}
+      </h1>
+      <div class="luz__pie">
+        <span class="luz__pista"><span class="punto" aria-hidden="true"></span>
+          <span class="luz__pista-raton">Mueve el cursor · de la oscuridad a la luz</span>
+          <span class="luz__pista-tactil">Toca y desliza · de la oscuridad a la luz</span>
+        </span>
+        <span>Óleo / Acuarela / Grabado</span>
+        <a href="#obra" class="luz__bajar">Desliza
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="obra" class="obra" aria-labelledby="obra-titulo">
+    <div class="obra__cabeza">
+      <div class="obra__titulos">
+        <p class="etiqueta">(01) Obra</p>
+        <h2 id="obra-titulo" class="obra__h2">Índice<span class="acento">.</span></h2>
+      </div>
+      <div class="obra__controles">
+        <FiltroTecnicas opciones={opciones} objetivo="portada" contar={false} />
+        <div role="group" aria-label="Vista" class="vistas">
+          <button type="button" class="vistas__boton" data-vista-boton="indice" aria-pressed="true">Índice</button>
+          <button type="button" class="vistas__boton" data-vista-boton="mosaico" aria-pressed="false">Mosaico</button>
+        </div>
+      </div>
+    </div>
+    <div data-vista="indice" data-filtro-objetivo="portada">
+      <IndiceObras obras={obras} etiquetas={etiquetas} />
+    </div>
+    <div data-vista="mosaico" data-filtro-objetivo="portada" class="mosaico" hidden>
+      {obras.map((o, i) => <TarjetaObra obra={o} etiqueta={etiquetas[i]} />)}
+    </div>
+  </section>
+
+  <TarjetasTecnica
+    tecnicas={principales}
+    etiqueta="(02) Técnicas — elige una para filtrar la obra"
+    titulo=""
+    texto=""
+    filtrarEn="obra"
+  />
+  <SobreMiPortada sobreMi={sobreMi} variante="luz" etiqueta="(03) Sobre mí" />
+  <ContactoPortada ajustes={ajustes} variante="luz" etiqueta="(04) Contacto" />
+</BaseLayout>
+
+<style>
+  .acento {
+    color: var(--accent);
+  }
+
+  /* ---------- Hero de luz ---------- */
+  .luz {
+    --mx: 68%;
+    --my: 46%;
+    --r: 260px;
+    /* «SENOVILLA» en Syne 800 mide ≈ 9.05em: debe caber entero en el ancho. */
+    --fs-ap: clamp(24px, calc((100vw - 2 * var(--gutter)) / 9.2), 230px);
+    position: relative;
+    height: min(100vh, 920px);
+    min-height: 640px;
+    overflow: hidden;
+    background: #edeae3;
+    cursor: crosshair;
+    touch-action: pan-y;
+  }
+  .luz__fondo {
+    position: absolute;
+    inset: 0;
+  }
+  .flota {
+    position: absolute;
+    height: auto;
+    object-fit: cover;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.28);
+    transform: rotate(var(--rot));
+    animation: flotar 9s ease-in-out infinite alternate;
+  }
+  @keyframes flotar {
+    from {
+      transform: translateY(-10px) rotate(var(--rot));
+    }
+    to {
+      transform: translateY(12px) rotate(var(--rot));
+    }
+  }
+  .luz__apellido {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--fs-ap);
+    line-height: 0.85;
+    letter-spacing: -0.045em;
+    white-space: nowrap;
+  }
+  .luz__apellido--rojo {
+    color: var(--accent);
+  }
+  .luz__apellido--trazo {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(250, 250, 248, 0.85);
+  }
+  .letra {
+    display: inline-block;
+    animation: subir 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes subir {
+    from {
+      transform: translateY(55%) rotate(4deg);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  /* Máscara negra con un agujero de luz en el cursor. */
+  .luz__mascara {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      circle var(--r) at var(--mx) var(--my),
+      rgba(11, 11, 11, 0) 0%,
+      rgba(11, 11, 11, 0) 58%,
+      rgba(11, 11, 11, 0.94) 88%,
+      #0b0b0b 100%
+    );
+  }
+  .luz__aro {
+    position: absolute;
+    left: var(--mx);
+    top: var(--my);
+    width: calc(var(--r) * 1.5);
+    height: calc(var(--r) * 1.5);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px solid rgba(250, 250, 248, 0.22);
+    pointer-events: none;
+  }
+  .luz__textos {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .luz__nombre {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% - var(--fs-ap) * 0.72);
+    margin: 0;
+    text-align: center;
+    color: #fff;
+    mix-blend-mode: difference;
+    font-size: clamp(13px, 1.2vw, 16px);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .luz__pie {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    color: #c9c6bf;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .luz__pista {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .luz__pista-tactil {
+    display: none;
+  }
+  @media (hover: none) {
+    .luz__pista-raton {
+      display: none;
+    }
+    .luz__pista-tactil {
+      display: inline;
+    }
+  }
+  .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .luz__bajar {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tap);
+    color: inherit;
+    text-decoration: none;
+    pointer-events: auto;
+  }
+  .luz__bajar:focus-visible {
+    outline-color: #fff;
+  }
+  @media (max-width: 640px) {
+    .luz {
+      --r: 170px;
+      min-height: 560px;
+      height: 88vh;
+    }
+    .luz__pie {
+      font-size: 11px;
+    }
+    .luz__pie > span:nth-child(2) {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flota,
+    .letra {
+      animation: none;
+    }
+  }
+
+  /* ---------- Obra ---------- */
+  .obra {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(80px, 10vw, 144px) var(--gutter);
+  }
+  .obra__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 48px;
+    margin-bottom: 48px;
+  }
+  .obra__titulos {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .obra__h2 {
+    font-weight: 800;
+    font-size: clamp(56px, 9vw, 152px);
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+  }
+  .obra__controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+  }
+  .vistas {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid #cfccc5;
+    border-radius: var(--radius-pill);
+  }
+  .vistas__boton {
+    min-height: var(--tap);
+    padding: 10px 18px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink);
+    font: 600 14px/1 var(--font-body);
+    cursor: pointer;
+  }
+  .vistas__boton[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .mosaico {
+    columns: 3 320px;
+    column-gap: 40px;
+  }
+</style>
+
+<script>
+  // Círculo de luz: sigue al cursor; sin cursor (táctil quieto) deriva despacio.
+  const hero = document.querySelector<HTMLElement>('[data-luz]');
+  if (hero) {
+    const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let ultimo = 0;
+    let marco = 0;
+    const poner = (x: number, y: number) => {
+      hero.style.setProperty('--mx', `${x}px`);
+      hero.style.setProperty('--my', `${y}px`);
+    };
+    hero.addEventListener('pointermove', (e) => {
+      const c = hero.getBoundingClientRect();
+      poner(e.clientX - c.left, e.clientY - c.top);
+      ultimo = performance.now();
+    });
+    hero.addEventListener('pointerdown', (e) => {
+      const c = hero.getBoundingClientRect();
+      poner(e.clientX - c.left, e.clientY - c.top);
+      ultimo = performance.now();
+    });
+    if (!reducir) {
+      const derivar = (t: number) => {
+        // Tras 4 s sin movimiento, la luz recorre la portada en una curva suave.
+        if (t - ultimo > 4000) {
+          const c = hero.getBoundingClientRect();
+          const s = t / 1000;
+          poner(c.width * (0.5 + 0.3 * Math.sin(s * 0.35)), c.height * (0.48 + 0.22 * Math.sin(s * 0.53)));
+        }
+        marco = requestAnimationFrame(derivar);
+      };
+      // Solo mientras el hero está a la vista.
+      new IntersectionObserver(([e]) => {
+        cancelAnimationFrame(marco);
+        if (e.isIntersecting) marco = requestAnimationFrame(derivar);
+      }).observe(hero);
+    }
+  }
+
+  // Conmutador Índice / Mosaico.
+  const botones = document.querySelectorAll<HTMLButtonElement>('[data-vista-boton]');
+  const paneles = document.querySelectorAll<HTMLElement>('[data-vista]');
+  botones.forEach((b) =>
+    b.addEventListener('click', () => {
+      botones.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      paneles.forEach((p) => (p.hidden = p.dataset.vista !== b.dataset.vistaBoton));
+    })
+  );
+</script>

@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Jesús Senovilla — Inicio (del boceto a la estampa)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Syne:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F6F4EF}
+a{color:#141414}a:hover{color:#000}
+
+.g{background-size:cover;background-position:center;background-repeat:no-repeat}
+.g-repollo{background-image:url(../assets/ejemplos/repollo-EJEMPLO.jpg)}
+.g-paisaje{background-image:url(../assets/ejemplos/paisaje-abstracto-EJEMPLO.jpg)}
+.g-arbol{background-image:url(../assets/ejemplos/arbol-aguafuerte-EJEMPLO.jpg)}
+.g-membrillos{background-image:url(../assets/ejemplos/membrillos-EJEMPLO.jpg)}
+.g-trigal{background-image:url(../assets/ejemplos/trigal-acuarela-EJEMPLO.jpg)}
+.g-noche{background-image:url(../assets/ejemplos/noche-carborundo-EJEMPLO.jpg)}
+.g-mar{background-image:url(../assets/ejemplos/mar-gris-EJEMPLO.jpg)}
+.pg *{box-sizing:border-box}
+.navl{color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;padding:12px 2px;position:relative}
+.navl::after{content:"";position:absolute;left:2px;right:2px;bottom:6px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .35s ease}
+.navl:hover{color:var(--ink)}
+.navl:hover::after{transform:scaleX(1)}
+.btn{transition:transform .2s ease}
+.btn:hover{transform:translateY(-2px)}
+.pill{cursor:pointer;transition:background .2s ease,color .2s ease,border-color .2s ease}
+.wk{text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:14px}
+.wk:hover{color:var(--ink)}
+.wk .fr{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.wk:hover .fr{transform:translateY(-8px)}
+.tc{text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:16px;padding:32px;border:1px solid var(--line);background:var(--bg);transition:background .3s ease,color .3s ease}
+.tc:hover{background:var(--ink);color:var(--bg)}
+.tc .go{transition:transform .3s ease;display:inline-block}
+.tc:hover .go{transform:translateX(8px)}
+.mail-big{color:var(--ink);text-decoration:none;background-image:linear-gradient(currentColor,currentColor);background-size:0% 4px;background-repeat:no-repeat;background-position:0 100%;transition:background-size .5s ease}
+.mail-big:hover{color:var(--ink);background-size:100% 4px}
+@media (prefers-reduced-motion: reduce){.wk .fr,.btn,.tc .go{transition:none}}
+
+.sk path{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:0;animation:bc-draw 2.4s cubic-bezier(.4,0,.2,1) both}
+@keyframes bc-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.stepb{background:none;border:0;padding:4px 0;min-height:44px;display:flex;align-items:baseline;gap:18px;cursor:pointer;color:var(--ink);text-align:left;transition:opacity .6s ease}
+.stepb:hover{opacity:1 !important}
+@media (prefers-reduced-motion: reduce){.sk path{animation:none}}
+
+</style>
+</helmet>
+<div class="pg" style="--accent: {{accent}}; --bg: #F6F4EF; --ink: #141414; --muted: #5F5C55; --line: rgba(20, 20, 20, 0.14); --band: #ECE9E2; --card: #DAD6CC; width: 100%; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; font-size: 16px; line-height: 1.55; overflow-x: clip">
+<header style="position: sticky; top: 0; z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line)">
+<div style="max-width: 1360px; margin: 0 auto; padding: 14px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 32px">
+<a href="#inicio" style="color: var(--ink); text-decoration: none; font-family: Syne, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; min-height: 44px; display: flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: {{accent}}; display: inline-block"></span>Jesús Senovilla</a>
+<nav aria-label="Principal" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 28px">
+<a class="navl" href="#obra">Obra</a>
+<a class="navl" href="#tecnicas">Técnicas</a>
+<a class="navl" href="#sobre">Sobre mí</a>
+<a class="navl" href="#">Blog</a>
+<a class="btn" href="#contacto" style="text-decoration: none; background: var(--ink); color: var(--bg); padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">Contacto</a>
+</nav>
+</div>
+</header>
+
+<section id="inicio" aria-label="Portada: del boceto a la estampa" style="position: relative; min-height: min(100vh, 860px); background: var(--band); border-bottom: 1px solid var(--line)">
+<div style="max-width: 1360px; margin: 0 auto; padding: clamp(48px, 6vw, 80px) clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 48px 64px">
+<div style="flex: 1 1 380px; max-width: 560px; display: flex; flex-direction: column; gap: 28px">
+<p style="margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Del boceto a la estampa · Rosa, 2010</p>
+<div role="group" aria-label="Fases del grabado" style="display: flex; flex-direction: column">
+<sc-for list="{{steps}}" as="st" hint-placeholder-count="4">
+<button type="button" class="stepb" onClick="{{st.go}}" aria-pressed="{{st.pressed}}" style="{{st.style}}"><span style="font-size: 14px; font-variant-numeric: tabular-nums; width: 26px">{{st.n}}</span><span style="font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(44px, 5.4vw, 84px); line-height: 1; letter-spacing: -0.045em">{{st.name}}</span></button>
+</sc-for>
+</div>
+<p aria-live="polite" style="margin: 0; min-height: 56px; max-width: 440px; font-size: 17px; line-height: 1.6; color: var(--muted)">{{stepText}}</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" class="btn" onClick="{{replay}}" style="font: 600 15px Inter, sans-serif; background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 14px 24px; border-radius: 999px; min-height: 52px; cursor: pointer">↺ Ver otra vez</button>
+<a class="btn" href="#obra" style="text-decoration: none; background: {{accent}}; color: #FFFFFF; padding: 14px 24px; border-radius: 999px; font-weight: 600; font-size: 15px; min-height: 52px; display: inline-flex; align-items: center">Ver la obra</a>
+</div>
+</div>
+<div style="flex: 0 1 auto; margin: 0 auto">
+<div role="img" aria-label="Rosa, de Jesús Senovilla: del boceto a lápiz a la estampa final a la manera negra, 1/50" style="{{cardStyle}}">
+<div aria-hidden="true" style="position: absolute; left: 28.01%; top: 22.18%; width: 43.29%; height: 37.2%">
+<div style="{{markStyle}}"></div>
+<div style="{{groundStyle}}"></div>
+<img src="../assets/obras/rosa-plancha.jpg" alt="" style="{{burnStyle}}">
+<div class="sk" style="{{skStyle}}">
+<sc-if value="{{runEven}}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 76 100" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<g stroke-width="0.55">
+<path pathLength="1" style="animation-delay: 0.1s" d="M40 27 c2 -2 5 0 4 3 c-1 4 -7 4 -8 0 c-1 -5 5 -9 10 -6 c5 3 4 11 -2 13"></path>
+<path pathLength="1" style="animation-delay: 0.3s" d="M20 30 C22 20 30 15 40 16 C50 15 60 20 63 30"></path>
+<path pathLength="1" style="animation-delay: 0.45s" d="M24 24 C28 17 36 14 44 15"></path>
+<path pathLength="1" style="animation-delay: 0.55s" d="M58 22 C62 26 64 32 62 38"></path>
+<path pathLength="1" style="animation-delay: 0.7s" d="M14 40 C20 34 30 34 38 38 C46 42 56 40 63 34"></path>
+<path pathLength="1" style="animation-delay: 0.9s" d="M14 40 C11 52 16 64 28 70 C38 75 52 72 60 62 C66 54 66 44 63 34"></path>
+<path pathLength="1" style="animation-delay: 1.1s" d="M14 42 C18 52 24 62 33 70"></path>
+<path pathLength="1" style="animation-delay: 1.2s" d="M18 46 C22 58 30 66 40 72"></path>
+<path pathLength="1" style="animation-delay: 1.35s" d="M38 72 C36 80 34 88 33 100"></path>
+<path pathLength="1" style="animation-delay: 1.4s" d="M44 72 C43 80 42 90 42 100"></path>
+<path pathLength="1" style="animation-delay: 1.5s" d="M36 74 C30 74 26 78 24 82"></path>
+<path pathLength="1" style="animation-delay: 1.55s" d="M46 73 C52 74 56 78 57 83"></path>
+</g>
+<g stroke-width="0.3" opacity="0.55" transform="translate(0.7 0.5)">
+<path pathLength="1" style="animation-delay: 0.6s" d="M20 30 C22 20 30 15 40 16 C50 15 60 20 63 30"></path>
+<path pathLength="1" style="animation-delay: 1s" d="M14 40 C11 52 16 64 28 70 C38 75 52 72 60 62 C66 54 66 44 63 34"></path>
+<path pathLength="1" style="animation-delay: 1.3s" d="M30 22 C34 26 34 32 30 36 M48 20 C52 24 54 30 50 36"></path>
+<path pathLength="1" style="animation-delay: 1.7s" d="M20 50 L26 60 M24 48 L30 58 M28 46 L34 56 M50 48 L56 56 M54 46 L58 52"></path>
+</g>
+</svg></sc-if>
+<sc-if value="{{runOdd}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 76 100" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<g stroke-width="0.55">
+<path pathLength="1" style="animation-delay: 0.1s" d="M40 27 c2 -2 5 0 4 3 c-1 4 -7 4 -8 0 c-1 -5 5 -9 10 -6 c5 3 4 11 -2 13"></path>
+<path pathLength="1" style="animation-delay: 0.3s" d="M20 30 C22 20 30 15 40 16 C50 15 60 20 63 30"></path>
+<path pathLength="1" style="animation-delay: 0.45s" d="M24 24 C28 17 36 14 44 15"></path>
+<path pathLength="1" style="animation-delay: 0.55s" d="M58 22 C62 26 64 32 62 38"></path>
+<path pathLength="1" style="animation-delay: 0.7s" d="M14 40 C20 34 30 34 38 38 C46 42 56 40 63 34"></path>
+<path pathLength="1" style="animation-delay: 0.9s" d="M14 40 C11 52 16 64 28 70 C38 75 52 72 60 62 C66 54 66 44 63 34"></path>
+<path pathLength="1" style="animation-delay: 1.1s" d="M14 42 C18 52 24 62 33 70"></path>
+<path pathLength="1" style="animation-delay: 1.2s" d="M18 46 C22 58 30 66 40 72"></path>
+<path pathLength="1" style="animation-delay: 1.35s" d="M38 72 C36 80 34 88 33 100"></path>
+<path pathLength="1" style="animation-delay: 1.4s" d="M44 72 C43 80 42 90 42 100"></path>
+<path pathLength="1" style="animation-delay: 1.5s" d="M36 74 C30 74 26 78 24 82"></path>
+<path pathLength="1" style="animation-delay: 1.55s" d="M46 73 C52 74 56 78 57 83"></path>
+</g>
+<g stroke-width="0.3" opacity="0.55" transform="translate(0.7 0.5)">
+<path pathLength="1" style="animation-delay: 0.6s" d="M20 30 C22 20 30 15 40 16 C50 15 60 20 63 30"></path>
+<path pathLength="1" style="animation-delay: 1s" d="M14 40 C11 52 16 64 28 70 C38 75 52 72 60 62 C66 54 66 44 63 34"></path>
+<path pathLength="1" style="animation-delay: 1.3s" d="M30 22 C34 26 34 32 30 36 M48 20 C52 24 54 30 50 36"></path>
+<path pathLength="1" style="animation-delay: 1.7s" d="M20 50 L26 60 M24 48 L30 58 M28 46 L34 56 M50 48 L56 56 M54 46 L58 52"></path>
+</g>
+</svg></sc-if>
+</div>
+</div>
+<img src="../assets/obras/rosa-estampa.jpg" alt="" style="{{printStyle}}">
+</div>
+</div>
+</div>
+</section>
+
+<section id="intro" aria-label="Presentación" style="max-width: 1360px; margin: 0 auto; padding: clamp(72px, 9vw, 128px) clamp(20px, 4vw, 48px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 32px 80px; align-items: end">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(44px, 6vw, 96px); line-height: 0.92; letter-spacing: -0.045em">Óleo, acuarela y grabado<span style="color: {{accent}}">.</span></h2>
+<div style="display: flex; flex-direction: column; gap: 24px">
+<p style="margin: 0; font-size: 19px; line-height: 1.6; color: var(--muted); max-width: 520px">[Presentación breve: qué pintas y grabas, desde dónde y cómo trabajas. Dos o tres líneas.]</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<a class="btn" href="#obra" style="text-decoration: none; background: {{accent}}; color: #FFFFFF; padding: 16px 28px; border-radius: 999px; font-weight: 600; font-size: 15px; min-height: 52px; display: inline-flex; align-items: center">Ver la obra</a>
+<a class="btn" href="#sobre" style="text-decoration: none; color: var(--ink); border: 1px solid var(--ink); padding: 16px 28px; border-radius: 999px; font-weight: 600; font-size: 15px; min-height: 52px; display: inline-flex; align-items: center">Sobre mí</a>
+</div>
+</div>
+</section>
+
+<section id="obra" aria-label="Obra" style="max-width: 1360px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px) clamp(80px, 10vw, 136px)">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px; border-top: 1px solid var(--line); padding-top: 48px; margin-bottom: 56px">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(52px, 7.5vw, 120px); line-height: 0.88; letter-spacing: -0.045em">Obra</h2>
+<div role="group" aria-label="Filtrar por técnica" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button type="button" class="pill" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.label}}<span style="opacity: 0.6; margin-left: 8px">{{f.count}}</span></button>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 56px 40px; align-items: end">
+<sc-for list="{{shown}}" as="w" hint-placeholder-count="6">
+<a class="wk" href="11-ficha-v2.dc.html">
+<span class="fr" style="display: flex; align-items: flex-end; justify-content: center; height: 340px">
+<sc-if value="{{w.isImg}}" hint-placeholder-val="{{ false }}"><img src="../assets/obras/rosa-estampa.jpg" alt="Rosa, grabado a la manera negra, estampa 1/50" style="display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; box-shadow: 0 2px 4px rgba(20,16,10,0.1), 0 20px 40px rgba(20,16,10,0.14)"></sc-if>
+<sc-if value="{{w.noImg}}" hint-placeholder-val="{{ true }}"><span role="img" aria-label="{{w.title}}, {{w.tech}}" class="g {{w.cls}}" style="{{w.phStyle}}"></span></sc-if>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-top: 1px solid var(--line); padding-top: 12px">
+<span style="font-family: Syne, sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em">{{w.title}}</span>
+<span style="font-size: 14px; color: var(--muted)">{{w.tech}}, {{w.year}}</span>
+</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+<section id="tecnicas" aria-label="Técnicas" style="background: var(--band)">
+<div style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px)">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 48px; margin-bottom: 48px">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(52px, 7.5vw, 120px); line-height: 0.88; letter-spacing: -0.045em">Técnicas</h2>
+<p style="margin: 0; max-width: 360px; color: var(--muted)">Elige una técnica para filtrar la obra.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 0">
+<sc-for list="{{techs}}" as="t" hint-placeholder-count="3">
+<a class="tc" href="#obra" onClick="{{t.pick}}">
+<span style="font-size: 14px; font-variant-numeric: tabular-nums; opacity: 0.7">{{t.n}}</span>
+<span style="font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(40px, 4.5vw, 64px); line-height: 1; letter-spacing: -0.04em">{{t.name}}</span>
+<span style="font-size: 16px; line-height: 1.6; opacity: 0.8; min-height: 78px">{{t.desc}}</span>
+<span style="font-weight: 600">Ver obra <span class="go">→</span></span>
+</a>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section id="sobre" aria-label="Sobre mí" style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 56px 80px; align-items: center">
+<div role="img" aria-label="Retrato del artista en el taller (pendiente)" style="aspect-ratio: 4 / 5; width: 100%; max-width: 540px; background: var(--card); display: flex; align-items: flex-end; padding: 20px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Retrato en el taller</div>
+<div style="display: flex; flex-direction: column; gap: 26px">
+<p style="margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Sobre mí</p>
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(40px, 5vw, 76px); line-height: 0.95; letter-spacing: -0.04em">Jesús Senovilla</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.65; color: var(--muted); max-width: 560px">[Presentación: formación, trayectoria, qué buscas en tu obra y cómo trabajas. Tres o cuatro líneas.]</p>
+<div style="width: 200px; height: 72px; border: 1px dashed var(--muted); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px">Firma</div>
+<div style="display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+</div>
+</div>
+</section>
+
+<section id="contacto" aria-label="Contacto" style="border-top: 1px solid var(--line)">
+<div style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px 48px">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<p style="margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Consultas y encargos</p>
+<a class="mail-big" href="mailto:" style="font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(48px, 8vw, 132px); line-height: 0.95; letter-spacing: -0.045em">Escríbeme →</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 18px">
+<a href="mailto:" style="color: var(--ink); padding: 8px 0">[TU EMAIL]</a>
+<a href="https://www.instagram.com/jesusenovilla/" style="color: var(--ink); padding: 8px 0">Instagram · @jesusenovilla</a>
+</div>
+</div>
+</section>
+
+<footer style="background: #141414; color: #C9C6BF">
+<div style="max-width: 1360px; margin: 0 auto; padding: 28px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 32px; font-size: 14px">
+<span>© 2026 Jesús Senovilla</span>
+<span style="display: flex; gap: 28px"><a href="https://www.instagram.com/jesusenovilla/" style="color: #F5F4F0; text-decoration: none; padding: 12px 0">Instagram</a><a href="#inicio" style="color: #F5F4F0; text-decoration: none; padding: 12px 0">Volver arriba ↑</a></span>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8371A","options":["#C8371A","#1F4FB8","#1E6B4F","#141414"]},"$preview":{"width":1440,"height":4300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = Object.assign({ filter: 'todo' }, { step: 0, run: 0 });
+    this.timers = [];
+  }
+
+  componentDidMount() { this.play(); }
+  componentWillUnmount() { this.stop(); }
+  stop() { (this.timers || []).forEach((t) => clearTimeout(t)); this.timers = []; }
+  play() {
+    this.stop();
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ step: 3 }); return; }
+    [2800, 5600, 8600].forEach((t, i) => { this.timers.push(setTimeout(() => this.setState({ step: i + 1 }), t)); });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const accent = this.props.accent ?? '#C8371A';
+
+    const works = [
+      { title: 'Rosa', tech: 'Manera negra', year: '2010', cat: 'grabado', img: true },
+      { title: 'Repollo', tech: 'Óleo', year: '2019', cat: 'oleo', cls: 'g-repollo', r: '4 / 5', h: 300, bg: '#33402C', fg: '#D9D6CF' },
+      { title: 'Paisaje abstracto', tech: 'Acuarela', year: '2019', cat: 'acuarela', cls: 'g-paisaje', r: '4 / 3', h: 210, bg: '#B7C6CB', fg: '#2B2A27' },
+      { title: 'Árbol', tech: 'Aguafuerte', year: '[Año]', cat: 'grabado', cls: 'g-arbol', r: '1 / 1', h: 250, bg: '#3A3633', fg: '#D9D6CF' },
+      { title: 'Membrillos', tech: 'Óleo', year: '[Año]', cat: 'oleo', cls: 'g-membrillos', r: '3 / 4', h: 320, bg: '#8C5A3C', fg: '#F3EEE6' },
+      { title: 'Trigal', tech: 'Acuarela', year: '[Año]', cat: 'acuarela', cls: 'g-trigal', r: '4 / 5', h: 290, bg: '#D9CBB0', fg: '#2B2A27' }
+    ];
+    const cats = [{ id: 'todo', label: 'Todo' }, { id: 'oleo', label: 'Óleos' }, { id: 'acuarela', label: 'Acuarelas' }, { id: 'grabado', label: 'Grabados' }];
+    const pillBase = 'font-family: Inter, sans-serif; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 999px; min-height: 44px; ';
+    const filters = cats.map((c) => {
+      const on = s.filter === c.id;
+      return {
+        label: c.label,
+        count: c.id === 'todo' ? works.length : works.filter((w) => w.cat === c.id).length,
+        pressed: on ? 'true' : 'false',
+        style: pillBase + (on ? 'background: var(--ink); color: var(--bg); border: 1px solid var(--ink);' : 'background: transparent; color: var(--ink); border: 1px solid var(--line);'),
+        pick: () => this.setState({ filter: c.id })
+      };
+    });
+    const shown = works.filter((w) => s.filter === 'todo' || w.cat === s.filter).map((w) => ({
+      ...w,
+      isImg: !!w.img,
+      noImg: !w.img,
+      phStyle: w.img ? '' : 'display: flex; align-items: flex-end; padding: 12px; height: ' + w.h + 'px; max-width: 100%; aspect-ratio: ' + w.r + '; background-color: ' + w.bg + '; color: ' + w.fg + '; font: 600 10px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; box-shadow: 0 2px 4px rgba(20,16,10,0.1), 0 20px 40px rgba(20,16,10,0.14)'
+    }));
+    const techs = [
+      { n: '01', name: 'Óleo', desc: '[Temas y formatos de tu pintura al óleo]', cat: 'oleo' },
+      { n: '02', name: 'Acuarela', desc: '[Temas de tus acuarelas]', cat: 'acuarela' },
+      { n: '03', name: 'Grabado', desc: 'Aguafuerte, aguatinta, manera negra, punta seca, carborundo, alcograbado, zieglerografía y stock-gum.', cat: 'grabado' }
+    ].map((t) => ({ ...t, pick: () => this.setState({ filter: t.cat }) }));
+
+    const st = s.step;
+    const names = ['Boceto', 'Granear', 'Bruñir', 'Estampar'];
+    const texts = [
+      'Todo empieza con un dibujo: la composición, la luz y dónde caerán las sombras.',
+      'La plancha se cubre entera de grano. Entintada así, imprimiría un negro profundo.',
+      'Con rascador y bruñidor se aplasta el grano. Donde se pule, aparece la luz.',
+      'Se entinta, se estampa en el tórculo y cada prueba se numera y se firma: esta es la 1 de 50.'
+    ];
+    const steps = names.map((name, i) => ({
+      name,
+      n: String(i + 1).padStart(2, '0'),
+      pressed: i === st ? 'true' : 'false',
+      style: 'opacity: ' + (i === st ? 1 : 0.22),
+      go: () => { this.stop(); this.setState({ step: i }); }
+    }));
+
+    return Object.assign({ accent, filters, shown, techs }, {
+      steps,
+      stepText: texts[st],
+      runEven: s.run % 2 === 0,
+      runOdd: s.run % 2 === 1,
+      replay: () => { this.setState({ step: 0, run: s.run + 1 }); this.play(); },
+      cardStyle: 'position: relative; height: min(72vh, 680px); aspect-ratio: 1014 / 1551; background: #F7F6F2; transition: box-shadow 1.6s ease; box-shadow: ' + (st >= 3 ? '0 2px 6px rgba(20,16,10,0.1), 0 40px 80px rgba(20,16,10,0.22)' : '0 2px 6px rgba(20,16,10,0.08)'),
+      markStyle: 'position: absolute; inset: -2px; border: 1px solid rgba(20, 16, 10, 0.22); transition: opacity 1s ease; opacity: ' + (st >= 3 ? 0 : 1),
+      groundStyle: 'position: absolute; inset: 0; background-color: #19191D; background-image: radial-gradient(rgba(255,255,255,0.07) 0.6px, rgba(0,0,0,0) 0.9px); background-size: 4px 4px; transition: opacity 1.6s ease; opacity: ' + (st >= 1 ? 1 : 0),
+      burnStyle: 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: clip-path 2.6s cubic-bezier(.4,0,.2,1); clip-path: circle(' + (st >= 2 ? '95%' : '0%') + ' at 55% 32%)',
+      skStyle: 'position: absolute; inset: 0; transition: color 1.6s ease, opacity 1.4s ease; color: ' + (st >= 1 ? '#D9D6CF' : '#6B6A66') + '; opacity: ' + (st >= 2 ? 0 : 1),
+      printStyle: 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 1.8s ease; opacity: ' + (st >= 3 ? 1 : 0)
+    });
+  }
+}
+</script>
+</body>
+</html>

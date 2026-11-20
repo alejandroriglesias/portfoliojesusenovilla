@@ -1,0 +1,384 @@
+---
+/**
+ * Visor de la ficha de obra (v2): imagen grande con lupa circular que sigue
+ * al cursor y miniaturas para cambiar de vista.
+ *
+ * - La lupa usa una versión grande aparte (hasta 3000 px) que solo se carga
+ *   al pasar por encima por primera vez.
+ * - Zoom configurable (2–5×), limitado según la resolución real de la foto
+ *   para no ampliar más de lo que la imagen aguanta.
+ * - Es un complemento visual (aria-hidden). Como alternativa accesible y
+ *   para móvil hay un enlace a la imagen a tamaño completo.
+ */
+import type { ImageMetadata } from 'astro';
+import { getImage } from 'astro:assets';
+
+interface Vista {
+  imagen: ImageMetadata;
+  etiqueta: string;
+}
+
+interface Props {
+  vistas: Vista[];
+  /** Texto alternativo base de la obra; se le añade «Vista: …». */
+  alt: string;
+  /** Aumento máximo (2–5). */
+  zoom?: number;
+  /** Texto a la derecha bajo la imagen (p. ej. la edición). */
+  pie?: string;
+}
+
+const { vistas, alt, zoom = 3, pie } = Astro.props;
+const Z = Math.min(5, Math.max(2, zoom));
+
+const datos = await Promise.all(
+  vistas.map(async (v) => {
+    const principal = await getImage({
+      src: v.imagen,
+      widths: [400, 540, 800, 1080].filter((w) => w <= v.imagen.width).concat(v.imagen.width < 400 ? [v.imagen.width] : []),
+      sizes: '(max-width: 640px) 100vw, 540px',
+      format: 'webp',
+    });
+    const grande = await getImage({
+      src: v.imagen,
+      width: Math.min(v.imagen.width, 3000),
+      format: 'webp',
+      quality: 85,
+    });
+    const mini = await getImage({ src: v.imagen, width: Math.min(192, v.imagen.width), format: 'webp' });
+    return {
+      etiqueta: v.etiqueta,
+      src: principal.src,
+      srcset: principal.srcSet.attribute,
+      sizes: '(max-width: 640px) 100vw, 540px',
+      ancho: v.imagen.width,
+      alto: v.imagen.height,
+      grande: grande.src,
+      mini: mini.src,
+    };
+  })
+);
+
+const primera = datos[0];
+const altDe = (etiqueta: string) => `${alt}. Vista: ${etiqueta}`;
+---
+
+<lupa-obra data-zoom={Z} class="lupa">
+  <div class="lupa__info">
+    <slot name="info" />
+    <p class="lupa__pista">
+      <span class="lupa__pista-raton">Pasa el cursor por la obra para verla de cerca.</span>
+      <span class="lupa__pista-tactil">Toca y desliza sobre la obra para verla de cerca.</span>
+    </p>
+    <span class="lupa__icono" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4M11 8v6M8 11h6"></path></svg>
+    </span>
+    <a class="lupa__ampliar" href={primera.grande} target="_blank" rel="noopener" data-ampliar>
+      Ver a tamaño completo <span aria-hidden="true">↗</span><span class="sr-only"> (se abre en una pestaña nueva)</span>
+    </a>
+  </div>
+
+  <figure class="lupa__visor">
+    <div class="lupa__marco" data-marco>
+      <img
+        data-principal
+        src={primera.src}
+        srcset={primera.srcset}
+        sizes={primera.sizes}
+        width={primera.ancho}
+        height={primera.alto}
+        alt={altDe(primera.etiqueta)}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+      <div class="lupa__lente" data-lente aria-hidden="true"></div>
+    </div>
+    <figcaption class="lupa__pie">
+      <span data-etiqueta>{primera.etiqueta}</span>
+      {pie && <span>{pie}</span>}
+    </figcaption>
+  </figure>
+
+  {
+    datos.length > 1 && (
+      <div class="lupa__miniaturas" role="group" aria-label="Vistas de la obra">
+        {datos.map((d, i) => (
+          <button
+            type="button"
+            class="lupa__mini"
+            aria-pressed={i === 0 ? 'true' : 'false'}
+            aria-label={d.etiqueta}
+            data-src={d.src}
+            data-srcset={d.srcset}
+            data-ancho={d.ancho}
+            data-alto={d.alto}
+            data-grande={d.grande}
+            data-etiqueta={d.etiqueta}
+            data-alt={altDe(d.etiqueta)}
+          >
+            <img src={d.mini} alt="" width={96} height={Math.round((96 * d.alto) / d.ancho)} loading="lazy" decoding="async" />
+          </button>
+        ))}
+      </div>
+    )
+  }
+</lupa-obra>
+
+<style>
+  .lupa {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 32px 48px;
+    margin-top: 32px;
+  }
+
+  /* Columna izquierda */
+  .lupa__info {
+    flex: 1 1 220px;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding-bottom: 8px;
+  }
+  .lupa__pista {
+    margin: 0;
+    font-size: 15px;
+    color: #c9c6bf;
+  }
+  .lupa__pista-tactil {
+    display: none;
+  }
+  @media (hover: none) {
+    .lupa__pista-raton {
+      display: none;
+    }
+    .lupa__pista-tactil {
+      display: inline;
+    }
+  }
+  .lupa__icono {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 1px solid #5f5e5a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--paper);
+  }
+  .lupa__ampliar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: var(--tap);
+    color: var(--paper);
+    font-size: 14px;
+    font-weight: 500;
+    text-underline-offset: 5px;
+  }
+  .lupa__ampliar:focus-visible {
+    outline-color: var(--accent-on-dark);
+  }
+
+  /* Imagen */
+  .lupa__visor {
+    flex: 0 1 540px;
+    min-width: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .lupa__marco {
+    position: relative;
+    cursor: zoom-in;
+    touch-action: pan-y;
+  }
+  .lupa__marco img {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #e9eaec;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  }
+  .lupa__lente {
+    --r: 110px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    width: calc(var(--r) * 2);
+    height: calc(var(--r) * 2);
+    border-radius: 50%;
+    border: 2px solid var(--paper);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    background-color: #e9eaec;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.2s ease;
+  }
+  .lupa__lente.is-activa {
+    opacity: 1;
+  }
+  @media (max-width: 640px) {
+    .lupa__lente {
+      --r: 80px;
+    }
+  }
+  .lupa__pie {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 13px;
+    color: #a8a59e;
+  }
+
+  /* Miniaturas */
+  .lupa__miniaturas {
+    flex: 0 0 96px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 8px;
+  }
+  .lupa__mini {
+    width: 96px;
+    min-height: var(--tap);
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    background: #e9eaec;
+    cursor: pointer;
+    outline: 2px solid rgba(250, 250, 248, 0.18);
+    outline-offset: 3px;
+    transition: opacity 0.2s ease;
+  }
+  .lupa__mini:hover {
+    opacity: 0.8;
+  }
+  .lupa__mini[aria-pressed='true'] {
+    outline-color: var(--paper);
+  }
+  .lupa__mini:focus-visible {
+    outline: 2px solid var(--accent-on-dark);
+  }
+  .lupa__mini img {
+    width: 100%;
+    height: auto;
+    border-radius: 2px;
+  }
+  /* Móvil: primero la obra, luego miniaturas e información compacta. */
+  @media (max-width: 640px) {
+    .lupa {
+      margin-top: 16px;
+      gap: 20px;
+    }
+    .lupa__visor {
+      order: 1;
+    }
+    .lupa__miniaturas {
+      order: 2;
+      flex-basis: 100%;
+      justify-content: center;
+      padding-bottom: 0;
+    }
+    .lupa__info {
+      order: 3;
+      flex-basis: 100%;
+      max-width: none;
+      gap: 8px;
+      padding-bottom: 0;
+    }
+    .lupa__icono {
+      display: none;
+    }
+    .lupa__mini {
+      width: 72px;
+    }
+  }
+</style>
+
+<script>
+  class LupaObra extends HTMLElement {
+    private marco!: HTMLElement;
+    private img!: HTMLImageElement;
+    private lente!: HTMLElement;
+    private grande = '';
+    private natAncho = 0;
+    private cargada = false;
+    private zoom = 3;
+
+    connectedCallback() {
+      this.marco = this.querySelector('[data-marco]')!;
+      this.img = this.querySelector('[data-principal]')!;
+      this.lente = this.querySelector('[data-lente]')!;
+      this.zoom = Number(this.dataset.zoom) || 3;
+      const ampliar = this.querySelector<HTMLAnchorElement>('[data-ampliar]');
+      this.grande = ampliar?.href ?? this.img.currentSrc;
+      this.natAncho = Number(this.img.getAttribute('width')) || 0;
+
+      this.marco.addEventListener('pointerenter', (e) => this.mover(e));
+      this.marco.addEventListener('pointerdown', (e) => this.mover(e));
+      this.marco.addEventListener('pointermove', (e) => this.mover(e));
+      this.marco.addEventListener('pointerleave', () => this.ocultar());
+      this.marco.addEventListener('pointercancel', () => this.ocultar());
+      this.marco.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') this.ocultar();
+      });
+
+      this.querySelectorAll<HTMLButtonElement>('.lupa__mini').forEach((b) =>
+        b.addEventListener('click', () => this.elegir(b, ampliar))
+      );
+    }
+
+    private elegir(b: HTMLButtonElement, ampliar: HTMLAnchorElement | null) {
+      const d = b.dataset;
+      this.querySelectorAll('.lupa__mini').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      this.img.srcset = d.srcset ?? '';
+      this.img.src = d.src ?? '';
+      this.img.width = Number(d.ancho);
+      this.img.height = Number(d.alto);
+      this.img.alt = d.alt ?? '';
+      this.natAncho = Number(d.ancho);
+      this.grande = d.grande ?? '';
+      this.cargada = false;
+      if (ampliar) ampliar.href = this.grande;
+      const etiqueta = this.querySelector('[data-etiqueta]');
+      if (etiqueta) etiqueta.textContent = d.etiqueta ?? '';
+    }
+
+    private mover(e: PointerEvent) {
+      if (e.pointerType === 'touch' && e.type === 'pointerenter') return;
+      if (e.pointerType === 'touch' && e.buttons === 0 && e.type === 'pointermove') return;
+      const caja = this.marco.getBoundingClientRect();
+      const x = Math.max(0, Math.min(caja.width, e.clientX - caja.left));
+      const y = Math.max(0, Math.min(caja.height, e.clientY - caja.top));
+      const r = this.lente.offsetWidth / 2;
+      // Aumento limitado por la resolución real (como en el prototipo).
+      const z = Math.min(this.zoom, Math.max(1.5, (this.natAncho * 2.5) / caja.width));
+      if (!this.cargada) {
+        this.lente.style.backgroundImage = `url("${this.grande}")`;
+        this.cargada = true;
+      }
+      const s = this.lente.style;
+      s.left = `${x}px`;
+      s.top = `${y}px`;
+      s.backgroundSize = `${Math.round(caja.width * z)}px ${Math.round(caja.height * z)}px`;
+      s.backgroundPosition = `${Math.round(-(x * z - r))}px ${Math.round(-(y * z - r))}px`;
+      this.lente.classList.add('is-activa');
+    }
+
+    private ocultar() {
+      this.lente.classList.remove('is-activa');
+    }
+  }
+
+  if (!customElements.get('lupa-obra')) customElements.define('lupa-obra', LupaObra);
+</script>

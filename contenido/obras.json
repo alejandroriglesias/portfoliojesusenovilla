@@ -1,0 +1,65 @@
+{
+  "_nota": "Contenido inicial para desarrollo. 'ejemplo: true' = imagen generada por ordenador y título inventado: NO publicar. Los valores entre [corchetes] están pendientes.",
+  "obras": [
+    {
+      "titulo": "Rosa",
+      "slug": "rosa",
+      "tecnica": "grabado",
+      "subtecnica": "manera negra",
+      "anio": 2010,
+      "medidas": "[alto × ancho cm]",
+      "soporte": "[tipo de papel]",
+      "edicion": "50 ejemplares",
+      "estado": "[disponible / vendida]",
+      "imagen": "assets/obras/rosa-estampa.jpg",
+      "imagenPlancha": "assets/obras/rosa-plancha.jpg",
+      "paleta": ["#27272D", "#38383D", "#797A83"],
+      "destacada": true,
+      "ejemplo": false,
+      "notas": "Foto real de baja resolución; volver a fotografiar a ≥2500 px."
+    },
+    {
+      "titulo": "Repollo",
+      "slug": "repollo",
+      "tecnica": "óleo",
+      "anio": 2019,
+      "medidas": "[alto × ancho cm]",
+      "imagen": "assets/ejemplos/repollo-EJEMPLO.jpg",
+      "paleta": ["#2A2C1E", "#425B2D", "#314121"],
+      "ejemplo": true,
+      "notas": "Obra real; la imagen es de ejemplo. Sustituir por la foto real."
+    },
+    {
+      "titulo": "Paisaje abstracto",
+      "slug": "paisaje-abstracto",
+      "tecnica": "acuarela",
+      "anio": 2019,
+      "medidas": "[alto × ancho cm]",
+      "imagen": "assets/ejemplos/paisaje-abstracto-EJEMPLO.jpg",
+      "paleta": ["#C7C8BE", "#BAB9A9", "#869088"],
+      "ejemplo": true,
+      "notas": "Obra real; la imagen es de ejemplo. Sustituir por la foto real."
+    },
+    { "titulo": "Árbol", "slug": "arbol", "tecnica": "grabado", "subtecnica": "aguafuerte", "anio": null, "imagen": "assets/ejemplos/arbol-aguafuerte-EJEMPLO.jpg", "paleta": ["#F3F0E7", "#EEEADF", "#CECAC0"], "ejemplo": true },
+    { "titulo": "Membrillos", "slug": "membrillos", "tecnica": "óleo", "anio": null, "imagen": "assets/ejemplos/membrillos-EJEMPLO.jpg", "paleta": ["#6B4327", "#8B6628", "#533320"], "ejemplo": true },
+    { "titulo": "Trigal", "slug": "trigal", "tecnica": "acuarela", "anio": null, "imagen": "assets/ejemplos/trigal-acuarela-EJEMPLO.jpg", "paleta": ["#E3E3E1", "#E1CEA9", "#D3B681"], "ejemplo": true },
+    { "titulo": "Noche", "slug": "noche", "tecnica": "grabado", "subtecnica": "carborundo", "anio": null, "imagen": "assets/ejemplos/noche-carborundo-EJEMPLO.jpg", "paleta": ["#1E1E21", "#242427", "#7D7B7E"], "ejemplo": true },
+    { "titulo": "Mar gris", "slug": "mar-gris", "tecnica": "óleo", "anio": null, "imagen": "assets/ejemplos/mar-gris-EJEMPLO.jpg", "paleta": ["#B4BCBD", "#A6AEB6", "#3E4D5F"], "ejemplo": true }
+  ],
+  "tecnicas": [
+    { "nombre": "Óleo", "slug": "oleo", "resumen": "[Temas y formatos de tu pintura al óleo]" },
+    { "nombre": "Acuarela", "slug": "acuarela", "resumen": "[Temas de tus acuarelas]" },
+    {
+      "nombre": "Grabado",
+      "slug": "grabado",
+      "resumen": "Aguafuerte, aguatinta, manera negra, punta seca, carborundo, alcograbado, zieglerografía y stock-gum.",
+      "sobreLaTecnica_maneraNegra": "En la manera negra (mezzotinta) se granea primero toda la plancha, de modo que imprimiría un negro intenso. Después se bruñe y se rasca para ir sacando los grises y los blancos: se trabaja de la oscuridad hacia la luz."
+    }
+  ],
+  "ajustes": {
+    "email": "[TU EMAIL]",
+    "instagram": "https://www.instagram.com/jesusenovilla/",
+    "portadaActiva": "luz",
+    "edicionRevista": "Nº 01 — Invierno 2026"
+  }
+}

@@ -1,0 +1,28 @@
+---
+/**
+ * Ajusta el tamaño de los titulares gigantes marcados con `data-ajustar`:
+ * si alguna palabra no cabe en su caja, reduce el font-size lo justo.
+ * El CSS da el tamaño ideal; esto solo corrige palabras muy largas
+ * (Syne es muy ancha y cada palabra mide distinto).
+ */
+---
+
+<script>
+  const ajustar = () => {
+    document.querySelectorAll<HTMLElement>('[data-ajustar]').forEach((el) => {
+      el.style.removeProperty('font-size');
+      const disponible = el.clientWidth;
+      const necesario = el.scrollWidth;
+      if (necesario > disponible + 1) {
+        const actual = parseFloat(getComputedStyle(el).fontSize);
+        el.style.fontSize = `${Math.floor(actual * (disponible / necesario) * 0.98)}px`;
+      }
+    });
+  };
+  document.fonts.ready.then(ajustar);
+  let t = 0;
+  addEventListener('resize', () => {
+    clearTimeout(t);
+    t = window.setTimeout(ajustar, 120);
+  });
+</script>

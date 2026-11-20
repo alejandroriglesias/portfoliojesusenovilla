@@ -1,0 +1,44 @@
+{
+  "name": "jesusenovilla-web",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "astro": "astro",
+    "importar": "node scripts/importar-contenido-inicial.mjs",
+    "migrar:descargar": "node scripts/migracion/descargar-wp.mjs",
+    "migrar:importar": "node scripts/migracion/importar-wp.mjs",
+    "lighthouse": "lighthouse http://localhost:4400 --view"
+  },
+  "dependencies": {
+    "@astrojs/markdoc": "^2.1.5",
+    "@astrojs/netlify": "^8.2.14",
+    "@astrojs/react": "^7.1.9",
+    "@astrojs/sitemap": "^3.7.6",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/syne": "^5.3.0",
+    "@keystatic/astro": "^6.0.0",
+    "@keystatic/core": "^0.6.10",
+    "astro": "^7.4.13",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "lighthouse": "^13.6.0",
+    "serve": "^14.2.8",
+    "typescript": "^5.9.3",
+    "yaml": "^2.9.1"
+  }
+}

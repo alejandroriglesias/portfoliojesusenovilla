@@ -1,0 +1,233 @@
+---
+/** Sobre mí: bio, retrato, firma y trayectoria (prototipos 01 y 02). */
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSobreMi } from '../lib/contenido';
+
+const sobreMi = await getSobreMi();
+const d = sobreMi.data;
+const { Content: Bio } = await render(sobreMi);
+const tieneBio = !!sobreMi.body?.trim();
+---
+
+<BaseLayout titulo="Sobre mí" descripcion="Jesús Senovilla, pintor y grabador: biografía y trayectoria.">
+  <section class="sobre" aria-labelledby="sobre-h1">
+    <div class="sobre__texto">
+      <p class="etiqueta">Sobre mí</p>
+      <h1 id="sobre-h1" class="sobre__h1" data-ajustar>Jesús<br />Senovilla<span class="acento">.</span></h1>
+      {d.frase && <p class="sobre__frase">{d.frase}</p>}
+      {
+        tieneBio && (
+          <div class="sobre__bio">
+            <Bio />
+          </div>
+        )
+      }
+    </div>
+
+    <div class="sobre__imagenes">
+      {
+        d.retrato ? (
+          <Image
+            src={d.retrato}
+            alt="Jesús Senovilla en su taller"
+            widths={[400, 560, 800, 1120]}
+            sizes="(max-width: 900px) 100vw, 520px"
+            class="sobre__retrato"
+          />
+        ) : (
+          <div class="sobre__retrato sobre__hueco">Retrato en el taller</div>
+        )
+      }
+      {
+        d.firma ? (
+          <Image src={d.firma} alt="Firma de Jesús Senovilla" width={400} class="sobre__firma" />
+        ) : (
+          <div class="sobre__firma sobre__firma--hueco">Firma</div>
+        )
+      }
+    </div>
+  </section>
+
+  {
+    d.trayectoria.length > 0 && (
+      <section class="trayectoria" aria-labelledby="trayectoria-h2">
+        <h2 id="trayectoria-h2" class="trayectoria__h2">
+          Trayectoria<span class="acento">.</span>
+        </h2>
+        <dl class="trayectoria__lista">
+          {d.trayectoria.map((h) => (
+            <div class="hito">
+              <dt>{h.anio}</dt>
+              <dd>{h.texto}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    )
+  }
+
+  <section class="cta" aria-label="Contacto">
+    <a class="cta__enlace" href="/contacto" data-ajustar>
+      Hablemos<span class="acento">.</span> <span class="cta__flecha" aria-hidden="true">→</span>
+    </a>
+  </section>
+</BaseLayout>
+
+<style>
+  .sobre {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(56px, 8vw, 112px) var(--gutter);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: 64px;
+    align-items: center;
+  }
+  .sobre__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .sobre__h1 {
+    font-weight: 800;
+    font-size: clamp(48px, 7vw, 112px);
+    line-height: 0.9;
+    letter-spacing: -0.045em;
+  }
+  .acento {
+    color: var(--accent);
+  }
+  .sobre__frase {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(26px, 3vw, 44px);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+  }
+  .sobre__bio {
+    max-width: 560px;
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--text-soft);
+  }
+  .sobre__bio :global(p) {
+    margin: 0 0 1em;
+  }
+  .sobre__bio :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .sobre__imagenes {
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: 520px;
+  }
+  .sobre__imagenes :global(.sobre__retrato) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    transform: rotate(2deg);
+  }
+  .sobre__hueco {
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+    background: #d8d4cc;
+    color: var(--text-soft);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .sobre__imagenes :global(.sobre__firma) {
+    position: absolute;
+    left: -24px;
+    bottom: 32px;
+    width: 200px;
+    height: auto;
+    transform: rotate(-3deg);
+  }
+  .sobre__firma--hueco {
+    height: 72px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+    border: 1px dashed #a8a59e;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  @media (max-width: 520px) {
+    .sobre__imagenes :global(.sobre__firma) {
+      left: -8px;
+      width: 160px;
+    }
+  }
+
+  .trayectoria {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--gutter) clamp(72px, 9vw, 128px);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: 32px 64px;
+    align-items: start;
+  }
+  .trayectoria__h2 {
+    font-weight: 700;
+    font-size: var(--fs-h2);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .trayectoria__lista {
+    margin: 0;
+    border-bottom: 1px solid #e6e4df;
+  }
+  .hito {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid #e6e4df;
+  }
+  .hito dt {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .hito dd {
+    margin: 0;
+  }
+
+  .cta {
+    border-top: 1px solid var(--line);
+  }
+  .cta__enlace {
+    display: block;
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(64px, 8vw, 112px) var(--gutter);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(48px, 9vw, 152px);
+    line-height: 0.9;
+    letter-spacing: -0.045em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .cta__flecha {
+    display: inline-block;
+    transition: transform 0.35s ease;
+  }
+  .cta__enlace:hover .cta__flecha {
+    transform: translateX(18px);
+  }
+  .cta__enlace:focus-visible {
+    outline-offset: -8px;
+  }
+</style>

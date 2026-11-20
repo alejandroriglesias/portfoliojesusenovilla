@@ -1,0 +1,104 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AjustarTexto from '../components/AjustarTexto.astro';
+import { getImage } from 'astro:assets';
+import { getAjustes } from '../lib/ajustes';
+import { getObrasDestacadas } from '../lib/contenido';
+import { personaJsonLd } from '../lib/datos-estructurados';
+// Fuentes que se ven nada más cargar: se precargan (mismo archivo que usa el CSS).
+import fuenteSyne from '@fontsource-variable/syne/files/syne-latin-wght-normal.woff2?url';
+import fuenteInter from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+
+interface Props {
+  titulo?: string;
+  descripcion?: string;
+  /** Variante de cabecera: sólida (por defecto) o superpuesta con difference. */
+  cabecera?: 'solida' | 'superpuesta';
+  /** Paleta de fondo de la portada o página. */
+  paleta?: 'clara' | 'oscura' | 'ficha' | 'luz' | 'revista' | 'muro' | 'boceto' | 'bandas';
+  /** URL canónica si difiere de la propia (p. ej. las portadas de comparación → «/»). */
+  canonica?: string;
+  /** Imagen para redes sociales (ruta o URL). */
+  imagenOg?: string;
+  /** Para páginas que no deben indexarse (p. ej. las portadas de comparación). */
+  noindex?: boolean;
+  /** Datos estructurados schema.org (uno o varios objetos JSON-LD). */
+  jsonLd?: object | object[];
+}
+
+const ajustes = await getAjustes();
+const {
+  titulo,
+  descripcion = ajustes.seoDescripcion,
+  cabecera = 'solida',
+  paleta = 'clara',
+  noindex = false,
+  imagenOg,
+  canonica: canonicaProp,
+  jsonLd,
+} = Astro.props;
+
+// Imagen para redes: la de la página o, por defecto, la obra destacada.
+let og = imagenOg;
+if (!og) {
+  const [destacada] = await getObrasDestacadas();
+  if (destacada) og = (await getImage({ src: destacada.data.imagen, width: 1200, format: 'jpg', quality: 78 })).src;
+}
+const ogAbsoluta = og ? new URL(og, Astro.site ?? Astro.url).href : undefined;
+const bloquesJsonLd = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+// En la portada y en «Sobre mí», la ficha del artista (Person) y del sitio (WebSite).
+const ruta = Astro.url.pathname.replace(/\/$/, '') || '/';
+if (Astro.site && !noindex && (ruta === '/' || ruta === '/sobre-mi')) {
+  bloquesJsonLd.push(await personaJsonLd(Astro.site));
+  if (ruta === '/') {
+    bloquesJsonLd.push({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Jesús Senovilla',
+      url: Astro.site.href,
+      inLanguage: 'es',
+      author: { '@id': new URL('/#artista', Astro.site).href },
+    });
+  }
+}
+
+const tituloFinal = titulo ? `${titulo} — Jesús Senovilla` : ajustes.seoTitulo;
+const canonica = Astro.site ? new URL(canonicaProp ?? Astro.url.pathname, Astro.site).href : undefined;
+---
+
+<!doctype html>
+<html lang="es" data-paleta={paleta}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{tituloFinal}</title>
+    {descripcion && <meta name="description" content={descripcion} />}
+    {canonica && <link rel="canonical" href={canonica} />}
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href={fuenteSyne} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={fuenteInter} as="font" type="font/woff2" crossorigin />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jesús Senovilla" />
+    {canonica && <meta property="og:url" content={canonica} />}
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:title" content={tituloFinal} />
+    {descripcion && <meta property="og:description" content={descripcion} />}
+    {ogAbsoluta && <meta property="og:image" content={ogAbsoluta} />}
+    <meta name="twitter:card" content={ogAbsoluta ? 'summary_large_image' : 'summary'} />
+    <meta name="theme-color" content={paleta === 'oscura' || paleta === 'ficha' ? '#0B0B0B' : '#FAFAF8'} />
+    {bloquesJsonLd.map((b) => <script type="application/ld+json" set:html={JSON.stringify(b)} />)}
+  </head>
+  <body id="arriba">
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+    <Header variante={cabecera} />
+    <main id="contenido" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    <AjustarTexto />
+  </body>
+</html>

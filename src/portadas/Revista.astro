@@ -1,0 +1,785 @@
+---
+/**
+ * Portada 03 · Revista — revista de arte en blanco y negro.
+ * Cabecera «SENOVILLA» con peso variable según el cursor; al hacer scroll
+ * (view-timeline) los textos se desvanecen, el fondo pasa a negro y la obra
+ * crece. Debajo: sumario, reportaje a doble página con capitular y colofón.
+ */
+import { Image, getImage } from 'astro:assets';
+import { getEntry, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Prosa from '../components/Prosa.astro';
+import { usuarioInstagram } from '../lib/ajustes';
+import { esMarcador } from '../lib/contenido';
+import { getDatosPortada } from '../lib/portada';
+import type { Props as PropsPortada } from './tipos';
+
+type Props = PropsPortada;
+const { canonica, noindex } = Astro.props;
+const { obras, etiquetas, sobreMi, ajustes, destacada, principales } = await getDatosPortada();
+
+const edicion = ajustes.edicionRevista ?? '';
+const numero = edicion.split(/\s+[—-]\s+/)[0] || 'Nº 01';
+const nObras = obras.length;
+const nombresTec = principales.map((t) => t.data.nombre.toLowerCase()).join(', ');
+
+const iDest = destacada ? obras.indexOf(destacada) : -1;
+const portadaImg = destacada ? (destacada.data.imagenPlancha ?? destacada.data.imagen) : undefined;
+const t = destacada?.data.tecnica;
+const tecnica = t ? await getEntry('tecnicas', t.discriminant === 'grabado' ? t.value.subtecnica : t.discriminant) : undefined;
+const TextoTecnica = tecnica?.body?.trim() ? (await render(tecnica)).Content : null;
+const edicionObra = t?.discriminant === 'grabado' ? t.value.edicion : undefined;
+const pieDest = destacada ? [destacada.data.titulo, destacada.data.anio, etiquetas[iDest]].filter(Boolean).join(' · ') : '';
+
+const miniaturas = await Promise.all(
+  obras.map((o) => getImage({ src: o.data.imagenPlancha ?? o.data.imagen, width: 96, height: 128, fit: 'cover', format: 'webp' }))
+);
+
+const emailValido = !!ajustes.email && !esMarcador(ajustes.email) && ajustes.email.includes('@');
+const mailto = emailValido ? `mailto:${ajustes.email}` : '/contacto';
+
+const letras = [...'SENOVILLA'];
+const titularTec = tecnica?.data.titular ?? (tecnica ? `${tecnica.data.nombre}.` : '');
+const palabrasTit = titularTec.replace(/\.$/, '').split(/\s+/);
+---
+
+<BaseLayout cabecera="superpuesta" paleta="revista" canonica={canonica} noindex={noindex}>
+  <div id="inicio" class="cubierta">
+    <div class="escena">
+      <div class="escena__in">
+        <div class="mancheta anim-fuera" data-mancheta>
+          <h1 class="mancheta__h1">
+            <span class="sr-only">Jesús Senovilla</span>
+            {letras.map((l) => <span class="mletra" aria-hidden="true">{l}</span>)}
+          </h1>
+          <div class="mancheta__datos">
+            <span>Jesús Senovilla</span>
+            <span>Óleo · Acuarela · Grabado</span>
+            <span>{edicion}</span>
+          </div>
+        </div>
+
+        <div class="escena__medio">
+          <div class="lateral anim-fuera">
+            <a class="cl" href="#sumario">
+              <span class="cl__k">01 — Sumario</span>
+              <span class="cl__t">{nObras} {nObras === 1 ? 'obra' : 'obras'} en el índice</span>
+            </a>
+            {
+              tecnica && (
+                <a class="cl" href="#reportaje">
+                  <span class="cl__k">02 — Reportaje</span>
+                  <span class="cl__t">{titularTec.replace(/\.$/, '')}: {tecnica.data.nombre.toLowerCase()}</span>
+                </a>
+              )
+            }
+          </div>
+
+          {
+            destacada && portadaImg && (
+              <div class="portada">
+                <a
+                  class="portada__obra anim-marco"
+                  href={`/obra/${destacada.id}`}
+                  aria-label={`En portada: ${pieDest}`}
+                  style={`aspect-ratio: ${portadaImg.width} / ${portadaImg.height}`}
+                >
+                  <Image src={portadaImg} alt="" widths={[360, 540, 800]} sizes="(max-width: 860px) 60vw, 380px" loading="eager" />
+                </a>
+              </div>
+            )
+          }
+
+          <div class="lateral anim-fuera">
+            {
+              destacada && (
+                <a class="cl" href={`/obra/${destacada.id}`}>
+                  <span class="cl__k"><span class="punto" aria-hidden="true"></span>En portada</span>
+                  <span class="cl__t">{pieDest}{edicionObra && `, ${edicionObra}`}</span>
+                </a>
+              )
+            }
+            <a class="cl" href="#colofon">
+              <span class="cl__k">03 — Colofón</span>
+              <span class="cl__t">Encargos y consultas</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="escena__pie anim-fuera">
+          <span>Portfolio de artista</span>
+          <span class="escena__desliza">Desliza para entrar en la obra
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+          </span>
+        </div>
+      </div>
+
+      {
+        destacada && (
+          <div class="anim-pie escena__pie-final">
+            <span>{pieDest}</span>
+            <a href={`/obra/${destacada.id}`}>Entrar en la obra →</a>
+          </div>
+        )
+      }
+    </div>
+  </div>
+
+  <section id="sumario" class="sumario" aria-labelledby="sumario-h2">
+    <div class="sumario__in">
+      <div class="sumario__cabeza">
+        <h2 id="sumario-h2" class="sumario__h2" data-ajustar>Sumario</h2>
+        <p class="sumario__meta">{numero} · {nObras} {nObras === 1 ? 'obra' : 'obras'} · {nombresTec}</p>
+      </div>
+      <ol class="sumario__lista">
+        {
+          obras.map((o, i) => (
+            <li>
+              <a class="fila" href={`/obra/${o.id}`}>
+                <span class="fila__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <img class="fila__img" src={miniaturas[i].src} alt="" width="44" height="58" loading="lazy" decoding="async" />
+                <span class="fila__t">{o.data.titulo}</span>
+                <span class="fila__x ocultar-m">{etiquetas[i]}</span>
+                <span class="fila__x ocultar-m">{o.data.anio ?? '—'}</span>
+                <span class="fila__p ocultar-m" aria-hidden="true">p. {String(6 + i * 2).padStart(2, '0')}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  {
+    tecnica && TextoTecnica && (
+      <section id="reportaje" class="reportaje" aria-labelledby="reportaje-h2">
+        <div class="reportaje__in">
+          <div class="barra">
+            <span>Reportaje · La técnica</span>
+            <span>{edicion}</span>
+          </div>
+          <div class="reportaje__doble">
+            <article class="reportaje__art">
+              <h2 id="reportaje-h2" class="reportaje__h2" data-ajustar>
+                {palabrasTit.join(' ')}<span class="acento">.</span>
+              </h2>
+              {tecnica.data.resumen && <p class="reportaje__entrada">{tecnica.data.resumen}</p>}
+              <div class="reportaje__columnas">
+                <Prosa capitular>
+                  <TextoTecnica />
+                </Prosa>
+              </div>
+              <a class="reportaje__mas" href={`/tecnicas/${tecnica.id}`}>Más sobre {tecnica.data.nombre.toLowerCase()} →</a>
+              <span class="folio" aria-hidden="true">04</span>
+            </article>
+            <aside class="reportaje__aside">
+              {destacada && (
+                <figure class="reportaje__fig">
+                  <Image
+                    src={destacada.data.imagen}
+                    alt={destacada.data.alt ?? destacada.data.titulo}
+                    widths={[360, 540, 880].filter((w) => w <= destacada.data.imagen.width)}
+                    sizes="(max-width: 1100px) 90vw, 440px"
+                  />
+                  <figcaption>
+                    <span>{pieDest}</span>
+                    {edicionObra && <span>{edicionObra}</span>}
+                  </figcaption>
+                </figure>
+              )}
+              {sobreMi.data.frase && <blockquote class="reportaje__cita">“{sobreMi.data.frase}”</blockquote>}
+              <span class="folio folio--d" aria-hidden="true">05</span>
+            </aside>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <section id="colofon" class="colofon" aria-labelledby="colofon-h2">
+    <div class="colofon__in">
+      <div class="colofon__col">
+        <h2 id="colofon-h2" class="colofon__h2" data-ajustar>Colofón</h2>
+        <a class="subrayado" href={mailto}>Escríbeme →</a>
+      </div>
+      <dl class="colofon__lista">
+        <div><dt>Contacto</dt><dd>{emailValido ? <a href={mailto}>{ajustes.email}</a> : ajustes.email}</dd></div>
+        {ajustes.instagram && <div><dt>Instagram</dt><dd><a href={ajustes.instagram} rel="me noopener">{usuarioInstagram(ajustes.instagram)}</a></dd></div>}
+        {ajustes.taller && <div><dt>Taller</dt><dd>{ajustes.taller}</dd></div>}
+        {ajustes.encargos && <div><dt>Encargos</dt><dd>{ajustes.encargos}</dd></div>}
+        <div><dt>Esta edición</dt><dd>{edicion.replace(/\s+[—-]\s+/, ' · ')}</dd></div>
+      </dl>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .acento {
+    color: var(--accent);
+  }
+  .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  /* ---------- Cubierta con scroll ---------- */
+  .cubierta {
+    position: relative;
+    height: 2200px;
+    view-timeline-name: --cubierta;
+    view-timeline-axis: block;
+  }
+  .escena {
+    position: sticky;
+    top: 0;
+    height: min(100vh, 900px);
+    min-height: 640px;
+    overflow: hidden;
+    background: #f5f4f0;
+  }
+  .escena__in {
+    max-width: 1440px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 68px var(--gutter) 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .mancheta {
+    border-bottom: 2px solid #0a0a0a;
+    padding-bottom: 6px;
+  }
+  .mancheta__h1 {
+    margin: 0;
+    text-align: center;
+    /* «SENOVILLA» a peso 800 ≈ 9.05em: debe caber entero. */
+    font-size: clamp(24px, calc((100vw - 2 * var(--gutter)) / 9.2), 206px);
+    font-weight: 800;
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+    white-space: nowrap;
+    color: #0a0a0a;
+  }
+  .mletra {
+    display: inline-block;
+    font-variation-settings: 'wght' var(--w, 800);
+    font-weight: var(--w, 800);
+    transition:
+      font-variation-settings 0.3s ease,
+      font-weight 0.3s ease;
+  }
+  .mancheta__datos,
+  .escena__pie,
+  .barra {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .mancheta__datos {
+    padding-top: 10px;
+  }
+  .escena__medio {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 24px 0;
+  }
+  .lateral {
+    flex: 1 1 0;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+  }
+  .cl {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 0;
+    border-top: 1px solid #0a0a0a;
+    color: #0a0a0a;
+    text-decoration: none;
+  }
+  .cl__k {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .cl__t {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .cl:hover .cl__t {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .portada {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+  }
+  .portada__obra {
+    display: block;
+    height: min(470px, 56vw, 52vh);
+    box-shadow: 0 30px 60px rgba(10, 10, 10, 0.28);
+    transform-origin: 50% 50%;
+  }
+  .portada__obra :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .escena__pie {
+    align-items: center;
+    border-top: 1px solid #0a0a0a;
+    padding-top: 12px;
+  }
+  .escena__desliza {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .escena__pie-final {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 28px;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px 32px;
+    color: #f5f4f0;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0;
+  }
+  .escena__pie-final a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 12px 20px;
+    border: 1px solid rgba(245, 244, 240, 0.6);
+    border-radius: var(--radius-pill);
+    color: #f5f4f0;
+    text-decoration: none;
+  }
+  .escena__pie-final a:focus-visible {
+    outline-color: #fff;
+  }
+
+  /* Animaciones ligadas al scroll (solo si el navegador las soporta y no se pide reducir movimiento). */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .escena {
+        animation: fondo linear both;
+        animation-timeline: --cubierta;
+        animation-range: contain 0% contain 100%;
+      }
+      .anim-marco {
+        animation: crecer linear both;
+        animation-timeline: --cubierta;
+        animation-range: contain 0% contain 100%;
+      }
+      .anim-fuera {
+        animation: fuera linear both;
+        animation-timeline: --cubierta;
+        animation-range: contain 0% contain 100%;
+      }
+      .anim-pie {
+        animation: pie linear both;
+        animation-timeline: --cubierta;
+        animation-range: contain 0% contain 100%;
+      }
+    }
+  }
+  @keyframes fondo {
+    0%, 12% { background-color: #f5f4f0; }
+    55%, 100% { background-color: #0a0a0a; }
+  }
+  @keyframes crecer {
+    0% { transform: none; }
+    60%, 100% { transform: translateY(-72px) scale(1.8); }
+  }
+  @keyframes fuera {
+    0% { opacity: 1; transform: none; }
+    32%, 100% { opacity: 0; transform: translateY(-32px); visibility: hidden; }
+  }
+  @keyframes pie {
+    0%, 62% { opacity: 0; transform: translateY(16px); }
+    80%, 100% { opacity: 1; transform: none; }
+  }
+  /* Sin scroll-driven animations: cubierta estática de altura normal. */
+  @supports not (animation-timeline: view()) {
+    .cubierta {
+      height: auto;
+    }
+    .escena {
+      position: relative;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cubierta {
+      height: auto;
+    }
+    .escena {
+      position: relative;
+    }
+    .mletra {
+      transition: none;
+    }
+  }
+  @media (max-width: 860px) {
+    .lateral {
+      display: none;
+    }
+    .escena__medio {
+      justify-content: center;
+    }
+    .cubierta {
+      height: 1800px;
+    }
+  }
+
+  /* ---------- Sumario ---------- */
+  .sumario {
+    background: #0a0a0a;
+    color: #f5f4f0;
+  }
+  .sumario__in {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: clamp(72px, 9vw, 128px) var(--gutter);
+  }
+  .sumario__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 40px;
+    margin-bottom: 48px;
+  }
+  .sumario__h2 {
+    min-width: 0;
+    max-width: 100%;
+    font-weight: 800;
+    font-size: clamp(56px, 11vw, 188px);
+    line-height: 0.84;
+    letter-spacing: -0.05em;
+  }
+  .sumario__meta {
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.7;
+  }
+  .sumario__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid #3a3a38;
+  }
+  .fila {
+    display: grid;
+    grid-template-columns: 72px 52px minmax(0, 1fr) 240px 72px 64px;
+    align-items: center;
+    gap: 16px 24px;
+    padding: 20px 16px;
+    border-top: 1px solid #3a3a38;
+    color: #f5f4f0;
+    text-decoration: none;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+  .fila:hover,
+  .fila:focus-visible {
+    background: #f5f4f0;
+    color: #0a0a0a;
+  }
+  .fila:focus-visible {
+    outline-color: var(--accent-on-dark);
+  }
+  .fila__n {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .fila__img {
+    width: 44px;
+    height: 58px;
+    object-fit: cover;
+  }
+  .fila__t {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(24px, 3.6vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .fila:hover .fila__t {
+    transform: translateX(16px);
+  }
+  .fila__x {
+    font-size: 15px;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+  }
+  .fila__p {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    text-align: right;
+  }
+  @media (max-width: 860px) {
+    .fila {
+      grid-template-columns: 44px 40px minmax(0, 1fr);
+      padding: 16px 0;
+    }
+    .fila__n {
+      font-size: 28px;
+    }
+    .ocultar-m {
+      display: none;
+    }
+  }
+
+  /* ---------- Reportaje ---------- */
+  .reportaje__in {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: clamp(72px, 9vw, 128px) var(--gutter);
+  }
+  .barra {
+    padding-bottom: 12px;
+    border-bottom: 2px solid #0a0a0a;
+  }
+  .reportaje__doble {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+    gap: 56px 0;
+  }
+  .reportaje__art {
+    padding: 48px clamp(0px, 3vw, 48px) 0 0;
+    border-right: 1px solid #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    min-width: 0;
+  }
+  .reportaje__h2 {
+    font-weight: 800;
+    font-size: clamp(48px, 8.5vw, 140px);
+    line-height: 0.86;
+    letter-spacing: -0.05em;
+  }
+  .reportaje__entrada {
+    margin: 0;
+    max-width: 560px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(20px, 1.8vw, 26px);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .reportaje__columnas :global(.prosa) {
+    max-width: none;
+    columns: 2 240px;
+    column-gap: 32px;
+    font-size: 16px;
+  }
+  .reportaje__mas {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: #0a0a0a;
+    font-weight: 600;
+    text-underline-offset: 5px;
+  }
+  .folio {
+    margin-top: auto;
+    padding-top: 24px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .folio--d {
+    align-self: flex-end;
+  }
+  .reportaje__aside {
+    padding: 48px 0 0 clamp(0px, 3vw, 48px);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .reportaje__fig {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .reportaje__fig :global(img) {
+    display: block;
+    width: 100%;
+    max-width: 440px;
+    height: auto;
+    box-shadow: 0 20px 44px rgba(10, 10, 10, 0.18);
+  }
+  .reportaje__fig figcaption {
+    align-self: stretch;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-soft);
+    border-top: 1px solid #0a0a0a;
+    padding-top: 10px;
+  }
+  .reportaje__cita {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(24px, 2.6vw, 38px);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+  @media (max-width: 1100px) {
+    .reportaje__art {
+      border-right: 0;
+      padding-right: 0;
+    }
+    .reportaje__aside {
+      padding-left: 0;
+    }
+  }
+
+  /* ---------- Colofón ---------- */
+  .colofon__in {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 var(--gutter) clamp(80px, 10vw, 144px);
+  }
+  .colofon__in {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+    gap: 40px 80px;
+    align-items: start;
+  }
+  .colofon__col {
+    border-top: 2px solid #0a0a0a;
+    padding-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    min-width: 0;
+  }
+  .colofon__h2 {
+    font-weight: 800;
+    font-size: clamp(48px, 8.5vw, 140px);
+    line-height: 0.86;
+    letter-spacing: -0.05em;
+  }
+  .subrayado {
+    align-self: flex-start;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(32px, 4.5vw, 68px);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    color: #0a0a0a;
+    text-decoration: none;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 4px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    transition: background-size 0.5s ease;
+  }
+  .subrayado:hover,
+  .subrayado:focus-visible {
+    background-size: 100% 4px;
+  }
+  .colofon__lista {
+    margin: 0;
+    font-size: 17px;
+    border-top: 2px solid #0a0a0a;
+    padding-top: 48px;
+  }
+  .colofon__lista div {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    border-top: 1px solid #0a0a0a;
+  }
+  .colofon__lista div:last-child {
+    border-bottom: 1px solid #0a0a0a;
+  }
+  .colofon__lista dt {
+    padding: 16px 0;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .colofon__lista dd {
+    margin: 0;
+    padding: 14px 0;
+    overflow-wrap: anywhere;
+  }
+  .colofon__lista a {
+    color: #0a0a0a;
+  }
+  @media (max-width: 480px) {
+    .colofon__lista div {
+      grid-template-columns: 110px minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  // Mancheta: cada letra cambia de peso (400–800) según su cercanía al cursor.
+  const m = document.querySelector<HTMLElement>('[data-mancheta]');
+  if (m && matchMedia('(hover: hover)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const letras = [...m.querySelectorAll<HTMLElement>('.mletra')];
+    m.addEventListener('pointermove', (e) => {
+      const c = m.getBoundingClientRect();
+      const x = (e.clientX - c.left) / c.width;
+      letras.forEach((l, i) => {
+        const d = (i + 0.5) / letras.length - x;
+        l.style.setProperty('--w', String(Math.round(420 + 380 * Math.exp(-(d * d) / 0.01))));
+      });
+    });
+    m.addEventListener('pointerleave', () => letras.forEach((l) => l.style.removeProperty('--w')));
+  }
+</script>

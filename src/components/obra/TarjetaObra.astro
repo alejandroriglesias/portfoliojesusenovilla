@@ -1,0 +1,116 @@
+---
+/** Tarjeta de obra para el mosaico (prototipo 01): zoom suave al pasar el ratón. */
+import { Image } from 'astro:assets';
+import type { Obra } from '../../lib/contenido';
+
+interface Props {
+  obra: Obra;
+  /** «Grabado · Manera negra», «Óleo»… */
+  etiqueta: string;
+  sizes?: string;
+}
+
+const { obra, etiqueta, sizes = '(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 420px' } = Astro.props;
+const d = obra.data;
+---
+
+<a class="tarjeta" href={`/obra/${obra.id}`} data-filtrable data-tecnica={d.tecnica.discriminant}>
+  <div class="tarjeta__marco">
+    <Image
+      src={d.imagen}
+      alt={d.alt ?? d.titulo}
+      widths={[320, 480, 640, 960].filter((w) => w <= d.imagen.width)}
+      sizes={sizes}
+      class="tarjeta__img"
+    />
+    {import.meta.env.DEV && (d.ejemplo || !d.publicada) && <span class="tarjeta__ejemplo">{d.ejemplo ? 'Ejemplo' : 'Oculta'}</span>}
+  </div>
+  <div class="tarjeta__pie">
+    <div class="tarjeta__textos">
+      <span class="tarjeta__titulo">{d.titulo}</span>
+      <span class="tarjeta__meta">{etiqueta}{d.anio && ` · ${d.anio}`}</span>
+    </div>
+    <span class="tarjeta__mas" aria-hidden="true">Ver obra →</span>
+  </div>
+</a>
+
+<style>
+  .tarjeta {
+    display: block;
+    break-inside: avoid;
+    margin: 0 0 40px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .tarjeta[hidden] {
+    display: none;
+  }
+  .tarjeta__marco {
+    position: relative;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #e6e4df;
+  }
+  .tarjeta__marco :global(.tarjeta__img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 0.9s var(--ease-out);
+  }
+  .tarjeta:hover :global(.tarjeta__img) {
+    transform: scale(1.04);
+  }
+  .tarjeta__ejemplo {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .tarjeta__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding-top: 14px;
+  }
+  .tarjeta__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .tarjeta__titulo {
+    font-weight: 600;
+    font-size: 17px;
+  }
+  .tarjeta__meta {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .tarjeta__mas {
+    padding-top: 2px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
+  }
+  .tarjeta:hover .tarjeta__mas,
+  .tarjeta:focus-visible .tarjeta__mas {
+    opacity: 1;
+    transform: none;
+  }
+  .tarjeta:focus-visible {
+    outline-offset: 6px;
+  }
+</style>

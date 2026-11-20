@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Jesús Senovilla — Inicio (muro de taller)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Syne:wght@600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F3F0EA}
+a{color:#141414}a:hover{color:#000}
+
+.g{background-size:cover;background-position:center;background-repeat:no-repeat}
+.g-repollo{background-image:url(../assets/ejemplos/repollo-EJEMPLO.jpg)}
+.g-paisaje{background-image:url(../assets/ejemplos/paisaje-abstracto-EJEMPLO.jpg)}
+.g-arbol{background-image:url(../assets/ejemplos/arbol-aguafuerte-EJEMPLO.jpg)}
+.g-membrillos{background-image:url(../assets/ejemplos/membrillos-EJEMPLO.jpg)}
+.g-trigal{background-image:url(../assets/ejemplos/trigal-acuarela-EJEMPLO.jpg)}
+.g-noche{background-image:url(../assets/ejemplos/noche-carborundo-EJEMPLO.jpg)}
+.g-mar{background-image:url(../assets/ejemplos/mar-gris-EJEMPLO.jpg)}
+.pg *{box-sizing:border-box}
+.navl{color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;padding:12px 2px;position:relative}
+.navl::after{content:"";position:absolute;left:2px;right:2px;bottom:6px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .35s ease}
+.navl:hover{color:var(--ink)}
+.navl:hover::after{transform:scaleX(1)}
+.btn{transition:transform .2s ease}
+.btn:hover{transform:translateY(-2px)}
+.pill{cursor:pointer;transition:background .2s ease,color .2s ease,border-color .2s ease}
+.wk{text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:14px}
+.wk:hover{color:var(--ink)}
+.wk .fr{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.wk:hover .fr{transform:translateY(-8px)}
+.tc{text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:16px;padding:32px;border:1px solid var(--line);background:var(--bg);transition:background .3s ease,color .3s ease}
+.tc:hover{background:var(--ink);color:var(--bg)}
+.tc .go{transition:transform .3s ease;display:inline-block}
+.tc:hover .go{transform:translateX(8px)}
+.mail-big{color:var(--ink);text-decoration:none;background-image:linear-gradient(currentColor,currentColor);background-size:0% 4px;background-repeat:no-repeat;background-position:0 100%;transition:background-size .5s ease}
+.mail-big:hover{color:var(--ink);background-size:100% 4px}
+@media (prefers-reduced-motion: reduce){.wk .fr,.btn,.tc .go{transition:none}}
+
+.pin{position:absolute;border:0;padding:0;background:none;cursor:pointer;display:block}
+.pin .art{display:block;width:100%;height:100%;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease;box-shadow:0 2px 4px rgba(20,16,10,.12),0 14px 28px rgba(20,16,10,.14)}
+.pin:hover .art,.pin:focus-visible .art{transform:translateY(-8px) scale(1.02);box-shadow:0 4px 8px rgba(20,16,10,.12),0 30px 50px rgba(20,16,10,.2)}
+.pin:focus-visible{outline:2px solid #141414;outline-offset:8px}
+.ctl{background:#FFFFFF;border:1px solid rgba(20,20,20,.15);border-radius:999px;min-width:44px;min-height:44px;padding:0 16px;font:600 14px Inter,sans-serif;color:#141414;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.ctl:hover{background:#F4F2EE;color:#141414}
+.ov-in{animation:mt-in .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes mt-in{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.ov-btn{background:transparent;border:1px solid rgba(245,244,240,.5);border-radius:999px;min-width:48px;min-height:48px;padding:0 18px;color:#F5F4F0;font:600 14px Inter,sans-serif;cursor:pointer;transition:background .2s ease,color .2s ease}
+.ov-btn:hover{background:#F5F4F0;color:#141414}
+@media (prefers-reduced-motion: reduce){.pin .art{transition:none}.ov-in{animation:none}}
+
+</style>
+</helmet>
+<div class="pg" style="--accent: {{accent}}; --bg: #F3F0EA; --ink: #141414; --muted: #5F5C55; --line: rgba(20, 20, 20, 0.14); --band: #ECE8E1; --card: #DDD8CF; width: 100%; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; font-size: 16px; line-height: 1.55; overflow-x: clip">
+<header style="position: sticky; top: 0; z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line)">
+<div style="max-width: 1360px; margin: 0 auto; padding: 14px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 32px">
+<a href="#inicio" style="color: var(--ink); text-decoration: none; font-family: Syne, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em; min-height: 44px; display: flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: {{accent}}; display: inline-block"></span>Jesús Senovilla</a>
+<nav aria-label="Principal" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 28px">
+<a class="navl" href="#obra">Obra</a>
+<a class="navl" href="#tecnicas">Técnicas</a>
+<a class="navl" href="#sobre">Sobre mí</a>
+<a class="navl" href="#">Blog</a>
+<a class="btn" href="#contacto" style="text-decoration: none; background: var(--ink); color: var(--bg); padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">Contacto</a>
+</nav>
+</div>
+</header>
+
+<section id="inicio" aria-label="Portada: el muro del taller" style="position: relative; height: min(100vh, 860px); min-height: 620px; overflow: hidden; background: #ECE8E1; border-bottom: 1px solid var(--line)">
+<div role="region" aria-label="Muro del taller: arrastra para recorrerlo" onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" onPointerLeave="{{up}}" style="{{viewportStyle}}">
+<div style="{{worldStyle}}">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="9"><div aria-hidden="true" style="{{t.style}}"></div></sc-for>
+<sc-for list="{{words}}" as="wd" hint-placeholder-count="9"><span aria-hidden="true" style="{{wd.style}}">{{wd.text}}</span></sc-for>
+<sc-for list="{{pins}}" as="p" hint-placeholder-count="12">
+<button type="button" class="pin" onClick="{{p.open}}" aria-label="{{p.label}}" aria-hidden="{{p.ariaHidden}}" tabindex="{{p.tab}}" style="{{p.style}}">
+<sc-if value="{{p.isImg}}" hint-placeholder-val="{{ false }}"><img class="art" src="../assets/obras/rosa-estampa.jpg" alt="" draggable="false" style="object-fit: cover"></sc-if>
+<sc-if value="{{p.noImg}}" hint-placeholder-val="{{ true }}"><span class="art g {{p.cls}}" style="{{p.artStyle}}"></span></sc-if>
+<span aria-hidden="true" style="position: absolute; left: -10px; top: -9px; width: 58px; height: 20px; background: rgba(232, 222, 196, 0.82); transform: rotate(-14deg)"></span>
+<span aria-hidden="true" style="position: absolute; right: -10px; top: -9px; width: 58px; height: 20px; background: rgba(232, 222, 196, 0.82); transform: rotate(12deg)"></span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="position: absolute; z-index: 5; left: clamp(20px, 4vw, 48px); top: 32px; max-width: 360px; background: #FFFFFF; padding: 22px 26px; transform: rotate(-1deg); box-shadow: 0 2px 4px rgba(20,16,10,0.1), 0 16px 32px rgba(20,16,10,0.12); pointer-events: none; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Taller abierto</span>
+<span style="font-family: Syne, sans-serif; font-weight: 800; font-size: 28px; line-height: 1.05; letter-spacing: -0.03em">Arrastra para recorrer el taller.</span>
+<span style="font-size: 14px; color: var(--muted)">Pulsa una obra para verla de cerca.</span>
+</div>
+<div style="position: absolute; z-index: 5; left: 0; right: 0; bottom: 0; padding: 0 clamp(20px, 4vw, 48px) 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; pointer-events: none">
+<span style="font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums">X {{coordX}} · Y {{coordY}}</span>
+<a class="ctl" href="#obra" style="pointer-events: auto">Ver toda la obra ↓</a>
+<div role="group" aria-label="Zoom" style="display: flex; align-items: center; gap: 8px; pointer-events: auto">
+<button type="button" class="ctl" onClick="{{zoomOut}}" aria-label="Alejar">−</button>
+<span style="min-width: 48px; text-align: center; font-size: 13px; font-variant-numeric: tabular-nums">{{zoomLabel}}</span>
+<button type="button" class="ctl" onClick="{{zoomIn}}" aria-label="Acercar">+</button>
+<button type="button" class="ctl" onClick="{{center}}">Centrar</button>
+</div>
+</div>
+<sc-if value="{{hasFocus}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-modal="true" aria-label="{{fw.title}}" style="position: absolute; z-index: 20; inset: 0; background: rgba(14, 13, 12, 0.9); backdrop-filter: blur(6px); color: #F5F4F0">
+<button type="button" onClick="{{close}}" aria-label="Cerrar" style="position: absolute; inset: 0; background: transparent; border: 0; cursor: zoom-out"></button>
+<div style="position: absolute; inset: 0; display: grid; place-items: center; padding: 80px clamp(64px, 8vw, 120px) 120px; pointer-events: none">
+<div class="ov-in" style="pointer-events: auto">
+<sc-if value="{{fw.isImg}}" hint-placeholder-val="{{ false }}"><img src="../assets/obras/rosa-estampa.jpg" alt="Rosa, grabado a la manera negra, 2010. Estampa 1/50 firmada" style="display: block; height: min(66vh, 620px); width: auto; max-width: 76vw; object-fit: contain; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5)"></sc-if>
+<sc-if value="{{fw.noImg}}" hint-placeholder-val="{{ true }}"><div role="img" aria-label="{{fw.title}}, {{fw.tech}}" class="g {{fw.cls}}" style="{{fw.bigStyle}}"></div></sc-if>
+</div>
+</div>
+<div style="position: absolute; top: 20px; right: clamp(20px, 3.5vw, 40px)"><button type="button" class="ov-btn" onClick="{{close}}">Cerrar ✕</button></div>
+<div style="position: absolute; top: 50%; left: clamp(12px, 2vw, 32px); transform: translateY(-50%)"><button type="button" class="ov-btn" onClick="{{prevW}}" aria-label="Obra anterior">←</button></div>
+<div style="position: absolute; top: 50%; right: clamp(12px, 2vw, 32px); transform: translateY(-50%)"><button type="button" class="ov-btn" onClick="{{nextW}}" aria-label="Obra siguiente">→</button></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 0 clamp(20px, 3.5vw, 40px) 24px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: Syne, sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -0.02em">{{fw.title}}</span><span style="font-size: 14px; color: #C9C6BF">{{fw.tech}}, {{fw.year}} · {{fw.extra}}</span></div>
+<a href="11-ficha-v2.dc.html" style="color: #141414; background: #F5F4F0; text-decoration: none; border-radius: 999px; padding: 14px 24px; font-weight: 600; min-height: 48px; display: inline-flex; align-items: center">Ver ficha →</a>
+</div>
+</div>
+</sc-if>
+</section>
+
+<section id="intro" aria-label="Presentación" style="max-width: 1360px; margin: 0 auto; padding: clamp(72px, 9vw, 128px) clamp(20px, 4vw, 48px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 32px 80px; align-items: end">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(44px, 6vw, 96px); line-height: 0.92; letter-spacing: -0.045em">Óleo, acuarela y grabado<span style="color: {{accent}}">.</span></h2>
+<div style="display: flex; flex-direction: column; gap: 24px">
+<p style="margin: 0; font-size: 19px; line-height: 1.6; color: var(--muted); max-width: 520px">[Presentación breve: qué pintas y grabas, desde dónde y cómo trabajas. Dos o tres líneas.]</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<a class="btn" href="#obra" style="text-decoration: none; background: {{accent}}; color: #FFFFFF; padding: 16px 28px; border-radius: 999px; font-weight: 600; font-size: 15px; min-height: 52px; display: inline-flex; align-items: center">Ver la obra</a>
+<a class="btn" href="#sobre" style="text-decoration: none; color: var(--ink); border: 1px solid var(--ink); padding: 16px 28px; border-radius: 999px; font-weight: 600; font-size: 15px; min-height: 52px; display: inline-flex; align-items: center">Sobre mí</a>
+</div>
+</div>
+</section>
+
+<section id="obra" aria-label="Obra" style="max-width: 1360px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px) clamp(80px, 10vw, 136px)">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px; border-top: 1px solid var(--line); padding-top: 48px; margin-bottom: 56px">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(52px, 7.5vw, 120px); line-height: 0.88; letter-spacing: -0.045em">Obra</h2>
+<div role="group" aria-label="Filtrar por técnica" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button type="button" class="pill" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.label}}<span style="opacity: 0.6; margin-left: 8px">{{f.count}}</span></button>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 56px 40px; align-items: end">
+<sc-for list="{{shown}}" as="w" hint-placeholder-count="6">
+<a class="wk" href="11-ficha-v2.dc.html">
+<span class="fr" style="display: flex; align-items: flex-end; justify-content: center; height: 340px">
+<sc-if value="{{w.isImg}}" hint-placeholder-val="{{ false }}"><img src="../assets/obras/rosa-estampa.jpg" alt="Rosa, grabado a la manera negra, estampa 1/50" style="display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; box-shadow: 0 2px 4px rgba(20,16,10,0.1), 0 20px 40px rgba(20,16,10,0.14)"></sc-if>
+<sc-if value="{{w.noImg}}" hint-placeholder-val="{{ true }}"><span role="img" aria-label="{{w.title}}, {{w.tech}}" class="g {{w.cls}}" style="{{w.phStyle}}"></span></sc-if>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-top: 1px solid var(--line); padding-top: 12px">
+<span style="font-family: Syne, sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.01em">{{w.title}}</span>
+<span style="font-size: 14px; color: var(--muted)">{{w.tech}}, {{w.year}}</span>
+</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+<section id="tecnicas" aria-label="Técnicas" style="background: var(--band)">
+<div style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px)">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 48px; margin-bottom: 48px">
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(52px, 7.5vw, 120px); line-height: 0.88; letter-spacing: -0.045em">Técnicas</h2>
+<p style="margin: 0; max-width: 360px; color: var(--muted)">Elige una técnica para filtrar la obra.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 0">
+<sc-for list="{{techs}}" as="t" hint-placeholder-count="3">
+<a class="tc" href="#obra" onClick="{{t.pick}}">
+<span style="font-size: 14px; font-variant-numeric: tabular-nums; opacity: 0.7">{{t.n}}</span>
+<span style="font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(40px, 4.5vw, 64px); line-height: 1; letter-spacing: -0.04em">{{t.name}}</span>
+<span style="font-size: 16px; line-height: 1.6; opacity: 0.8; min-height: 78px">{{t.desc}}</span>
+<span style="font-weight: 600">Ver obra <span class="go">→</span></span>
+</a>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section id="sobre" aria-label="Sobre mí" style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 56px 80px; align-items: center">
+<div role="img" aria-label="Retrato del artista en el taller (pendiente)" style="aspect-ratio: 4 / 5; width: 100%; max-width: 540px; background: var(--card); display: flex; align-items: flex-end; padding: 20px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Retrato en el taller</div>
+<div style="display: flex; flex-direction: column; gap: 26px">
+<p style="margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Sobre mí</p>
+<h2 style="margin: 0; font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(40px, 5vw, 76px); line-height: 0.95; letter-spacing: -0.04em">Jesús Senovilla</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.65; color: var(--muted); max-width: 560px">[Presentación: formación, trayectoria, qué buscas en tu obra y cómo trabajas. Tres o cuatro líneas.]</p>
+<div style="width: 200px; height: 72px; border: 1px dashed var(--muted); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px">Firma</div>
+<div style="display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)"><span style="color: var(--muted)">[Año]</span><span>[Exposición o premio], [lugar]</span></div>
+</div>
+</div>
+</section>
+
+<section id="contacto" aria-label="Contacto" style="border-top: 1px solid var(--line)">
+<div style="max-width: 1360px; margin: 0 auto; padding: clamp(80px, 10vw, 136px) clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px 48px">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<p style="margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted)">Consultas y encargos</p>
+<a class="mail-big" href="mailto:" style="font-family: Syne, sans-serif; font-weight: 800; font-size: clamp(48px, 8vw, 132px); line-height: 0.95; letter-spacing: -0.045em">Escríbeme →</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 18px">
+<a href="mailto:" style="color: var(--ink); padding: 8px 0">[TU EMAIL]</a>
+<a href="https://www.instagram.com/jesusenovilla/" style="color: var(--ink); padding: 8px 0">Instagram · @jesusenovilla</a>
+</div>
+</div>
+</section>
+
+<footer style="background: #141414; color: #C9C6BF">
+<div style="max-width: 1360px; margin: 0 auto; padding: 28px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 32px; font-size: 14px">
+<span>© 2026 Jesús Senovilla</span>
+<span style="display: flex; gap: 28px"><a href="https://www.instagram.com/jesusenovilla/" style="color: #F5F4F0; text-decoration: none; padding: 12px 0">Instagram</a><a href="#inicio" style="color: #F5F4F0; text-decoration: none; padding: 12px 0">Volver arriba ↑</a></span>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C8371A","options":["#C8371A","#1F4FB8","#1E6B4F","#141414"]},"$preview":{"width":1440,"height":4300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = Object.assign({ filter: 'todo' }, { cx: 900, cy: 520, z: 1, dragging: false, focus: -1 });
+    this.drag = null;
+    this.moved = false;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const accent = this.props.accent ?? '#C8371A';
+
+    const works = [
+      { title: 'Rosa', tech: 'Manera negra', year: '2010', cat: 'grabado', img: true },
+      { title: 'Repollo', tech: 'Óleo', year: '2019', cat: 'oleo', cls: 'g-repollo', r: '4 / 5', h: 300, bg: '#33402C', fg: '#D9D6CF' },
+      { title: 'Paisaje abstracto', tech: 'Acuarela', year: '2019', cat: 'acuarela', cls: 'g-paisaje', r: '4 / 3', h: 210, bg: '#B7C6CB', fg: '#2B2A27' },
+      { title: 'Árbol', tech: 'Aguafuerte', year: '[Año]', cat: 'grabado', cls: 'g-arbol', r: '1 / 1', h: 250, bg: '#3A3633', fg: '#D9D6CF' },
+      { title: 'Membrillos', tech: 'Óleo', year: '[Año]', cat: 'oleo', cls: 'g-membrillos', r: '3 / 4', h: 320, bg: '#8C5A3C', fg: '#F3EEE6' },
+      { title: 'Trigal', tech: 'Acuarela', year: '[Año]', cat: 'acuarela', cls: 'g-trigal', r: '4 / 5', h: 290, bg: '#D9CBB0', fg: '#2B2A27' }
+    ];
+    const cats = [{ id: 'todo', label: 'Todo' }, { id: 'oleo', label: 'Óleos' }, { id: 'acuarela', label: 'Acuarelas' }, { id: 'grabado', label: 'Grabados' }];
+    const pillBase = 'font-family: Inter, sans-serif; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 999px; min-height: 44px; ';
+    const filters = cats.map((c) => {
+      const on = s.filter === c.id;
+      return {
+        label: c.label,
+        count: c.id === 'todo' ? works.length : works.filter((w) => w.cat === c.id).length,
+        pressed: on ? 'true' : 'false',
+        style: pillBase + (on ? 'background: var(--ink); color: var(--bg); border: 1px solid var(--ink);' : 'background: transparent; color: var(--ink); border: 1px solid var(--line);'),
+        pick: () => this.setState({ filter: c.id })
+      };
+    });
+    const shown = works.filter((w) => s.filter === 'todo' || w.cat === s.filter).map((w) => ({
+      ...w,
+      isImg: !!w.img,
+      noImg: !w.img,
+      phStyle: w.img ? '' : 'display: flex; align-items: flex-end; padding: 12px; height: ' + w.h + 'px; max-width: 100%; aspect-ratio: ' + w.r + '; background-color: ' + w.bg + '; color: ' + w.fg + '; font: 600 10px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; box-shadow: 0 2px 4px rgba(20,16,10,0.1), 0 20px 40px rgba(20,16,10,0.14)'
+    }));
+    const techs = [
+      { n: '01', name: 'Óleo', desc: '[Temas y formatos de tu pintura al óleo]', cat: 'oleo' },
+      { n: '02', name: 'Acuarela', desc: '[Temas de tus acuarelas]', cat: 'acuarela' },
+      { n: '03', name: 'Grabado', desc: 'Aguafuerte, aguatinta, manera negra, punta seca, carborundo, alcograbado, zieglerografía y stock-gum.', cat: 'grabado' }
+    ].map((t) => ({ ...t, pick: () => this.setState({ filter: t.cat }) }));
+
+    const TW = 1800;
+    const TH = 1200;
+    const wall = [
+      { title: 'Rosa', tech: 'Manera negra', year: '2010', extra: 'Estampa 1/50, firmada', img: true, x: 790, y: 300, h: 380, r: 1014 / 1551, rot: -1.2 },
+      { title: 'Repollo', tech: 'Óleo', year: '2019', extra: '[Medidas]', cls: 'g-repollo', x: 470, y: 150, h: 280, r: 0.8, rot: 2.2, bg: '#33402C', fg: '#D9D6CF' },
+      { title: 'Paisaje abstracto', tech: 'Acuarela', year: '2019', extra: '[Medidas]', cls: 'g-paisaje', x: 1190, y: 150, h: 210, r: 4 / 3, rot: -2.4, bg: '#B7C6CB', fg: '#2B2A27' },
+      { title: 'Árbol', tech: 'Aguafuerte', year: '[Año]', extra: '[Edición]', cls: 'g-arbol', x: 1330, y: 540, h: 230, r: 1, rot: 1.6, bg: '#3A3633', fg: '#D9D6CF' },
+      { title: 'Membrillos', tech: 'Óleo', year: '[Año]', extra: '[Medidas]', cls: 'g-membrillos', x: 360, y: 600, h: 330, r: 0.75, rot: -1.4, bg: '#8C5A3C', fg: '#F3EEE6' },
+      { title: 'Trigal', tech: 'Acuarela', year: '[Año]', extra: '[Medidas]', cls: 'g-trigal', x: 1060, y: 830, h: 250, r: 0.8, rot: 2.8, bg: '#D9CBB0', fg: '#2B2A27' }
+    ];
+    const notes = [
+      { text: 'Manera negra · 2010', x: 800, y: 715, rot: -2, kind: 'tape' },
+      { text: 'Óleo, 2019', x: 480, y: 460, rot: 1.5, kind: 'tape' },
+      { text: 'Acuarela, 2019', x: 1205, y: 384, rot: -1, kind: 'tape' },
+      { text: '[Nota del taller: una idea, una fecha, una prueba de color]', x: 660, y: 900, rot: 2, kind: 'card' },
+      { text: 'Taller', x: 40, y: 990, rot: -3, kind: 'word' }
+    ];
+    const tx0 = Math.floor(s.cx / TW);
+    const ty0 = Math.floor(s.cy / TH);
+    const tiles = [];
+    const pins = [];
+    const words = [];
+    for (let j = -1; j <= 1; j++) {
+      for (let i = -1; i <= 1; i++) {
+        const ox = (tx0 + i) * TW;
+        const oy = (ty0 + j) * TH;
+        const main = i === 0 && j === 0;
+        tiles.push({ style: 'position: absolute; left: ' + ox + 'px; top: ' + oy + 'px; width: ' + TW + 'px; height: ' + TH + 'px; background-image: radial-gradient(rgba(60, 50, 40, 0.07) 1px, rgba(0,0,0,0) 1.2px); background-size: 6px 6px' });
+        wall.forEach((w, k) => {
+          pins.push({
+            label: w.title + ', ' + w.tech + ', ' + w.year,
+            ariaHidden: main ? 'false' : 'true',
+            tab: main ? '0' : '-1',
+            isImg: !!w.img,
+            noImg: !w.img,
+            cls: w.cls || '',
+            open: () => { if (!this.moved) this.setState({ focus: k }); },
+            style: 'left: ' + (ox + w.x) + 'px; top: ' + (oy + w.y) + 'px; width: ' + Math.round(w.h * w.r) + 'px; height: ' + w.h + 'px; transform: rotate(' + w.rot + 'deg)',
+            artStyle: 'background-color: ' + w.bg + '; color: ' + w.fg + '; display: flex; align-items: flex-end; padding: 12px; font: 600 10px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase'
+          });
+        });
+        notes.forEach((nt) => {
+          let st = 'position: absolute; left: ' + (ox + nt.x) + 'px; top: ' + (oy + nt.y) + 'px; transform: rotate(' + nt.rot + 'deg); pointer-events: none; ';
+          if (nt.kind === 'tape') st += 'background: rgba(232, 222, 196, 0.85); padding: 6px 14px; font: 500 14px Inter, sans-serif; color: #3D3A33; white-space: nowrap';
+          if (nt.kind === 'card') st += 'background: #FFFFFF; width: 220px; padding: 16px; font: 500 14px/1.45 Inter, sans-serif; color: #3D3A33; box-shadow: 0 2px 4px rgba(20,16,10,0.1), 0 10px 20px rgba(20,16,10,0.1)';
+          if (nt.kind === 'word') st += 'font-family: Syne, sans-serif; font-weight: 800; font-size: 200px; line-height: 1; letter-spacing: -0.05em; color: rgba(40, 32, 24, 0.06); white-space: nowrap';
+          words.push({ text: nt.text, style: st });
+        });
+      }
+    }
+    const fi = s.focus;
+    const fb = fi >= 0 ? wall[fi] : wall[0];
+    const fw = { ...fb, isImg: !!fb.img, noImg: !fb.img, bigStyle: 'height: min(58vh, 560px); aspect-ratio: ' + fb.r + '; max-width: 76vw; background-color: ' + (fb.bg || '#222') + '; color: ' + (fb.fg || '#DDD') + '; display: flex; align-items: flex-end; padding: 16px; font: 600 11px Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5)' };
+    const zooms = [0.6, 0.8, 1, 1.25];
+    const zi = zooms.indexOf(s.z);
+    const pad = (v) => (v < 0 ? '−' : '') + String(Math.abs(Math.round(v))).padStart(4, '0');
+
+    return Object.assign({ accent, filters, shown, techs }, {
+      tiles, pins, words, fw,
+      hasFocus: fi >= 0,
+      viewportStyle: 'position: absolute; inset: 0; touch-action: none; user-select: none; cursor: ' + (s.dragging ? 'grabbing' : 'grab'),
+      worldStyle: 'position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-origin: 0 0; transform: scale(' + s.z + ') translate(' + (-s.cx) + 'px, ' + (-s.cy) + 'px); transition: ' + (s.dragging ? 'none' : 'transform .45s cubic-bezier(.2,.8,.2,1)'),
+      coordX: pad(s.cx - 900),
+      coordY: pad(s.cy - 560),
+      zoomLabel: Math.round(s.z * 100) + '%',
+      down: (e) => { if (s.focus >= 0) return; this.drag = { x: e.clientX, y: e.clientY, cx: s.cx, cy: s.cy }; this.moved = false; },
+      move: (e) => {
+        if (!this.drag) return;
+        const dx = e.clientX - this.drag.x;
+        const dy = e.clientY - this.drag.y;
+        if (!this.moved && Math.hypot(dx, dy) > 5) this.moved = true;
+        if (this.moved) this.setState({ dragging: true, cx: this.drag.cx - dx / s.z, cy: this.drag.cy - dy / s.z });
+      },
+      up: () => { this.drag = null; if (s.dragging) this.setState({ dragging: false }); setTimeout(() => { this.moved = false; }, 0); },
+      zoomIn: () => this.setState({ z: zooms[Math.min(zooms.length - 1, zi + 1)] }),
+      zoomOut: () => this.setState({ z: zooms[Math.max(0, zi - 1)] }),
+      center: () => this.setState({ cx: 900, cy: 560, z: 1 }),
+      close: () => this.setState({ focus: -1 }),
+      prevW: () => this.setState({ focus: (fi - 1 + wall.length) % wall.length }),
+      nextW: () => this.setState({ focus: (fi + 1) % wall.length })
+    });
+  }
+}
+</script>
+</body>
+</html>

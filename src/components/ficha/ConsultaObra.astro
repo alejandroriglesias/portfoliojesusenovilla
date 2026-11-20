@@ -1,0 +1,94 @@
+---
+/** Bloque «¿Te interesa esta obra?» en color de acento. */
+import { getAjustes } from '../../lib/ajustes';
+import { esMarcador } from '../../lib/contenido';
+
+interface Props {
+  titulo: string;
+  anio?: number;
+  estado: string;
+  numero?: string;
+}
+
+const { titulo, anio, estado, numero = '(04)' } = Astro.props;
+const ajustes = await getAjustes();
+
+const ESTADO: Record<string, string | undefined> = {
+  disponible: 'Disponible',
+  vendida: 'Vendida',
+  'no-a-la-venta': 'No a la venta',
+};
+const emailValido = !!ajustes.email && !esMarcador(ajustes.email) && ajustes.email.includes('@');
+const asunto = `Consulta sobre «${titulo}»${anio ? ` (${anio})` : ''}`;
+const href = emailValido
+  ? `mailto:${ajustes.email}?subject=${encodeURIComponent(asunto)}`
+  : '/contacto';
+
+const datos = [
+  ESTADO[estado] && `Estado: ${ESTADO[estado]}`,
+  ajustes.condicionesEnvio && `Envío: ${ajustes.condicionesEnvio}`,
+  ajustes.email,
+].filter(Boolean);
+
+const textoGrande = estado === 'vendida' ? ['Preguntar por', 'obra similar'] : ['Consultar', 'disponibilidad'];
+---
+
+<section id="consultar" class="consulta" aria-labelledby="consulta-titulo">
+  <div class="consulta__in">
+    <h2 id="consulta-titulo" class="etiqueta consulta__etiqueta">{numero} ¿Te interesa esta obra?</h2>
+    <a class="consulta__cta" href={href} data-ajustar>
+      {textoGrande[0]}<br /><span class="nowrap">{textoGrande[1]}&nbsp;<span class="flecha" aria-hidden="true">→</span></span>
+    </a>
+    {datos.length > 0 && <p class="consulta__datos">{datos.join(' · ')}</p>}
+  </div>
+</section>
+
+<style>
+  .consulta {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .consulta__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(80px, 10vw, 144px) var(--gutter);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+  }
+  .consulta__etiqueta {
+    font-family: var(--font-body);
+    color: inherit;
+  }
+  .consulta__cta {
+    display: block;
+    max-width: 100%;
+    color: inherit;
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-weight: 800;
+    /* «disponibilidad →» ≈ 10.5em de ancho: debe caber en móvil */
+    font-size: clamp(28px, min(8vw, calc((100vw - 2 * var(--gutter)) / 10.6)), 136px);
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+  }
+  .nowrap {
+    white-space: nowrap;
+  }
+  .flecha {
+    display: inline-block;
+    transition: transform 0.35s ease;
+  }
+  .consulta__cta:hover .flecha {
+    transform: translateX(18px);
+  }
+  .consulta__cta:focus-visible,
+  .consulta :focus-visible {
+    outline-color: #ffffff;
+  }
+  .consulta__datos {
+    margin: 0;
+    font-size: 17px;
+  }
+</style>

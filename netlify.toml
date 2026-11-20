@@ -1,0 +1,21 @@
+# Despliegue en Netlify (fase 7). Ver README.md → «Puesta en marcha».
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Astro 7 necesita Node ≥ 22.23; usamos la LTS actual.
+  NODE_VERSION = "24"
+
+# Cabeceras: las imágenes y el JS/CSS con hash se cachean un año.
+[[headers]]
+  for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"

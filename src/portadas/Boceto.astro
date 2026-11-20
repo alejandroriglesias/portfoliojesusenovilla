@@ -1,0 +1,395 @@
+---
+/**
+ * Portada 05 · Boceto — «del boceto a la estampa».
+ * Secuencia automática de 4 fases sobre la obra destacada:
+ *  1. Boceto: un trazo SVG que se dibuja (stroke-dashoffset).
+ *  2. Granear: capa negra con grano sobre la plancha.
+ *  3. Bruñir: clip-path circle() que crece y descubre la plancha.
+ *  4. Estampar: la estampa final.
+ * Fases pulsables y «Ver otra vez». Con movimiento reducido se muestra la estampa.
+ *
+ * El boceto y la posición de la plancha dentro de la estampa están ajustados
+ * a «Rosa» (la obra del prototipo). Para otra obra destacada habría que
+ * dibujar su boceto y medir su plancha.
+ */
+import { getImage } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ComunesTaller from '../components/portada/ComunesTaller.astro';
+import { getDatosPortada } from '../lib/portada';
+import type { Props as PropsPortada } from './tipos';
+
+type Props = PropsPortada;
+const { canonica, noindex } = Astro.props;
+const datos = await getDatosPortada();
+const { obras } = datos;
+
+// Mejor un grabado destacado con imagen de plancha; si no, la destacada.
+const obra =
+  obras.find((o) => o.data.destacada && o.data.tecnica.discriminant === 'grabado' && o.data.imagenPlancha) ??
+  obras.find((o) => o.data.tecnica.discriminant === 'grabado' && o.data.imagenPlancha) ??
+  datos.destacada;
+
+const estampa = obra ? await getImage({ src: obra.data.imagen, width: Math.min(obra.data.imagen.width, 1000), format: 'webp' }) : undefined;
+const plancha = obra?.data.imagenPlancha
+  ? await getImage({ src: obra.data.imagenPlancha, width: Math.min(obra.data.imagenPlancha.width, 700), format: 'webp' })
+  : undefined;
+const ratio = obra ? `${obra.data.imagen.width} / ${obra.data.imagen.height}` : '2 / 3';
+const t = obra?.data.tecnica;
+const edicion = t?.discriminant === 'grabado' ? t.value.edicion : undefined;
+const etiqueta = obra ? [obra.data.titulo, obra.data.anio].filter(Boolean).join(', ') : '';
+
+// Posición de la plancha dentro de la estampa (medida sobre la foto de Rosa).
+const PLANCHA = { left: '28.01%', top: '22.18%', width: '43.29%', height: '37.2%' };
+
+const FASES = [
+  { nombre: 'Boceto', texto: 'Todo empieza con un dibujo: la composición, la luz y dónde caerán las sombras.' },
+  { nombre: 'Granear', texto: 'La plancha se cubre entera de grano. Entintada así, imprimiría un negro profundo.' },
+  { nombre: 'Bruñir', texto: 'Con rascador y bruñidor se aplasta el grano. Donde se pule, aparece la luz.' },
+  {
+    nombre: 'Estampar',
+    texto: `Se entinta, se estampa en el tórculo y cada prueba se numera y se firma${edicion ? ` (edición de ${edicion})` : ''}.`,
+  },
+];
+
+// Trazos del boceto (viewBox 76×100) con su retardo, del prototipo.
+const TRAZOS = [
+  [0.1, 'M40 27 c2 -2 5 0 4 3 c-1 4 -7 4 -8 0 c-1 -5 5 -9 10 -6 c5 3 4 11 -2 13'],
+  [0.3, 'M20 30 C22 20 30 15 40 16 C50 15 60 20 63 30'],
+  [0.45, 'M24 24 C28 17 36 14 44 15'],
+  [0.55, 'M58 22 C62 26 64 32 62 38'],
+  [0.7, 'M14 40 C20 34 30 34 38 38 C46 42 56 40 63 34'],
+  [0.9, 'M14 40 C11 52 16 64 28 70 C38 75 52 72 60 62 C66 54 66 44 63 34'],
+  [1.1, 'M14 42 C18 52 24 62 33 70'],
+  [1.2, 'M18 46 C22 58 30 66 40 72'],
+  [1.35, 'M38 72 C36 80 34 88 33 100'],
+  [1.4, 'M44 72 C43 80 42 90 42 100'],
+  [1.5, 'M36 74 C30 74 26 78 24 82'],
+  [1.55, 'M46 73 C52 74 56 78 57 83'],
+] as const;
+const TRAZOS_FINOS = [
+  [0.6, 'M20 30 C22 20 30 15 40 16 C50 15 60 20 63 30'],
+  [1, 'M14 40 C11 52 16 64 28 70 C38 75 52 72 60 62 C66 54 66 44 63 34'],
+  [1.3, 'M30 22 C34 26 34 32 30 36 M48 20 C52 24 54 30 50 36'],
+  [1.7, 'M20 50 L26 60 M24 48 L30 58 M28 46 L34 56 M50 48 L56 56 M54 46 L58 52'],
+] as const;
+---
+
+<BaseLayout paleta="boceto" canonica={canonica} noindex={noindex}>
+  <section id="inicio" class="boceto" aria-labelledby="boceto-titulo">
+    <div class="boceto__in">
+      <div class="boceto__texto">
+        <h1 id="boceto-titulo" class="etiqueta">Del boceto a la estampa{etiqueta && ` · ${etiqueta}`}</h1>
+        <div role="group" aria-label="Fases del grabado" class="fases">
+          {
+            FASES.map((f, i) => (
+              <button type="button" class="fase" data-fase={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+                <span class="fase__n">{String(i + 1).padStart(2, '0')}</span>
+                <span class="fase__nombre">{f.nombre}</span>
+              </button>
+            ))
+          }
+        </div>
+        <p class="boceto__explica" aria-live="polite" data-explica>{FASES[0].texto}</p>
+        <div class="boceto__botones">
+          <button type="button" class="boton boton--borde" data-otra-vez>↺ Ver otra vez</button>
+          <a class="boton boton--acento" href="#obra">Ver la obra</a>
+        </div>
+      </div>
+
+      {
+        obra && estampa && (
+          <div class="boceto__obra">
+            <a
+              class="tarjeta"
+              href={`/obra/${obra.id}`}
+              style={`aspect-ratio: ${ratio}`}
+              data-escena
+              data-fase-actual="0"
+              aria-label={`${etiqueta}: del boceto a lápiz a la estampa final. Ver la obra`}
+            >
+              <div class="plancha" style={`left: ${PLANCHA.left}; top: ${PLANCHA.top}; width: ${PLANCHA.width}; height: ${PLANCHA.height}`} aria-hidden="true">
+                <div class="capa marca" />
+                <div class="capa grano" />
+                {plancha && <img class="capa brunido" src={plancha.src} alt="" decoding="async" />}
+                <div class="capa trazo" data-trazo>
+                  <svg viewBox="0 0 76 100" preserveAspectRatio="none">
+                    <g stroke-width="0.55">
+                      {TRAZOS.map(([d, p]) => <path pathLength="1" style={`animation-delay: ${d}s`} d={p} />)}
+                    </g>
+                    <g stroke-width="0.3" opacity="0.55" transform="translate(0.7 0.5)">
+                      {TRAZOS_FINOS.map(([d, p]) => <path pathLength="1" style={`animation-delay: ${d}s`} d={p} />)}
+                    </g>
+                  </svg>
+                </div>
+              </div>
+              <img class="capa estampa" src={estampa.src} alt="" decoding="async" />
+            </a>
+          </div>
+        )
+      }
+    </div>
+    <script type="application/json" data-textos set:html={JSON.stringify(FASES.map((f) => f.texto))} />
+  </section>
+
+  <ComunesTaller datos={datos} />
+</BaseLayout>
+
+<style>
+  .boceto {
+    position: relative;
+    min-height: min(100vh - 73px, 860px);
+    background: var(--band);
+    border-bottom: 1px solid var(--line);
+  }
+  .boceto__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(48px, 6vw, 80px) var(--gutter);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 48px 64px;
+  }
+  .boceto__texto {
+    flex: 1 1 380px;
+    min-width: 0;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .fases {
+    display: flex;
+    flex-direction: column;
+  }
+  .fase {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    min-height: var(--tap);
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    /* Fases inactivas en gris claro (contraste ≥ 3:1, texto grande); la activa en tinta. */
+    color: #827e76;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.6s ease;
+  }
+  .fase:hover,
+  .fase[aria-pressed='true'] {
+    color: var(--ink);
+  }
+  .fase__n {
+    color: var(--muted);
+    width: 26px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  .fase__nombre {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(40px, 5.4vw, 84px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+  .boceto__explica {
+    margin: 0;
+    min-height: 56px;
+    max-width: 440px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .boceto__botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .boceto__obra {
+    flex: 0 1 auto;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+
+  /* Escena */
+  .tarjeta {
+    position: relative;
+    display: block;
+    height: min(72vh, 680px);
+    max-width: calc(100vw - 2 * var(--gutter));
+    background: #f7f6f2;
+    box-shadow: 0 2px 6px rgba(20, 16, 10, 0.08);
+    transition: box-shadow 1.6s ease;
+  }
+  .tarjeta:focus-visible {
+    outline-offset: 6px;
+  }
+  .plancha {
+    position: absolute;
+  }
+  .capa {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .marca {
+    inset: -2px;
+    width: auto;
+    height: auto;
+    border: 1px solid rgba(20, 16, 10, 0.22);
+    transition: opacity 1s ease;
+  }
+  .grano {
+    background-color: #19191d;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.07) 0.6px, rgba(0, 0, 0, 0) 0.9px);
+    background-size: 4px 4px;
+    opacity: 0;
+    transition: opacity 1.6s ease;
+  }
+  .brunido {
+    object-fit: cover;
+    clip-path: circle(0% at 55% 32%);
+    transition: clip-path 2.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .trazo {
+    color: #6b6a66;
+    transition:
+      color 1.6s ease,
+      opacity 1.4s ease;
+  }
+  .trazo svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .trazo path {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    animation: dibujar 2.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  @keyframes dibujar {
+    from {
+      stroke-dashoffset: 1;
+    }
+  }
+  .estampa {
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1.8s ease;
+  }
+  /* Estados por fase */
+  [data-fase-actual='1'] .grano,
+  [data-fase-actual='2'] .grano,
+  [data-fase-actual='3'] .grano {
+    opacity: 1;
+  }
+  [data-fase-actual='1'] .trazo {
+    color: #d9d6cf;
+  }
+  [data-fase-actual='2'] .trazo,
+  [data-fase-actual='3'] .trazo {
+    color: #d9d6cf;
+    opacity: 0;
+  }
+  [data-fase-actual='2'] .brunido,
+  [data-fase-actual='3'] .brunido {
+    clip-path: circle(95% at 55% 32%);
+  }
+  [data-fase-actual='3'] .marca {
+    opacity: 0;
+  }
+  [data-fase-actual='3'] .estampa {
+    opacity: 1;
+  }
+  [data-fase-actual='3'].tarjeta {
+    box-shadow:
+      0 2px 6px rgba(20, 16, 10, 0.1),
+      0 40px 80px rgba(20, 16, 10, 0.22);
+  }
+  @media (max-width: 640px) {
+    .fase__nombre {
+      font-size: min(40px, 9.6vw);
+    }
+    .boceto__obra {
+      width: 100%;
+    }
+    .tarjeta {
+      width: 100%;
+      height: auto;
+      max-width: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .trazo path {
+      animation: none;
+    }
+    .fase,
+    .grano,
+    .brunido,
+    .trazo,
+    .estampa,
+    .marca,
+    .tarjeta {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const escena = document.querySelector<HTMLElement>('[data-escena]');
+  const botones = [...document.querySelectorAll<HTMLButtonElement>('[data-fase]')];
+  const explica = document.querySelector<HTMLElement>('[data-explica]');
+  const textos: string[] = JSON.parse(document.querySelector('[data-textos]')?.textContent ?? '[]');
+  const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let temporizadores: number[] = [];
+
+  const ir = (fase: number) => {
+    escena?.setAttribute('data-fase-actual', String(fase));
+    botones.forEach((b, i) => b.setAttribute('aria-pressed', String(i === fase)));
+    if (explica) explica.textContent = textos[fase] ?? '';
+  };
+  const parar = () => {
+    temporizadores.forEach(clearTimeout);
+    temporizadores = [];
+  };
+  const reproducir = () => {
+    parar();
+    if (reducir) return ir(3);
+    // Reinicia el dibujo del trazo.
+    const trazo = escena?.querySelector<HTMLElement>('[data-trazo]');
+    if (trazo) {
+      const svg = trazo.innerHTML;
+      trazo.innerHTML = '';
+      trazo.innerHTML = svg;
+    }
+    ir(0);
+    [2800, 5600, 8600].forEach((t, i) => temporizadores.push(window.setTimeout(() => ir(i + 1), t)));
+  };
+
+  botones.forEach((b, i) =>
+    b.addEventListener('click', () => {
+      parar();
+      ir(i);
+    })
+  );
+  document.querySelector('[data-otra-vez]')?.addEventListener('click', reproducir);
+
+  // Empieza cuando la escena se ve (no antes, para no perderse el boceto).
+  if (escena) {
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        reproducir();
+        io.disconnect();
+      }
+    }, { threshold: 0.4 });
+    io.observe(escena);
+  }
+</script>
