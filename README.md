@@ -77,8 +77,9 @@ git push -u origin main
 
 ### 2. Netlify
 1. *Add new site → Import an existing project →* elige el repositorio. La configuración se lee de `netlify.toml` (Node 24, `npm run build`, carpeta `dist`).
-2. En *Site configuration → Environment variables* añade:
-   `PUBLIC_KEYSTATIC_GITHUB_REPO = USUARIO/jesusenovilla-web`
+2. (Opcional) El repositorio que usa Keystatic ya viene en `keystatic.config.ts`
+   (`alejandroriglesias/portfoliojesusenovilla`); solo si cambia, añade en
+   *Site configuration → Environment variables* `PUBLIC_KEYSTATIC_GITHUB_REPO = usuario/repositorio`.
 3. Despliega. Comprueba la URL provisional (`*.netlify.app`).
 
 ### 3. Keystatic (edición en producción)
@@ -93,7 +94,9 @@ Keystatic usa una GitHub App para que el artista entre con su cuenta de GitHub.
    `KEYSTATIC_GITHUB_CLIENT_ID`, `KEYSTATIC_GITHUB_CLIENT_SECRET`, `KEYSTATIC_SECRET`, `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`.
 3. Cópialas a las variables de entorno de Netlify y vuelve a desplegar.
 4. En la configuración de la GitHub App (github.com → Settings → Developer settings → GitHub Apps) añade como *Callback URL*:
-   `https://jesusenovilla.com/api/keystatic/github/oauth/callback` (y la de `*.netlify.app` si se va a usar).
+   `https://jesusenovilla.com/api/keystatic/github/oauth/callback` y
+   `https://portfoliojesusenovilla.netlify.app/api/keystatic/github/oauth/callback`
+   (en GitHub ahora se llama **Redirect URI**, botón *Add redirect URI*).
 5. Instala la App en el repositorio y da acceso al artista (colaborador del repositorio).
 6. Quita `PUBLIC_KEYSTATIC_MODO=github` de tu `.env` local para volver a editar en local.
 

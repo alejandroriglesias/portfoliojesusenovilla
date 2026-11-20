@@ -12,8 +12,8 @@ import { collection, config, fields, singleton } from '@keystatic/core';
 // PUBLIC_KEYSTATIC_MODO=github (solo para el asistente de configuración inicial; ver README).
 const usarGithub = import.meta.env.PROD || import.meta.env.PUBLIC_KEYSTATIC_MODO === 'github';
 // Repositorio de GitHub donde se guarda el contenido en producción, p. ej. «usuario/jesusenovilla-web».
-// Se define como variable de entorno en Netlify (ver README).
-const repo = (import.meta.env.PUBLIC_KEYSTATIC_GITHUB_REPO as `${string}/${string}` | undefined) ?? 'OWNER/REPO';
+// Por defecto, el repositorio de la web; se puede cambiar con la variable PUBLIC_KEYSTATIC_GITHUB_REPO.
+const repo = (import.meta.env.PUBLIC_KEYSTATIC_GITHUB_REPO as `${string}/${string}` | undefined) ?? 'alejandroriglesias/portfoliojesusenovilla';
 
 // ---------- Listas compartidas ----------
 
