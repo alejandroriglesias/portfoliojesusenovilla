@@ -1,0 +1,427 @@
+---
+/**
+ * Portada 07 · Deriva — un muro de obras a pantalla completa que deriva
+ * despacio y sin fin en diagonal. La posición del cursor orienta y acelera la
+ * deriva; al pasar por una obra el muro se detiene y aparece su cartela.
+ * El nombre, enorme y en blanco con mix-blend-mode: difference, cambia de
+ * color con cada obra que pasa por debajo. Debajo, las secciones comunes.
+ *
+ * Infinito: cada fila contiene sus obras dos veces (se desplaza en módulo del
+ * ancho de una tanda) y el escenario contiene las filas dos veces (módulo del
+ * alto de una tanda). Solo la primera copia de cada obra es enfocable.
+ */
+import { getImage } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ComunesTaller from '../components/portada/ComunesTaller.astro';
+import { getDatosPortada } from '../lib/portada';
+import { usuarioInstagram } from '../lib/ajustes';
+import type { Props as PropsPortada } from './tipos';
+
+type Props = PropsPortada;
+const { canonica, noindex } = Astro.props;
+const datos = await getDatosPortada();
+const { obras, etiquetas, ajustes } = datos;
+
+const FILAS = 4;
+// Obras por fila: suficientes para que una tanda sea más ancha que la pantalla.
+const porFila = Math.max(5, Math.ceil(obras.length / FILAS));
+
+const piezas = await Promise.all(
+  obras.map(async (o, i) => {
+    const src = o.data.imagen;
+    const img = await getImage({ src, width: Math.min(src.width, 720), format: 'webp', quality: 78 });
+    return {
+      href: `/obra/${o.id}`,
+      src: img.src,
+      ratio: +(src.width / src.height).toFixed(4),
+      titulo: o.data.titulo,
+      meta: [etiquetas[i], o.data.anio].filter(Boolean).join(' · '),
+      alt: o.data.alt ?? o.data.titulo,
+    };
+  })
+);
+
+// Reparto: cada fila arranca en un punto distinto de la lista para que las
+// vecinas no coincidan (con pocas obras se repiten, como en un muro real).
+const filas = Array.from({ length: FILAS }, (_, f) =>
+  Array.from({ length: porFila }, (_, j) => piezas[(f * porFila + j) % Math.max(1, piezas.length)])
+);
+const primeraAparicion = new Set<string>();
+const filasConFoco = filas.map((fila) =>
+  fila.map((p) => {
+    const enfocable = !primeraAparicion.has(p.href);
+    primeraAparicion.add(p.href);
+    return { ...p, enfocable };
+  })
+);
+const insta = usuarioInstagram(ajustes.instagram);
+---
+
+<BaseLayout cabecera="superpuesta" paleta="deriva" canonica={canonica} noindex={noindex}>
+  <section id="inicio" class="deriva" aria-labelledby="deriva-titulo">
+    <muro-deriva class="deriva__muro" data-filas={FILAS}>
+      <div class="deriva__escenario" data-escenario>
+        {
+          [0, 1].map((tanda) =>
+            filasConFoco.map((fila, f) => (
+              <div class="fila" data-fila={f} aria-hidden={tanda === 1 ? 'true' : undefined}>
+                {[0, 1].map((copia) => (
+                  <div class="fila__tanda" data-tanda={copia === 0 ? '' : undefined} aria-hidden={copia === 1 ? 'true' : undefined}>
+                    {fila.map((p) => {
+                      const foco = tanda === 0 && copia === 0 && p.enfocable;
+                      return (
+                        <a
+                          class="pieza"
+                          href={p.href}
+                          tabindex={foco ? undefined : -1}
+                          aria-hidden={foco ? undefined : 'true'}
+                          style={`--ratio: ${p.ratio}`}
+                        >
+                          <img src={p.src} alt={foco ? p.alt : ''} decoding="async" draggable="false" fetchpriority={tanda === 0 && f < 2 ? 'high' : 'low'} />
+                          <span class="pieza__cartela">
+                            <span class="pieza__titulo">{p.titulo}</span>
+                            <span class="pieza__meta">{p.meta}</span>
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            ))
+          )
+        }
+      </div>
+    </muro-deriva>
+
+    <div class="deriva__velo" aria-hidden="true"></div>
+
+    <h1 id="deriva-titulo" class="deriva__nombre" data-ajustar><span>Jesús</span> <span>Senovilla</span></h1>
+    <p class="deriva__lema" aria-hidden="true">Óleo · Acuarela · Grabado</p>
+
+    <div class="deriva__pie">
+      <a class="deriva__enlace" href="#obra">
+        <span class="punto" aria-hidden="true"></span>Ver toda la obra <span aria-hidden="true">↓</span>
+      </a>
+      {ajustes.instagram && <a class="deriva__enlace" href={ajustes.instagram} rel="me noopener">{insta}</a>}
+    </div>
+  </section>
+
+  <ComunesTaller datos={datos} />
+</BaseLayout>
+
+<style>
+  .deriva {
+    --alto: clamp(240px, 46vh, 520px);
+    --hueco: clamp(28px, 4.4vw, 64px);
+    position: relative;
+    height: 100svh;
+    min-height: 600px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .deriva__muro {
+    position: absolute;
+    inset: 0;
+    display: block;
+  }
+  .deriva__escenario {
+    position: absolute;
+    left: 0;
+    top: 0;
+    will-change: transform;
+  }
+  .fila {
+    display: flex;
+    width: max-content;
+    margin-bottom: var(--hueco);
+    will-change: transform;
+  }
+  .fila__tanda {
+    display: flex;
+    gap: var(--hueco);
+    padding-right: var(--hueco);
+  }
+  .pieza {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    height: var(--alto);
+    width: calc(var(--alto) * var(--ratio));
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .pieza img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--card);
+    user-select: none;
+  }
+  .pieza:hover,
+  .pieza:focus-visible {
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 0 24px 50px rgba(20, 16, 10, 0.22);
+    z-index: 2;
+  }
+  .pieza:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+  /* Cartela que aparece al pasar por la obra */
+  .pieza__cartela {
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    transform: translateY(100%);
+    display: flex;
+    flex-direction: column;
+    padding-top: 10px;
+    font-size: 13px;
+    line-height: 1.35;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .pieza:hover .pieza__cartela,
+  .pieza:focus-visible .pieza__cartela {
+    opacity: 1;
+  }
+  .pieza__titulo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+  .pieza__meta {
+    color: var(--muted);
+  }
+
+  /* Un velo muy suave en los bordes para que el texto respire */
+  .deriva__velo {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to bottom, rgba(245, 243, 238, 0.55), transparent 18%, transparent 78%, rgba(245, 243, 238, 0.7)),
+      radial-gradient(ellipse at center, transparent 55%, rgba(245, 243, 238, 0.25));
+  }
+
+  .deriva__nombre {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    top: 50%;
+    transform: translateY(-58%);
+    margin: 0;
+    text-align: center;
+    white-space: nowrap;
+    font-weight: 800;
+    /* «Jesús Senovilla» en Syne 800 ≈ 12em: cabe entero; data-ajustar corrige lo que falte */
+    font-size: clamp(36px, calc((100vw - 2 * var(--gutter)) / 12.4), 210px);
+    line-height: 0.9;
+    letter-spacing: -0.045em;
+    color: #fff;
+    mix-blend-mode: difference;
+    pointer-events: none;
+  }
+  .deriva__lema {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% + clamp(36px, calc((100vw - 2 * var(--gutter)) / 12.4), 210px) * 0.5);
+    margin: 0;
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #fff;
+    mix-blend-mode: difference;
+    pointer-events: none;
+  }
+  .deriva__pie {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 24px;
+    pointer-events: none;
+  }
+  .deriva__enlace {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tap);
+    padding: 0 16px;
+    border-radius: var(--radius-pill);
+    background: rgba(245, 243, 238, 0.88);
+    backdrop-filter: blur(8px);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+  .deriva__enlace:hover {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  @media (max-width: 640px) {
+    .deriva {
+      --alto: clamp(180px, 34vh, 300px);
+      height: 88svh;
+      min-height: 520px;
+    }
+    /* En móvil, el nombre en dos líneas y mucho más grande */
+    .deriva__nombre {
+      white-space: normal;
+      font-size: clamp(40px, calc((100vw - 2 * var(--gutter)) / 7.6), 96px);
+      line-height: 0.88;
+      transform: translateY(-62%);
+    }
+    .deriva__nombre span {
+      display: block;
+    }
+    .deriva__lema {
+      top: calc(50% + clamp(40px, calc((100vw - 2 * var(--gutter)) / 7.6), 96px) * 1.05);
+    }
+    .deriva__enlace {
+      min-height: 40px;
+      font-size: 12px;
+    }
+    .deriva__lema {
+      letter-spacing: 0.2em;
+      font-size: 11px;
+    }
+  }
+</style>
+
+<script>
+  // Velocidad base (px/s) y cuánto la orienta el cursor.
+  const BASE = { x: -14, y: -10 };
+  const GUIA = 46;
+
+  class MuroDeriva extends HTMLElement {
+    private escenario!: HTMLElement;
+    private filas: HTMLElement[] = [];
+    private anchos: number[] = [];
+    private desfases: number[] = [];
+    private altoTanda = 0;
+    private x = 0;
+    private y = 0;
+    private v = { ...BASE };
+    private objetivo = { ...BASE };
+    private pausa = false;
+    private visible = true;
+    private ultimo = 0;
+    private marco = 0;
+
+    connectedCallback() {
+      this.escenario = this.querySelector('[data-escenario]')!;
+      this.filas = [...this.querySelectorAll<HTMLElement>('.fila')];
+      const nFilas = Number(this.dataset.filas) || 4;
+      this.desfases = this.filas.map((_, i) => ((i % nFilas) * 0.37) % 1);
+      this.medir();
+      new ResizeObserver(() => this.medir()).observe(this);
+      // Las imágenes cargadas tarde no cambian el ancho (lo fija la proporción), pero por si acaso:
+      addEventListener('load', () => this.medir(), { once: true });
+
+      const reducir = matchMedia('(prefers-reduced-motion: reduce)');
+      const seccion = this.closest('section')!;
+
+      // El cursor orienta la deriva: hacia donde apunta, hacia allí se viaja.
+      seccion.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        const c = seccion.getBoundingClientRect();
+        const dx = (e.clientX - c.left) / c.width - 0.5;
+        const dy = (e.clientY - c.top) / c.height - 0.5;
+        this.objetivo = { x: BASE.x - dx * GUIA * 2, y: BASE.y - dy * GUIA * 2 };
+      });
+      seccion.addEventListener('pointerleave', () => (this.objetivo = { ...BASE }));
+
+      // Se detiene sobre una obra o con el foco del teclado dentro.
+      this.addEventListener('pointerover', (e) => {
+        if ((e.target as HTMLElement).closest('.pieza')) this.pausa = true;
+      });
+      this.addEventListener('pointerout', (e) => {
+        if (!(e.relatedTarget as HTMLElement | null)?.closest?.('.pieza')) this.pausa = false;
+      });
+      this.addEventListener('focusin', () => (this.pausa = true));
+      this.addEventListener('focusout', (e) => {
+        if (!this.contains(e.relatedTarget as Node)) this.pausa = false;
+      });
+
+      new IntersectionObserver(([en]) => {
+        this.visible = en.isIntersecting;
+        if (this.visible && !reducir.matches) this.arrancar();
+      }).observe(this);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.visible && !reducir.matches) this.arrancar();
+      });
+
+      this.pintar();
+      if (!reducir.matches) this.arrancar();
+    }
+
+    private medir() {
+      this.anchos = this.filas.map((f) => (f.querySelector<HTMLElement>('[data-tanda]')?.offsetWidth ?? 1) || 1);
+      const nFilas = Number(this.dataset.filas) || 4;
+      const primera = this.filas[0];
+      const paso = primera ? primera.offsetHeight + parseFloat(getComputedStyle(primera).marginBottom) : 1;
+      this.altoTanda = paso * nFilas || 1;
+      this.pintar();
+    }
+
+    private arrancar() {
+      cancelAnimationFrame(this.marco);
+      this.ultimo = performance.now();
+      this.marco = requestAnimationFrame((t) => this.paso(t));
+    }
+
+    private paso(t: number) {
+      if (!this.visible || document.hidden) return;
+      const dt = Math.min(0.05, (t - this.ultimo) / 1000);
+      this.ultimo = t;
+      // Suavizado: la velocidad se acerca al objetivo (o a cero en pausa).
+      const meta = this.pausa ? { x: 0, y: 0 } : this.objetivo;
+      const k = 1 - Math.exp(-dt * 3);
+      this.v.x += (meta.x - this.v.x) * k;
+      this.v.y += (meta.y - this.v.y) * k;
+      this.x += this.v.x * dt;
+      this.y += this.v.y * dt;
+      this.pintar();
+      this.marco = requestAnimationFrame((n) => this.paso(n));
+    }
+
+    private pintar() {
+      const mod = (a: number, n: number) => ((a % n) + n) % n;
+      const ty = -mod(-this.y, this.altoTanda);
+      this.escenario.style.transform = `translate3d(0, ${ty}px, 0)`;
+      this.filas.forEach((f, i) => {
+        const w = this.anchos[i] || 1;
+        const tx = -mod(-this.x + this.desfases[i] * w, w);
+        f.style.transform = `translate3d(${tx}px, 0, 0)`;
+      });
+    }
+  }
+
+  if (!customElements.get('muro-deriva')) customElements.define('muro-deriva', MuroDeriva);
+</script>

@@ -69,6 +69,15 @@
   --footer-bg: #141414;
   --header-bg: var(--bg);
 }
+[data-paleta='deriva'] {
+  --bg: #f5f3ee;
+  --band: #ebe7df;
+  --card: #dcd7cd;
+  --muted: #5f5c55;
+  --footer-bg: #141414;
+  --header-bg: var(--bg);
+  --container: 1440px;
+}
 [data-paleta='oscura'] {
   --bg: var(--black);
   --footer-bg: var(--black);

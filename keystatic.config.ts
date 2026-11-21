@@ -382,6 +382,7 @@ export default config({
             { label: '04 · Muro', value: 'muro' },
             { label: '05 · Boceto', value: 'boceto' },
             { label: '06 · Bandas', value: 'bandas' },
+            { label: '07 · Deriva', value: 'deriva' },
           ],
           defaultValue: 'luz',
         }),

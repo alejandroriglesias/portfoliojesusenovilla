@@ -15,7 +15,7 @@ Astro 7 + Keystatic · CSS propio · sin base de datos: el contenido son archivo
    - **Técnicas** — textos de cada técnica («Sobre la técnica»).
    - **Blog** — entradas. El enlace «Blog» aparece en el menú cuando hay al menos una publicada.
    - **Sobre mí** — biografía, retrato, firma y trayectoria.
-   - **Ajustes** — email, Instagram, ciudad del taller, encargos, **portada activa** (cuál de los 6 diseños se ve en la página de inicio) y textos SEO.
+   - **Ajustes** — email, Instagram, ciudad del taller, encargos, **portada activa** (cuál de los 7 diseños se ve en la página de inicio) y textos SEO.
 3. Pulsa **Guardar**. La web se actualiza sola en 1–2 minutos.
 
 Los textos entre **[corchetes]** son marcadores pendientes de escribir.
@@ -43,7 +43,7 @@ En desarrollo se ven también las obras ocultas y las de ejemplo (con un aviso);
 | `src/content.config.ts` | Las mismas colecciones para Astro (con `astro:assets`) |
 | `src/content/` | Contenido (obras, técnicas, blog, sobre mí, ajustes) |
 | `src/assets/` | Imágenes del contenido |
-| `src/portadas/` | Las 6 portadas (Galería, Luz, Revista, Muro, Boceto, Bandas) |
+| `src/portadas/` | Las 7 portadas (Galería, Luz, Revista, Muro, Boceto, Bandas, Deriva) |
 | `src/components/` | Cabecera, pie, ficha de obra (lupa, proceso…), índice, filtros… |
 | `src/lib/redirecciones.mjs` | Redirecciones 301 desde el antiguo WordPress |
 | `integraciones/vigilar-ejemplos.mjs` | Detiene la compilación si una imagen de ejemplo llega a `dist/` |

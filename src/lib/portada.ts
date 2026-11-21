@@ -5,7 +5,7 @@ import { parse } from 'yaml';
 import { getAjustes } from './ajustes';
 import { etiquetaTecnica, getObras, getSobreMi, getTecnicas, type Obra } from './contenido';
 
-export const PORTADAS = ['galeria', 'luz', 'revista', 'muro', 'boceto', 'bandas'] as const;
+export const PORTADAS = ['galeria', 'luz', 'revista', 'muro', 'boceto', 'bandas', 'deriva'] as const;
 export type Portada = (typeof PORTADAS)[number];
 
 export const NOMBRES_PORTADA: Record<Portada, string> = {
@@ -15,6 +15,7 @@ export const NOMBRES_PORTADA: Record<Portada, string> = {
   muro: 'Muro',
   boceto: 'Boceto',
   bandas: 'Bandas',
+  deriva: 'Deriva',
 };
 
 /** Todo lo que necesitan las portadas, en una sola llamada. */
