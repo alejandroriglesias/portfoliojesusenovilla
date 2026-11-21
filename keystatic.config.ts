@@ -8,12 +8,13 @@ import { collection, config, fields, singleton } from '@keystatic/core';
  * contenido (src/content/<colección>/<slug>.mdoc → ../../assets/…).
  */
 
-// En producción se guarda en GitHub. En local, en los archivos del proyecto, salvo que
-// PUBLIC_KEYSTATIC_MODO=github (solo para el asistente de configuración inicial; ver README).
-const usarGithub = import.meta.env.PROD || import.meta.env.PUBLIC_KEYSTATIC_MODO === 'github';
-// Repositorio de GitHub donde se guarda el contenido en producción, p. ej. «usuario/jesusenovilla-web».
-// Por defecto, el repositorio de la web; se puede cambiar con la variable PUBLIC_KEYSTATIC_GITHUB_REPO.
-const repo = (import.meta.env.PUBLIC_KEYSTATIC_GITHUB_REPO as `${string}/${string}` | undefined) ?? 'alejandroriglesias/portfoliojesusenovilla';
+// En producción el panel usa Keystatic Cloud: el pintor entra con su cuenta de
+// correo (sin GitHub) y Keystatic Cloud guarda los cambios en el repositorio.
+// En local se guarda en los archivos del proyecto, salvo PUBLIC_KEYSTATIC_MODO=cloud.
+const usarNube = import.meta.env.PROD || import.meta.env.PUBLIC_KEYSTATIC_MODO === 'cloud';
+// Equipo/proyecto de keystatic.cloud (se puede cambiar con PUBLIC_KEYSTATIC_CLOUD_PROJECT).
+const proyectoNube =
+  (import.meta.env.PUBLIC_KEYSTATIC_CLOUD_PROJECT as `${string}/${string}` | undefined) ?? 'portfolio-jesu/portfoliojesu';
 
 // ---------- Listas compartidas ----------
 
@@ -70,14 +71,10 @@ const textoEnriquecido = (label: string, carpeta: string, description?: string) 
   });
 
 export default config({
-  storage: usarGithub
-    ? {
-        kind: 'github',
-        repo,
-        // Cada guardado desde el panel es un commit en la rama principal;
-        // Netlify detecta el cambio y vuelve a publicar la web (1–2 minutos).
-      }
-    : { kind: 'local' },
+  // Cada guardado desde el panel es un commit en la rama principal del repositorio;
+  // Netlify detecta el cambio y vuelve a publicar la web (1–2 minutos).
+  storage: usarNube ? { kind: 'cloud' } : { kind: 'local' },
+  cloud: { project: proyectoNube },
   locale: 'es-ES',
   ui: {
     brand: { name: 'Jesús Senovilla' },

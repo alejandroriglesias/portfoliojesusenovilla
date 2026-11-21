@@ -7,7 +7,7 @@ Astro 7 + Keystatic · CSS propio · sin base de datos: el contenido son archivo
 
 ## Para el artista: cómo editar la web
 
-1. Entra en **https://jesusenovilla.com/keystatic** con tu cuenta de GitHub.
+1. Entra en **https://jesusenovilla.com/keystatic** con tu cuenta de **Keystatic Cloud** (tu correo; no hace falta GitHub).
 2. En el menú de la izquierda:
    - **Obras** — cada obra con su imagen, técnica, año, medidas, estado, vistas, proceso…
      - La casilla **Publicada** decide si la obra sale en la web. Las obras traídas del WordPress cuya técnica no se conocía están **sin publicar**: revisa la nota de cada una («Notas internas»), elige la técnica correcta y marca *Publicada*.
@@ -83,22 +83,12 @@ git push -u origin main
 3. Despliega. Comprueba la URL provisional (`*.netlify.app`).
 
 ### 3. Keystatic (edición en producción)
-Keystatic usa una GitHub App para que el artista entre con su cuenta de GitHub.
+El panel usa **Keystatic Cloud**: quien edita entra con su cuenta de correo (sin GitHub) y Keystatic Cloud guarda los cambios como commits en el repositorio.
 
-1. En local, crea `.env` con:
-   ```
-   PUBLIC_KEYSTATIC_GITHUB_REPO=USUARIO/jesusenovilla-web
-   PUBLIC_KEYSTATIC_MODO=github
-   ```
-2. `npm run dev` y abre http://localhost:4321/keystatic → sigue el asistente «Create GitHub App». Al terminar, Keystatic escribe en `.env` estas variables:
-   `KEYSTATIC_GITHUB_CLIENT_ID`, `KEYSTATIC_GITHUB_CLIENT_SECRET`, `KEYSTATIC_SECRET`, `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`.
-3. Cópialas a las variables de entorno de Netlify y vuelve a desplegar.
-4. En la configuración de la GitHub App (github.com → Settings → Developer settings → GitHub Apps) añade como *Callback URL*:
-   `https://jesusenovilla.com/api/keystatic/github/oauth/callback` y
-   `https://portfoliojesusenovilla.netlify.app/api/keystatic/github/oauth/callback`
-   (en GitHub ahora se llama **Redirect URI**, botón *Add redirect URI*).
-5. Instala la App en el repositorio y da acceso al artista (colaborador del repositorio).
-6. Quita `PUBLIC_KEYSTATIC_MODO=github` de tu `.env` local para volver a editar en local.
+- Proyecto: `portfolio-jesu/portfoliojesu` (en `keystatic.config.ts`; se puede cambiar con `PUBLIC_KEYSTATIC_CLOUD_PROJECT`).
+- El proyecto está enlazado en keystatic.cloud al repositorio `alejandroriglesias/portfoliojesusenovilla`.
+- **Dar acceso a alguien**: keystatic.cloud → equipo `portfolio-jesu` → *Members* → invitar por correo. El plan gratuito admite hasta 3 personas por equipo.
+- En local, `npm run dev` guarda en los archivos del proyecto. Para probar el modo nube en local: `PUBLIC_KEYSTATIC_MODO=cloud` en `.env`.
 
 ### 4. Dominio
 1. En Netlify: *Domain management → Add domain →* `jesusenovilla.com` (y `www`).
