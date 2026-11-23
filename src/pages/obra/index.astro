@@ -357,6 +357,7 @@ const pestanas = [
 <script>
   import Lenis from 'lenis';
   import 'lenis/dist/lenis.css';
+  import { EVENTO_CAMBIO, permite } from '../../lib/consentimiento';
 
   const CLAVE = 'obra:vista';
   const raiz = document.querySelector<HTMLElement>('[data-obra]');
@@ -443,7 +444,8 @@ const pestanas = [
       vistas.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vistaBoton === vista)));
       paneles.forEach((p) => (p.hidden = p.dataset.panel !== vista));
       raiz.dataset.vista = vista;
-      if (!guardar) return;
+      // Recordar la vista es una «preferencia»: solo con permiso (aviso de cookies).
+      if (!guardar || !permite('preferencias')) return;
       try {
         localStorage.setItem(CLAVE, vista);
       } catch {
@@ -477,11 +479,16 @@ const pestanas = [
     );
 
     try {
-      const guardada = localStorage.getItem(CLAVE);
+      const guardada = permite('preferencias') ? localStorage.getItem(CLAVE) : null;
       if (guardada === 'sala' || guardada === 'indice') elegirVista(guardada, false);
     } catch {
       /* sin almacenamiento: vista por defecto */
     }
+
+    // Si se aceptan las preferencias ahora, se recuerda la vista actual.
+    document.addEventListener(EVENTO_CAMBIO, () => {
+      if (permite('preferencias')) elegirVista(raiz.dataset.vista ?? 'sala');
+    });
 
     // Raya en su sitio al cargar (sin animar) y al cambiar el tamaño.
     const colocarRayas = (animar: boolean) => grupos.forEach((g) => moverRaya(g, animar));

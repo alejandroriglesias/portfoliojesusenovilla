@@ -26,6 +26,9 @@ const anio = new Date().getFullYear();
           {legales.map((l) => (
             <a href={`/${l.id}`}>{l.data.titulo}</a>
           ))}
+          <button type="button" class="pie__cookies" data-abrir-cookies>
+            Configurar cookies
+          </button>
         </nav>
         <p class="pie__pago">Pago por transferencia o Bizum · Sin cookies de seguimiento</p>
       </div>
@@ -79,7 +82,8 @@ const anio = new Date().getFullYear();
     flex-wrap: wrap;
     gap: 0 22px;
   }
-  .pie__legal-nav a {
+  .pie__legal-nav a,
+  .pie__cookies {
     display: inline-flex;
     align-items: center;
     min-height: 36px;
@@ -94,7 +98,14 @@ const anio = new Date().getFullYear();
       background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
       color 0.3s ease;
   }
-  .pie__legal-nav a:hover {
+  .pie__cookies {
+    padding: 0;
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .pie__legal-nav a:hover,
+  .pie__cookies:hover {
     color: var(--footer-link);
     background-position: left 70%;
     background-size: 100% 1px;
@@ -108,3 +119,8 @@ const anio = new Date().getFullYear();
     outline-color: var(--accent-on-dark);
   }
 </style>
+
+<script>
+  import { abrirAjustesCookies } from '../lib/consentimiento';
+  document.querySelectorAll('[data-abrir-cookies]').forEach((b) => b.addEventListener('click', abrirAjustesCookies));
+</script>

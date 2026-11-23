@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import AjustarTexto from '../components/AjustarTexto.astro';
 import TransicionObras from '../components/TransicionObras.astro';
+import AvisoCookies from '../components/AvisoCookies.astro';
 import { getImage } from 'astro:assets';
 import { getAjustes } from '../lib/ajustes';
 import { getObrasDestacadas } from '../lib/contenido';
@@ -105,6 +106,7 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
       <slot />
     </main>
     <Footer />
+    <AvisoCookies />
     <AjustarTexto />
   </body>
 </html>
