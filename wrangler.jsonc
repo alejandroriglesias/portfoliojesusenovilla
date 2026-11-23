@@ -1,5 +1,6 @@
 // Configuración del Worker de Cloudflare (despliegue). El adaptador de Astro
 // completa el resto (punto de entrada y archivos estáticos) al compilar.
+// Se despliega con Workers Builds desde la rama de producción configurada en Cloudflare.
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "portfoliojesusenovilla",
