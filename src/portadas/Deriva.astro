@@ -6,6 +6,10 @@
  * El nombre, enorme y en blanco con mix-blend-mode: difference, cambia de
  * color con cada obra que pasa por debajo. Debajo, las secciones comunes.
  *
+ * Navegable: se arrastra con el ratón o el dedo (con inercia al soltar) y con
+ * el desplazamiento lateral del trackpad. Tras arrastrar, el clic no abre la
+ * obra. En táctil, el gesto vertical sigue desplazando la página.
+ *
  * Infinito: cada fila contiene sus obras dos veces (se desplaza en módulo del
  * ancho de una tanda) y el escenario contiene las filas dos veces (módulo del
  * alto de una tanda). Solo la primera copia de cada obra es enfocable.
@@ -100,6 +104,10 @@ const insta = usuarioInstagram(ajustes.instagram);
     <p class="deriva__lema" aria-hidden="true">Óleo · Acuarela · Grabado</p>
 
     <div class="deriva__pie">
+      <p class="deriva__pista" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20" /></svg>
+        <span class="deriva__pista-raton">Arrastra para recorrer</span><span class="deriva__pista-tactil">Desliza para recorrer</span>
+      </p>
       <a class="deriva__enlace" href="#obra">
         <span class="punto" aria-hidden="true"></span>Ver toda la obra <span aria-hidden="true">↓</span>
       </a>
@@ -124,6 +132,19 @@ const insta = usuarioInstagram(ajustes.instagram);
     position: absolute;
     inset: 0;
     display: block;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    /* El gesto vertical en táctil sigue siendo de la página */
+    touch-action: pan-y pinch-zoom;
+  }
+  .deriva__muro.is-arrastrando,
+  .deriva__muro.is-arrastrando * {
+    cursor: grabbing;
+  }
+  /* Mientras se arrastra, ni realces ni cartelas */
+  .deriva__muro.is-arrastrando .pieza {
+    pointer-events: none;
   }
   .deriva__escenario {
     position: absolute;
@@ -257,6 +278,40 @@ const insta = usuarioInstagram(ajustes.instagram);
     gap: 8px 24px;
     pointer-events: none;
   }
+  .deriva__pista {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    margin: 0;
+    min-height: var(--tap);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+    mix-blend-mode: difference;
+    white-space: nowrap;
+    transition: opacity 0.6s ease;
+  }
+  .deriva__pista-tactil {
+    display: none;
+  }
+  @media (hover: none) {
+    .deriva__pista-raton {
+      display: none;
+    }
+    .deriva__pista-tactil {
+      display: inline;
+    }
+  }
+  /* Tras el primer arrastre ya no hace falta */
+  .deriva.ya-arrastrado .deriva__pista {
+    opacity: 0;
+  }
   .deriva__enlace {
     pointer-events: auto;
     display: inline-flex;
@@ -311,6 +366,10 @@ const insta = usuarioInstagram(ajustes.instagram);
       letter-spacing: 0.2em;
       font-size: 11px;
     }
+    .deriva__pista {
+      bottom: calc(100% + 6px);
+      font-size: 11px;
+    }
   }
 </style>
 
@@ -333,6 +392,11 @@ const insta = usuarioInstagram(ajustes.instagram);
     private visible = true;
     private ultimo = 0;
     private marco = 0;
+    /** Arrastre en curso (puntero, última posición y tiempo, recorrido total). */
+    private arrastre: { id: number; x: number; y: number; t: number; recorrido: number } | null = null;
+    /** Velocidad que queda al soltar (px/s); se frena poco a poco. */
+    private inercia = { x: 0, y: 0 };
+    private reducir = matchMedia('(prefers-reduced-motion: reduce)');
 
     connectedCallback() {
       this.escenario = this.querySelector('[data-escenario]')!;
@@ -344,8 +408,9 @@ const insta = usuarioInstagram(ajustes.instagram);
       // Las imágenes cargadas tarde no cambian el ancho (lo fija la proporción), pero por si acaso:
       addEventListener('load', () => this.medir(), { once: true });
 
-      const reducir = matchMedia('(prefers-reduced-motion: reduce)');
+      const reducir = this.reducir;
       const seccion = this.closest('section')!;
+      this.navegacion(seccion);
 
       // El cursor orienta la deriva: hacia donde apunta, hacia allí se viaja.
       seccion.addEventListener('pointermove', (e) => {
@@ -381,6 +446,88 @@ const insta = usuarioInstagram(ajustes.instagram);
       if (!reducir.matches) this.arrancar();
     }
 
+    /** Arrastre con ratón o dedo, con inercia; desplazamiento lateral del trackpad. */
+    private navegacion(seccion: HTMLElement) {
+      const UMBRAL = 6;
+      this.addEventListener('dragstart', (e) => e.preventDefault());
+
+      this.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        this.arrastre = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), recorrido: 0 };
+        this.inercia = { x: 0, y: 0 };
+      });
+
+      addEventListener(
+        'pointermove',
+        (e) => {
+          const a = this.arrastre;
+          if (!a || e.pointerId !== a.id) return;
+          const ahora = performance.now();
+          const dx = e.clientX - a.x;
+          // En táctil el eje vertical es del scroll de la página.
+          const dy = e.pointerType === 'touch' ? 0 : e.clientY - a.y;
+          const ms = Math.max(8, ahora - a.t);
+          a.x = e.clientX;
+          a.y = e.clientY;
+          a.t = ahora;
+          a.recorrido += Math.abs(dx) + Math.abs(dy);
+          if (a.recorrido > UMBRAL && !this.classList.contains('is-arrastrando')) {
+            this.classList.add('is-arrastrando');
+            seccion.classList.add('ya-arrastrado');
+            try {
+              this.setPointerCapture(a.id);
+            } catch {
+              /* sin captura: seguimos con los eventos de la ventana */
+            }
+          }
+          this.x += dx;
+          this.y += dy;
+          // Velocidad suavizada (px/s) para lanzar el muro al soltar.
+          this.inercia = { x: this.inercia.x * 0.3 + (dx / ms) * 700, y: this.inercia.y * 0.3 + (dy / ms) * 700 };
+          if (this.reducir.matches || !this.visible) this.pintar();
+        },
+        { passive: true }
+      );
+
+      const soltar = (e: PointerEvent) => {
+        const a = this.arrastre;
+        if (!a || e.pointerId !== a.id) return;
+        this.arrastre = null;
+        // Si se quedó quieto antes de soltar, no hay lanzamiento.
+        if (performance.now() - a.t > 90 || this.reducir.matches) this.inercia = { x: 0, y: 0 };
+        // Tope para que un gesto brusco no lo dispare.
+        const tope = 2600;
+        this.inercia.x = Math.max(-tope, Math.min(tope, this.inercia.x));
+        this.inercia.y = Math.max(-tope, Math.min(tope, this.inercia.y));
+        this.classList.remove('is-arrastrando');
+        if (a.recorrido > UMBRAL) {
+          // El clic que sigue a un arrastre no abre la obra (ni prepara su transición).
+          const bloquear = (ev: Event) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+          };
+          addEventListener('click', bloquear, { capture: true, once: true });
+          setTimeout(() => removeEventListener('click', bloquear, { capture: true }), 0);
+        }
+        if (!this.reducir.matches) this.arrancar();
+      };
+      addEventListener('pointerup', soltar);
+      addEventListener('pointercancel', soltar);
+
+      // Trackpad: el gesto lateral mueve el muro; el vertical, la página.
+      seccion.addEventListener(
+        'wheel',
+        (e) => {
+          if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+          e.preventDefault();
+          this.x -= e.deltaX;
+          seccion.classList.add('ya-arrastrado');
+          this.pintar();
+        },
+        { passive: false }
+      );
+    }
+
     private medir() {
       this.anchos = this.filas.map((f) => (f.querySelector<HTMLElement>('[data-tanda]')?.offsetWidth ?? 1) || 1);
       const nFilas = Number(this.dataset.filas) || 4;
@@ -401,12 +548,17 @@ const insta = usuarioInstagram(ajustes.instagram);
       const dt = Math.min(0.05, (t - this.ultimo) / 1000);
       this.ultimo = t;
       // Suavizado: la velocidad se acerca al objetivo (o a cero en pausa).
-      const meta = this.pausa ? { x: 0, y: 0 } : this.objetivo;
+      // Arrastrando, el muro sigue al dedo; parado sobre una obra, quieto.
+      const meta = this.arrastre || this.pausa ? { x: 0, y: 0 } : this.objetivo;
       const k = 1 - Math.exp(-dt * 3);
       this.v.x += (meta.x - this.v.x) * k;
       this.v.y += (meta.y - this.v.y) * k;
-      this.x += this.v.x * dt;
-      this.y += this.v.y * dt;
+      // La inercia del último arrastre se frena poco a poco.
+      const freno = Math.exp(-dt * 3.2);
+      this.inercia.x *= freno;
+      this.inercia.y *= freno;
+      this.x += (this.v.x + this.inercia.x) * dt;
+      this.y += (this.v.y + this.inercia.y) * dt;
       this.pintar();
       this.marco = requestAnimationFrame((n) => this.paso(n));
     }
