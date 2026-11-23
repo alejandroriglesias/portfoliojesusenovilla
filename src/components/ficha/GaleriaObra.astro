@@ -4,8 +4,9 @@
  * completa y entera (sin recortar), como colgadas en una pared.
  *
  * - Escritorio: columna que se recorre con el scroll de la página; a la
- *   izquierda, rombos de progreso y contador fijos.
- * - Móvil: carrusel horizontal con scroll-snap y puntos debajo.
+ *   izquierda, rayas de progreso y contador fijos.
+ * - Móvil: carrusel horizontal con scroll-snap y barra segmentada debajo.
+ * - Al final, la vista «en casa» (AmbienteObra): la obra colgada en una pared.
  * - «Ver completa» (o clic en la imagen) abre un visor a pantalla completa
  *   con una versión grande y zoom al pulsar.
  * - La primera imagen lleva view-transition-name «obra»: es la que crece
@@ -13,6 +14,7 @@
  */
 import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
+import AmbienteObra from './AmbienteObra.astro';
 
 interface Vista {
   imagen: ImageMetadata;
@@ -22,9 +24,11 @@ interface Props {
   vistas: Vista[];
   /** Texto alternativo de la obra; las vistas secundarias añaden su etiqueta. */
   alt: string;
+  /** Vista «en casa» con la obra colgada (ver AmbienteObra). */
+  ambiente?: { tipo: 'lienzo' | 'papel'; ladoLargo: number; aEscala: boolean };
 }
 
-const { vistas, alt } = Astro.props;
+const { vistas, alt, ambiente } = Astro.props;
 const ANCHOS = [480, 720, 960, 1280, 1600, 2000];
 
 const datos = await Promise.all(
@@ -52,7 +56,8 @@ const datos = await Promise.all(
     };
   })
 );
-const n = datos.length;
+const etiquetas = [...datos.map((v) => v.etiqueta), ...(ambiente ? ['En casa'] : [])];
+const n = etiquetas.length;
 const nn = (i: number) => String(i).padStart(2, '0');
 ---
 
@@ -82,17 +87,22 @@ const nn = (i: number) => String(i).padStart(2, '0');
         </figure>
       ))
     }
+    {
+      ambiente && datos[0] && (
+        <AmbienteObra src={datos[0].src} srcset={datos[0].srcset} ratio={datos[0].ratio} {...ambiente} />
+      )
+    }
   </div>
 
   {
     n > 1 && (
       <>
         <ol class="galeria__puntos" aria-label="Vistas de la obra">
-          {datos.map((v, i) => (
+          {etiquetas.map((etiqueta, i) => (
             <li>
               <button type="button" data-ir={i} aria-current={i === 0 ? 'true' : undefined}>
                 <span class="sr-only">
-                  Vista {i + 1} de {n}: {v.etiqueta}
+                  Vista {i + 1} de {n}: {etiqueta}
                 </span>
               </button>
             </li>
@@ -177,8 +187,11 @@ const nn = (i: number) => String(i).padStart(2, '0');
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
+  /* Pie centrado: a la izquierda está el contador y a la derecha «Ver completa». */
   .marco__pie {
-    left: var(--px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
     color: var(--muted);
   }
   .marco__ver {
@@ -209,10 +222,10 @@ const nn = (i: number) => String(i).padStart(2, '0');
     color: var(--paper);
   }
 
-  /* ---------- Progreso (rombos) y contador, fijos a la izquierda ---------- */
+  /* ---------- Progreso (rayas) y contador, fijos a la izquierda ---------- */
   .galeria__puntos {
     position: fixed;
-    left: calc(var(--gutter) - 6px);
+    left: var(--gutter);
     top: 50%;
     transform: translateY(-50%);
     z-index: 20;
@@ -223,29 +236,49 @@ const nn = (i: number) => String(i).padStart(2, '0');
     flex-direction: column;
     transition: opacity 0.35s ease;
   }
+  /* Cada vista es una raya; la activa se alarga y se oscurece, con un punto
+     bermellón al final (el mismo punto de los botones de la web). */
   .galeria__puntos button {
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 22px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 44px;
+    height: 20px;
     padding: 0;
     border: 0;
     background: none;
     cursor: pointer;
   }
+  .galeria__puntos button::before {
+    content: '';
+    width: 14px;
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(20, 20, 20, 0.38);
+    transition:
+      width 0.55s var(--ease-out),
+      background 0.4s ease;
+  }
   .galeria__puntos button::after {
     content: '';
     width: 6px;
     height: 6px;
-    transform: rotate(45deg);
-    background: rgba(20, 20, 20, 0.28);
-    transition:
-      transform 0.5s var(--ease-out),
-      background 0.4s ease;
+    margin-left: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: scale(0);
+    transition: transform 0.45s var(--ease-out) 0.1s;
+  }
+  .galeria__puntos button:hover::before {
+    width: 22px;
+    background: rgba(20, 20, 20, 0.6);
+  }
+  .galeria__puntos button[aria-current='true']::before {
+    width: 30px;
+    background: var(--ink);
   }
   .galeria__puntos button[aria-current='true']::after {
-    transform: rotate(45deg) scale(1.7);
-    background: var(--ink);
+    transform: scale(1);
   }
   .galeria__contador {
     position: fixed;
@@ -394,6 +427,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
     .marco__pie {
       bottom: 22px;
       left: 24px;
+      transform: none;
     }
     .marco__ver {
       right: 16px;
@@ -401,16 +435,28 @@ const nn = (i: number) => String(i).padStart(2, '0');
       opacity: 1;
       transform: none;
     }
+    /* Barra segmentada bajo el carrusel */
     .galeria__puntos {
       position: static;
       transform: none;
       flex-direction: row;
-      justify-content: center;
-      padding: 10px 0 0;
+      gap: 6px;
+      padding: 0 var(--gutter);
+    }
+    .galeria__puntos li {
+      flex: 1;
     }
     .galeria__puntos button {
-      width: 26px;
+      width: 100%;
       height: 28px;
+    }
+    .galeria__puntos button::before,
+    .galeria__puntos button:hover::before,
+    .galeria__puntos button[aria-current='true']::before {
+      width: 100%;
+    }
+    .galeria__puntos button::after {
+      display: none;
     }
     .galeria__contador {
       display: none;
@@ -424,6 +470,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
   @media (prefers-reduced-motion: reduce) {
     .marco__ver,
     .visor__img,
+    .galeria__puntos button::before,
     .galeria__puntos button::after {
       transition: none;
     }
@@ -437,6 +484,8 @@ const nn = (i: number) => String(i).padStart(2, '0');
   class GaleriaObra extends HTMLElement {
     private pista!: HTMLElement;
     private marcos: HTMLElement[] = [];
+    /** Las fotos de la obra (sin la vista «en casa»): las que recorre el visor. */
+    private fotos: HTMLElement[] = [];
     private puntos: HTMLButtonElement[] = [];
     private actual = 0;
     private visor!: HTMLDialogElement;
@@ -447,6 +496,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
     connectedCallback() {
       this.pista = this.querySelector('[data-pista]')!;
       this.marcos = [...this.querySelectorAll<HTMLElement>('[data-marco]')];
+      this.fotos = this.marcos.filter((m) => !m.hasAttribute('data-ambiente'));
       this.puntos = [...this.querySelectorAll<HTMLButtonElement>('[data-ir]')];
       this.visor = this.querySelector('[data-visor]')!;
 
@@ -485,7 +535,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
       });
       this.visor.addEventListener('close', () => {
         this.visor.classList.remove('is-zoom');
-        this.ir(this.enVisor, false);
+        this.ir(this.marcos.indexOf(this.fotos[this.enVisor]), false);
       });
       const lienzo = this.visor.querySelector<HTMLElement>('[data-lienzo]')!;
       const img = this.visor.querySelector<HTMLImageElement>('[data-visor-img]')!;
@@ -557,10 +607,10 @@ const nn = (i: number) => String(i).padStart(2, '0');
     }
 
     private mostrar(i: number) {
-      const n = this.marcos.length;
+      const n = this.fotos.length;
       i = ((i % n) + n) % n;
       this.enVisor = i;
-      const origen = this.marcos[i].querySelector('img')!;
+      const origen = this.fotos[i].querySelector('img')!;
       const img = this.visor.querySelector<HTMLImageElement>('[data-visor-img]')!;
       this.visor.classList.remove('is-zoom');
       // Primero la versión que ya está cargada; luego la grande.
@@ -575,7 +625,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
         pre.src = grande;
       }
       const pie = this.visor.querySelector('[data-visor-pie]');
-      const etiqueta = this.marcos[i].querySelector('figcaption')?.textContent;
+      const etiqueta = this.fotos[i].querySelector('figcaption')?.textContent;
       if (pie) pie.textContent = n > 1 ? `${String(i + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}${etiqueta ? ` · ${etiqueta}` : ''}` : '';
     }
   }

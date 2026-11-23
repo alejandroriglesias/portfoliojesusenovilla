@@ -68,6 +68,19 @@ const vistas = [
   ...d.vistas.map((v, i) => ({ imagen: v.imagen, etiqueta: v.etiqueta ?? `Vista ${i + 2}` })),
 ];
 
+// Vista «en casa»: tamaño real si las medidas de la ficha se pueden leer
+// («50 × 60 cm»), si no uno típico de la técnica.
+const numeros = esMarcador(d.medidas)
+  ? []
+  : (d.medidas?.match(/\d+(?:[.,]\d+)?/g) ?? []).map((x) => parseFloat(x.replace(',', '.')));
+const ladoMedidas = numeros.length >= 2 ? Math.max(numeros[0], numeros[1]) : undefined;
+const aEscala = !!ladoMedidas && ladoMedidas >= 5 && ladoMedidas <= 300;
+const ambiente = {
+  tipo: (t.discriminant === 'oleo' ? 'lienzo' : 'papel') as 'lienzo' | 'papel',
+  ladoLargo: aEscala ? ladoMedidas! : t.discriminant === 'oleo' ? 70 : t.discriminant === 'acuarela' ? 42 : 45,
+  aEscala,
+};
+
 const ESTADOS = {
   disponible: { texto: 'Disponible', color: '#1E6B4F' },
   vendida: { texto: 'Vendida', color: 'var(--accent)' },
@@ -131,7 +144,7 @@ const jsonLd = Astro.site
   jsonLd={jsonLd}
 >
   <div class="obra">
-    <GaleriaObra vistas={vistas} alt={altBase} />
+    <GaleriaObra vistas={vistas} alt={altBase} ambiente={ambiente} />
 
     <section class="panel" aria-labelledby="titulo-obra">
       <div class="panel__in">
@@ -515,8 +528,7 @@ const jsonLd = Astro.site
   .muestra {
     width: 16px;
     height: 16px;
-    transform: rotate(45deg);
-    border-radius: 2px;
+    border-radius: 50%;
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   }
   .cartela__consulta {

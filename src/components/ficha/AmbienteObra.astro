@@ -1,0 +1,270 @@
+---
+/**
+ * Vista «en casa»: la obra colgada en la pared de un salón, sobre un banco de
+ * madera, con luz de ventana. Escena dibujada con CSS/SVG (no es una foto).
+ *
+ * Todo se mide en centímetros reales (--cm = px por cm): si la ficha tiene
+ * medidas, la obra sale a escala respecto al banco (150 cm); si no, con un
+ * tamaño típico de su técnica y el pie lo dice.
+ * La obra sobre papel (grabado, acuarela) va enmarcada con paspartú; el
+ * lienzo, sin marco.
+ */
+interface Props {
+  src: string;
+  srcset: string;
+  /** Ancho / alto de la imagen de la obra. */
+  ratio: number;
+  tipo: 'lienzo' | 'papel';
+  /** Lado largo de la obra en cm (sin marco). */
+  ladoLargo: number;
+  /** true si ladoLargo sale de las medidas de la ficha. */
+  aEscala: boolean;
+}
+
+const { src, srcset, ratio, tipo, ladoLargo, aEscala } = Astro.props;
+
+// Medidas en cm de la obra y de lo que cuelga (con paspartú y marco).
+const ancho = ratio >= 1 ? ladoLargo : ladoLargo * ratio;
+const alto = ratio >= 1 ? ladoLargo / ratio : ladoLargo;
+const PASPARTU = tipo === 'papel' ? Math.max(5, Math.min(10, ladoLargo * 0.12)) : 0;
+const MARCO = tipo === 'papel' ? 2.2 : 0;
+const exterior = { w: ancho + 2 * (PASPARTU + MARCO), h: alto + 2 * (PASPARTU + MARCO) };
+
+// Escena: suelo visible, banco, hueco hasta la obra y aire por encima.
+const SUELO = 26;
+const BANCO = 42;
+const HUECO = 24;
+const altoEscena = SUELO + BANCO + HUECO + exterior.h + 46;
+const anchoEscena = Math.max(240, exterior.w * 2.1);
+// En pantallas estrechas (móvil) se encuadra más cerca: banco y jarrón justos.
+const anchoEstrecho = Math.max(190, exterior.w * 1.25);
+
+const r = (x: number) => +x.toFixed(2);
+const estilo = [
+  `--escena-w: ${r(anchoEscena)}`,
+  `--escena-w-estrecha: ${r(anchoEstrecho)}`,
+  `--escena-h: ${r(altoEscena)}`,
+  `--suelo: ${SUELO}`,
+  `--banco: ${BANCO}`,
+  `--hueco: ${HUECO}`,
+  `--obra-w: ${r(exterior.w)}`,
+  `--obra-h: ${r(exterior.h)}`,
+  `--paspartu: ${r(PASPARTU)}`,
+  `--marco: ${MARCO}`,
+].join('; ');
+const pie = aEscala ? 'Así quedaría en casa · a escala' : 'Así quedaría en casa · recreación orientativa';
+---
+
+<figure class:list={['ambiente', `ambiente--${tipo}`]} data-marco data-ambiente style={estilo}>
+  <div class="escena" aria-hidden="true">
+    <div class="pared"></div>
+    <div class="luz"></div>
+    <div class="suelo"></div>
+    <div class="zocalo"></div>
+
+    <div class="cuadro">
+      <img src={src} srcset={srcset} sizes="(max-width: 900px) 60vw, 30vw" alt="" loading="lazy" decoding="async" draggable="false" />
+    </div>
+
+    <svg class="banco" viewBox="0 0 150 42" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="roble" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#b58a5f" />
+          <stop offset="0.55" stop-color="#c79c6f" />
+          <stop offset="1" stop-color="#a77c52" />
+        </linearGradient>
+        <linearGradient id="roble-canto" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#d9b285" />
+          <stop offset="1" stop-color="#a97e55" />
+        </linearGradient>
+      </defs>
+      <!-- patas -->
+      <rect x="9" y="5" width="4.2" height="37" fill="#8f6a46" />
+      <rect x="136.8" y="5" width="4.2" height="37" fill="#8f6a46" />
+      <rect x="9" y="32" width="132" height="2.4" fill="#8f6a46" opacity="0.85" />
+      <!-- tablero -->
+      <rect x="0" y="0" width="150" height="5.2" fill="url(#roble)" />
+      <rect x="0" y="0" width="150" height="1.3" fill="url(#roble-canto)" opacity="0.9" />
+    </svg>
+    <div class="banco__sombra"></div>
+
+    <svg class="jarron" viewBox="0 0 30 70">
+      <!-- rama seca -->
+      <g fill="none" stroke="#5b4a3a" stroke-width="0.55" stroke-linecap="round">
+        <path d="M15 40 C14 28 12 18 7 4" />
+        <path d="M13.2 27 C10 23 6 21 2 20" />
+        <path d="M11.4 18 C13 13 16 10 20 8" />
+        <path d="M15.2 33 C18 26 22 22 27 19" />
+        <path d="M9 10 C7 8 6 6 6.5 3" />
+      </g>
+      <g fill="#7d8a5f" opacity="0.9">
+        <ellipse cx="2.4" cy="19.6" rx="1.6" ry="0.8" transform="rotate(-20 2.4 19.6)" />
+        <ellipse cx="20.4" cy="7.8" rx="1.6" ry="0.8" transform="rotate(-30 20.4 7.8)" />
+        <ellipse cx="26.6" cy="18.8" rx="1.6" ry="0.8" transform="rotate(-25 26.6 18.8)" />
+        <ellipse cx="7.2" cy="4.4" rx="1.4" ry="0.7" transform="rotate(50 7.2 4.4)" />
+      </g>
+      <!-- jarrón de cerámica -->
+      <path d="M11 40 C11 43 6 47 6 56 C6 64 9.5 70 15 70 C20.5 70 24 64 24 56 C24 47 19 43 19 40 Z" fill="#e6ddd0" />
+      <path d="M15 40 L19 40 C19 43 24 47 24 56 C24 64 20.5 70 15 70 C19 66 20.5 60 20 54 C19.5 47 16 44 15 40 Z" fill="#cfc4b4" />
+      <ellipse cx="15" cy="40" rx="4" ry="0.9" fill="#bfb3a2" />
+    </svg>
+  </div>
+  <figcaption class="ambiente__pie">{pie}</figcaption>
+</figure>
+
+<style>
+  .ambiente {
+    position: relative;
+    margin: 0;
+    height: 100svh;
+    min-height: 520px;
+    overflow: hidden;
+    container-type: size;
+    background: #e7e1d7;
+  }
+  .escena {
+    /* px por centímetro: que quepan el ancho y el alto de la escena */
+    --cm: min(calc(100cqw / var(--escena-w)), calc(100cqh / var(--escena-h)));
+    position: absolute;
+    inset: 0;
+  }
+  .pared {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(120% 90% at 18% 8%, rgba(255, 250, 240, 0.85), transparent 60%),
+      radial-gradient(140% 120% at 100% 100%, rgba(120, 100, 80, 0.16), transparent 55%),
+      linear-gradient(180deg, #ece6dc, #e2dbcf);
+  }
+  /* Luz de una ventana que entra en diagonal */
+  .luz {
+    position: absolute;
+    left: -10%;
+    top: -6%;
+    width: 62%;
+    height: 92%;
+    background: linear-gradient(115deg, rgba(255, 248, 232, 0.55), rgba(255, 248, 232, 0.12) 70%, transparent);
+    clip-path: polygon(18% 0, 46% 0, 88% 100%, 52% 100%);
+    filter: blur(14px);
+    mix-blend-mode: soft-light;
+    opacity: 0.9;
+  }
+  .suelo {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--suelo) * var(--cm));
+    background:
+      linear-gradient(180deg, rgba(60, 40, 20, 0.28), transparent 35%),
+      repeating-linear-gradient(90deg, transparent 0 calc(17 * var(--cm) - 1px), rgba(80, 55, 30, 0.22) calc(17 * var(--cm) - 1px) calc(17 * var(--cm))),
+      linear-gradient(90deg, #c9a983, #d6b892 40%, #c4a17a);
+  }
+  .zocalo {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--suelo) * var(--cm));
+    height: calc(7 * var(--cm));
+    background: linear-gradient(180deg, #f1ede6, #dcd5ca);
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.05);
+  }
+  .banco {
+    position: absolute;
+    left: 50%;
+    bottom: calc((var(--suelo) - 4) * var(--cm));
+    width: calc(150 * var(--cm));
+    height: calc(var(--banco) * var(--cm));
+    transform: translateX(-50%);
+    overflow: visible;
+  }
+  .banco__sombra {
+    position: absolute;
+    left: 50%;
+    bottom: calc((var(--suelo) - 6) * var(--cm));
+    width: calc(165 * var(--cm));
+    height: calc(5 * var(--cm));
+    transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(40, 28, 15, 0.35), transparent);
+  }
+  .jarron {
+    position: absolute;
+    left: calc(50% - 60 * var(--cm));
+    bottom: calc((var(--suelo) - 4 + var(--banco) - 0.4) * var(--cm));
+    width: calc(30 * var(--cm));
+    height: calc(70 * var(--cm));
+  }
+  .cuadro {
+    position: absolute;
+    left: 50%;
+    bottom: calc((var(--suelo) - 4 + var(--banco) + var(--hueco)) * var(--cm));
+    width: calc(var(--obra-w) * var(--cm));
+    height: calc(var(--obra-h) * var(--cm));
+    transform: translateX(-50%);
+    box-shadow:
+      calc(1.2 * var(--cm)) calc(2.4 * var(--cm)) calc(3 * var(--cm)) rgba(40, 28, 15, 0.28),
+      calc(3 * var(--cm)) calc(8 * var(--cm)) calc(14 * var(--cm)) rgba(40, 28, 15, 0.18);
+  }
+  .cuadro img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  /* Obra sobre papel: marco fino negro y paspartú blanco */
+  .ambiente--papel .cuadro {
+    padding: calc(var(--paspartu) * var(--cm));
+    border: calc(var(--marco) * var(--cm)) solid #1d1b19;
+    background: #f7f5f0;
+    box-sizing: border-box;
+  }
+  .ambiente--papel .cuadro img {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+    outline: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  /* Lienzo: un canto oscuro que da grosor */
+  .ambiente--lienzo .cuadro {
+    outline: calc(0.6 * var(--cm)) solid rgba(30, 22, 15, 0.25);
+    outline-offset: 0;
+  }
+  .ambiente__pie {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    margin: 0;
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5f5c55;
+    background: rgba(247, 245, 240, 0.85);
+    padding: 7px 10px;
+  }
+
+  @media (max-width: 900px) {
+    /* Con alto automático (estirado en el carrusel) el contenedor no puede
+       medir su alto: se usa el mínimo garantizado. */
+    .escena {
+      --cm: min(calc(100cqw / var(--escena-w-estrecha)), calc(min(86svh, 125vw, 560px) / var(--escena-h)));
+    }
+    /* En el carrusel, tan alta como la vista más alta (se estira). */
+    .ambiente {
+      flex: 0 0 100%;
+      height: auto;
+      align-self: stretch;
+      container-type: inline-size;
+      min-height: min(86svh, 125vw, 560px);
+      scroll-snap-align: start;
+    }
+    .ambiente__pie {
+      left: 16px;
+      right: 16px;
+      bottom: 14px;
+      transform: none;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.4;
+    }
+  }
+</style>
