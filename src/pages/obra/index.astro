@@ -37,7 +37,13 @@ const pestanas = [
           <span class="punto" aria-hidden="true"></span>
           <span data-total>{obras.length}</span>&nbsp;{obras.length === 1 ? 'obra' : 'obras'}
         </p>
-        <h1 class="cabeza__titulo">Obra<span class="acento">.</span></h1>
+        <h1 class="cabeza__titulo">
+          <span class="sr-only">Obra</span>
+          <span class="cabeza__letras" aria-hidden="true">
+            {[...'Obra'].map((l, i) => <span class="letra" style={`animation-delay: ${120 + i * 70}ms`}>{l}</span>)}
+            <span class="letra acento" style="animation-delay: 420ms">.</span>
+          </span>
+        </h1>
         <p class="cabeza__intro">
           {grupos.map((g, i) => (i === 0 ? g.tecnica.data.nombre : g.tecnica.data.nombre.toLowerCase())).join(', ').replace(/, ([^,]*)$/, ' y $1')}. Cada obra, entera y en su pared:
           elige una para verla de cerca.
@@ -55,10 +61,12 @@ const pestanas = [
               </button>
             ))
           }
+          <span class="pestanas__raya" aria-hidden="true"></span>
         </div>
         <div class="pestanas pestanas--vista" role="group" aria-label="Vista">
           <button class="pestana" type="button" data-vista-boton="sala" aria-pressed="true">Sala</button>
           <button class="pestana" type="button" data-vista-boton="indice" aria-pressed="false">Índice</button>
+          <span class="pestanas__raya" aria-hidden="true"></span>
         </div>
       </div>
     </header>
@@ -112,6 +120,41 @@ const pestanas = [
     height: 8px;
     border-radius: 50%;
     background: var(--accent);
+  }
+  .cabeza__letras {
+    display: inline-flex;
+    overflow: hidden;
+    padding-bottom: 0.06em;
+    margin-bottom: -0.06em;
+  }
+  .letra {
+    display: inline-block;
+    animation: letra-sube 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes letra-sube {
+    from {
+      transform: translateY(105%);
+    }
+  }
+  .cabeza__eti,
+  .cabeza__intro,
+  .barra {
+    animation: aparecer 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .cabeza__eti {
+    animation-delay: 0.05s;
+  }
+  .cabeza__intro {
+    animation-delay: 0.45s;
+  }
+  .barra {
+    animation-delay: 0.6s;
+  }
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
   }
   .cabeza__titulo {
     grid-area: titulo;
@@ -180,45 +223,42 @@ const pestanas = [
     font-variant-numeric: tabular-nums;
     transform: translateY(-0.5em);
   }
-  /* Raya bajo la pestaña activa, con el punto bermellón al final */
-  .pestana::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -1px;
-    height: 2px;
-    width: 100%;
-    background: var(--ink);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.55s var(--ease-out);
-  }
-  .pestana::before {
-    content: '';
-    position: absolute;
-    right: -10px;
-    bottom: -3px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-    transform: scale(0);
-    transition: transform 0.4s var(--ease-out) 0.15s;
-  }
-  .pestana:hover {
-    color: var(--ink);
-  }
+  .pestana:hover,
   .pestana[aria-pressed='true'] {
     color: var(--ink);
   }
-  .pestana[aria-pressed='true']::after {
-    transform: scaleX(1);
-  }
-  .pestana[aria-pressed='true']::before {
-    transform: scale(1);
-  }
+  /* Una sola raya por grupo, que se desliza hasta la pestaña activa,
+     con el punto bermellón al final. */
   .pestanas {
-    padding-right: 12px;
+    position: relative;
+    padding-right: 14px;
+  }
+  .pestanas__raya {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: var(--w, 0px);
+    height: 2px;
+    background: var(--ink);
+    transform: translateX(var(--x, 0px));
+    transition:
+      transform 0.65s cubic-bezier(0.65, 0, 0.2, 1),
+      width 0.65s cubic-bezier(0.65, 0, 0.2, 1);
+    pointer-events: none;
+  }
+  .pestanas__raya::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .pestanas__raya.sin-transicion {
+    transition: none;
   }
 
   .panel-vista--indice {
@@ -263,16 +303,111 @@ const pestanas = [
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .pestana::after,
-    .pestana::before {
+    .pestanas__raya,
+    .letra,
+    .cabeza__eti,
+    .cabeza__intro,
+    .barra {
       transition: none;
+      animation: none;
+    }
+  }
+</style>
+
+<style is:global>
+  /* Transiciones dentro de la página (filtrar, cambiar de vista): cada obra
+     se desliza a su nuevo sitio; las que llegan suben y las que se van se
+     desvanecen. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.vt-interna::view-transition-old(root) {
+      animation: vt-salir 0.4s ease both;
+    }
+    html.vt-interna::view-transition-new(root) {
+      animation: vt-entrar 0.4s ease both;
+    }
+    ::view-transition-group(*.pieza) {
+      animation-duration: 0.75s;
+      animation-timing-function: cubic-bezier(0.65, 0, 0.2, 1);
+    }
+    ::view-transition-old(*.pieza),
+    ::view-transition-new(*.pieza) {
+      height: 100%;
+    }
+    ::view-transition-new(*.pieza):only-child {
+      animation: vt-pieza-entra 0.65s cubic-bezier(0.2, 0.7, 0.2, 1) 0.18s both;
+    }
+    ::view-transition-old(*.pieza):only-child {
+      animation: vt-pieza-sale 0.35s ease both;
+    }
+  }
+  @keyframes vt-pieza-entra {
+    from {
+      opacity: 0;
+      transform: translateY(28px) scale(0.96);
+    }
+  }
+  @keyframes vt-pieza-sale {
+    to {
+      opacity: 0;
+      transform: scale(0.96);
     }
   }
 </style>
 
 <script>
+  import Lenis from 'lenis';
+  import 'lenis/dist/lenis.css';
+
   const CLAVE = 'obra:vista';
   const raiz = document.querySelector<HTMLElement>('[data-obra]');
+  const reducir = matchMedia('(prefers-reduced-motion: reduce)');
+
+  // Scroll suave con inercia (no con movimiento reducido).
+  const lenis = reducir.matches ? undefined : new Lenis({ autoRaf: true, lerp: 0.09, anchors: true });
+
+  /** Coloca la raya de un grupo bajo su pestaña activa. */
+  const moverRaya = (grupo: HTMLElement, animar = true, destino?: HTMLElement) => {
+    const raya = grupo.querySelector<HTMLElement>('.pestanas__raya');
+    // La raya sale ya hacia la pestaña pulsada, sin esperar a la transición.
+    const activa = destino ?? grupo.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!raya || !activa) return;
+    raya.classList.toggle('sin-transicion', !animar);
+    raya.style.setProperty('--x', `${activa.offsetLeft}px`);
+    raya.style.setProperty('--w', `${activa.offsetWidth}px`);
+  };
+
+  /**
+   * Aplica un cambio (filtro o vista) con una View Transition: las obras y
+   * filas cercanas a la pantalla reciben un nombre para deslizarse a su
+   * nuevo sitio. Sin soporte o con movimiento reducido, el cambio es directo.
+   */
+  const conTransicion = (animables: HTMLElement[], cambio: () => void) => {
+    if (!('startViewTransition' in document) || reducir.matches) {
+      cambio();
+      return;
+    }
+    const nombrar = () =>
+      animables.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        const cerca = r.height > 0 && r.bottom > -innerHeight * 0.25 && r.top < innerHeight * 1.25;
+        el.style.setProperty('view-transition-name', cerca ? (el.dataset.vt ?? '') : '');
+        el.style.setProperty('view-transition-class', cerca ? 'pieza' : '');
+      });
+    nombrar();
+    // Fundido cruzado normal de la página (no el de cambio de página).
+    document.documentElement.classList.add('vt-interna');
+    const vt = document.startViewTransition(() => {
+      cambio();
+      nombrar();
+    });
+    vt.finished.finally(() => {
+      document.documentElement.classList.remove('vt-interna');
+      animables.forEach((el) => {
+        el.style.removeProperty('view-transition-name');
+        el.style.removeProperty('view-transition-class');
+      });
+    });
+  };
 
   if (raiz) {
     const filtros = [...raiz.querySelectorAll<HTMLButtonElement>('[data-filtro]')];
@@ -280,7 +415,13 @@ const pestanas = [
     const paneles = [...raiz.querySelectorAll<HTMLElement>('[data-panel]')];
     const salas = [...raiz.querySelectorAll<HTMLElement>('[data-sala]')];
     const filas = [...raiz.querySelectorAll<HTMLElement>('[data-filtrable]')];
+    const piezas = [...raiz.querySelectorAll<HTMLElement>('.pieza')];
     const total = raiz.querySelector('[data-total]');
+    const barra = raiz.querySelector<HTMLElement>('.barra');
+    const grupos = [...raiz.querySelectorAll<HTMLElement>('.pestanas')];
+    piezas.forEach((p, i) => (p.dataset.vt = `pieza-${i}`));
+    filas.forEach((f, i) => (f.dataset.vt = `fila-${i}`));
+    const animables = [...piezas, ...filas];
 
     const filtrar = (id: string) => {
       filtros.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filtro === id)));
@@ -310,8 +451,30 @@ const pestanas = [
       }
     };
 
-    filtros.forEach((b) => b.addEventListener('click', () => filtrar(b.dataset.filtro ?? 'todo')));
-    vistas.forEach((b) => b.addEventListener('click', () => elegirVista(b.dataset.vistaBoton ?? 'sala')));
+    // Si la barra quedó por encima, se vuelve a ella con suavidad.
+    const volverABarra = () => {
+      if (!barra || barra.getBoundingClientRect().top >= 0) return;
+      const destino = barra.getBoundingClientRect().top + scrollY - 96;
+      if (lenis) lenis.scrollTo(destino, { duration: 1.1 });
+      else scrollTo({ top: destino });
+    };
+
+    filtros.forEach((b) =>
+      b.addEventListener('click', () => {
+        if (b.getAttribute('aria-pressed') === 'true') return;
+        conTransicion(animables, () => filtrar(b.dataset.filtro ?? 'todo'));
+        moverRaya(b.closest('.pestanas')!, true, b);
+        volverABarra();
+      })
+    );
+    vistas.forEach((b) =>
+      b.addEventListener('click', () => {
+        if (b.getAttribute('aria-pressed') === 'true') return;
+        conTransicion(animables, () => elegirVista(b.dataset.vistaBoton ?? 'sala'));
+        moverRaya(b.closest('.pestanas')!, true, b);
+        volverABarra();
+      })
+    );
 
     try {
       const guardada = localStorage.getItem(CLAVE);
@@ -319,5 +482,11 @@ const pestanas = [
     } catch {
       /* sin almacenamiento: vista por defecto */
     }
+
+    // Raya en su sitio al cargar (sin animar) y al cambiar el tamaño.
+    const colocarRayas = (animar: boolean) => grupos.forEach((g) => moverRaya(g, animar));
+    colocarRayas(false);
+    document.fonts?.ready.then(() => colocarRayas(false));
+    addEventListener('resize', () => colocarRayas(false));
   }
 </script>
