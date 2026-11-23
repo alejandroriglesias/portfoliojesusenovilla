@@ -1,7 +1,7 @@
 // @ts-check
 /**
  * Redirecciones 301 desde las URL del antiguo WordPress (rastreadas en la fase 6).
- * Se aplican en astro.config.mjs; con el adaptador de Netlify salen en _redirects.
+ * Las escribe en _redirects la integración integraciones/redirecciones-cloudflare.mjs.
  */
 
 /** Categorías de WordPress → páginas de técnica. */
