@@ -1,149 +1,323 @@
 ---
-/** Índice completo de obra: filtros por técnica y conmutador Índice / Mosaico. */
+/**
+ * Índice de obra.
+ * - Vista «Sala» (por defecto): una pared por técnica con las obras colgadas
+ *   enteras (SalaObras), en la línea de la ficha de obra.
+ * - Vista «Índice»: lista editorial con vista previa flotante (IndiceObras).
+ * Pestañas por técnica con su número de obras y el mismo indicador de raya y
+ * punto bermellón que la galería de la ficha. La vista elegida se recuerda.
+ */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import FiltroTecnicas from '../../components/obra/FiltroTecnicas.astro';
+import SalaObras from '../../components/obra/SalaObras.astro';
 import IndiceObras from '../../components/obra/IndiceObras.astro';
-import TarjetaObra from '../../components/obra/TarjetaObra.astro';
-import TarjetasTecnica from '../../components/obra/TarjetasTecnica.astro';
 import { etiquetaTecnica, getObras, getTecnicas } from '../../lib/contenido';
 
 const obras = await getObras();
 const etiquetas = await Promise.all(obras.map(etiquetaTecnica));
 const principales = await getTecnicas('principal');
 
-const opciones = [
-  { id: 'todo', label: 'Todo', count: obras.length },
-  ...principales.map((t) => ({
-    id: t.id,
-    label: `${t.data.nombre}s`,
-    count: obras.filter((o) => o.data.tecnica.discriminant === t.id).length,
-  })),
+const grupos = principales
+  .map((tecnica) => {
+    const indices = obras.flatMap((o, i) => (o.data.tecnica.discriminant === tecnica.id ? [i] : []));
+    return { tecnica, obras: indices.map((i) => obras[i]), etiquetas: indices.map((i) => etiquetas[i]) };
+  })
+  .filter((g) => g.obras.length > 0);
+
+const pestanas = [
+  { id: 'todo', nombre: 'Todo', n: obras.length },
+  ...grupos.map((g) => ({ id: g.tecnica.id, nombre: g.tecnica.data.nombre, n: g.obras.length })),
 ];
 ---
 
-<BaseLayout
-  titulo="Obra"
-  descripcion="Índice de la obra de Jesús Senovilla: óleo, acuarela y grabado."
->
-  <section class="obra" aria-labelledby="obra-titulo">
-    <div class="obra__cabeza">
-      <div class="obra__titulos">
-        <p class="etiqueta">Obra · {obras.length} {obras.length === 1 ? 'obra' : 'obras'}</p>
-        <h1 id="obra-titulo" class="obra__h1">Índice<span class="acento">.</span></h1>
+<BaseLayout titulo="Obra" descripcion="Índice de la obra de Jesús Senovilla: óleo, acuarela y grabado." paleta="ficha">
+  <div class="obra" data-obra data-vista="sala">
+    <header class="cabeza">
+      <div class="cabeza__in">
+        <p class="cabeza__eti">
+          <span class="punto" aria-hidden="true"></span>
+          <span data-total>{obras.length}</span>&nbsp;{obras.length === 1 ? 'obra' : 'obras'}
+        </p>
+        <h1 class="cabeza__titulo">Obra<span class="acento">.</span></h1>
+        <p class="cabeza__intro">
+          {grupos.map((g, i) => (i === 0 ? g.tecnica.data.nombre : g.tecnica.data.nombre.toLowerCase())).join(', ').replace(/, ([^,]*)$/, ' y $1')}. Cada obra, entera y en su pared:
+          elige una para verla de cerca.
+        </p>
       </div>
-      <div class="obra__controles">
-        <FiltroTecnicas opciones={opciones} objetivo="obra" />
-        <div role="group" aria-label="Vista" class="vistas" data-vistas>
-          <button type="button" class="vistas__boton" data-vista-boton="indice" aria-pressed="true">Índice</button>
-          <button type="button" class="vistas__boton" data-vista-boton="mosaico" aria-pressed="false">Mosaico</button>
+
+      <!-- «Técnicas» del menú apunta aquí: cada pared es una técnica -->
+      <div class="barra" id="tecnicas">
+        <div class="pestanas" role="group" aria-label="Filtrar por técnica">
+          {
+            pestanas.map((p, i) => (
+              <button class="pestana" type="button" data-filtro={p.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+                {p.nombre}
+                <sup class="pestana__n">{p.n}</sup>
+              </button>
+            ))
+          }
+        </div>
+        <div class="pestanas pestanas--vista" role="group" aria-label="Vista">
+          <button class="pestana" type="button" data-vista-boton="sala" aria-pressed="true">Sala</button>
+          <button class="pestana" type="button" data-vista-boton="indice" aria-pressed="false">Índice</button>
         </div>
       </div>
-    </div>
+    </header>
 
     {
       obras.length === 0 ? (
         <p class="obra__vacio">Todavía no hay obras publicadas.</p>
       ) : (
         <>
-          <div data-vista="indice" data-filtro-objetivo="obra">
-            <IndiceObras obras={obras} etiquetas={etiquetas} />
+          <div class="panel-vista" data-panel="sala">
+            <SalaObras grupos={grupos} />
           </div>
-          <div data-vista="mosaico" data-filtro-objetivo="obra" class="mosaico" hidden>
-            {obras.map((o, i) => (
-              <TarjetaObra obra={o} etiqueta={etiquetas[i]} />
-            ))}
+          <div class="panel-vista panel-vista--indice" data-panel="indice" hidden>
+            <IndiceObras obras={obras} etiquetas={etiquetas} />
           </div>
         </>
       )
     }
-  </section>
-
-  <TarjetasTecnica tecnicas={principales} />
+  </div>
 </BaseLayout>
 
 <style>
-  .obra {
+  .cabeza {
+    background: var(--paper);
+  }
+  .cabeza__in {
     max-width: var(--container);
     margin: 0 auto;
-    padding: clamp(56px, 8vw, 112px) var(--gutter) clamp(80px, 10vw, 144px);
+    padding: clamp(48px, 7vw, 104px) var(--gutter) clamp(32px, 4vw, 56px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+    grid-template-areas:
+      'eti eti'
+      'titulo intro';
+    align-items: end;
+    gap: 20px clamp(24px, 4vw, 64px);
   }
-  .obra__cabeza {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px 48px;
-    margin-bottom: 48px;
+  .cabeza__eti {
+    grid-area: eti;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
-  .obra__titulos {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
   }
-  .obra__h1 {
+  .cabeza__titulo {
+    grid-area: titulo;
+    margin: 0;
     font-weight: 800;
-    font-size: clamp(56px, 9vw, 152px);
-    line-height: 0.88;
-    letter-spacing: -0.045em;
+    font-size: clamp(72px, 15vw, 240px);
+    line-height: 0.8;
+    letter-spacing: -0.055em;
   }
   .acento {
     color: var(--accent);
   }
-  .obra__controles {
+  .cabeza__intro {
+    grid-area: intro;
+    margin: 0;
+    padding-bottom: 0.5em;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--text-soft);
+  }
+
+  /* ---------- Barra: pestañas de técnica y de vista ---------- */
+  .barra {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 16px 24px;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 0 32px;
+    border-bottom: 1px solid var(--line);
   }
-  .vistas {
+  .pestanas {
     display: flex;
-    gap: 6px;
-    padding: 4px;
-    border: 1px solid #cfccc5;
-    border-radius: var(--radius-pill);
+    gap: clamp(18px, 3vw, 40px);
+    overflow-x: auto;
+    scrollbar-width: none;
   }
-  .vistas__boton {
-    min-height: var(--tap);
-    padding: 10px 18px;
+  .pestanas::-webkit-scrollbar {
+    display: none;
+  }
+  .pestanas--vista {
+    gap: 24px;
+  }
+  .pestana {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 56px;
+    padding: 0;
     border: 0;
-    border-radius: var(--radius-pill);
-    background: transparent;
-    color: var(--ink);
-    font: 600 14px/1 var(--font-body);
+    background: none;
+    color: var(--muted);
+    font: 600 13px/1 var(--font-body);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
     cursor: pointer;
+    transition: color 0.3s ease;
   }
-  .vistas__boton[aria-pressed='true'] {
+  .pestana__n {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    transform: translateY(-0.5em);
+  }
+  /* Raya bajo la pestaña activa, con el punto bermellón al final */
+  .pestana::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 2px;
+    width: 100%;
+    background: var(--ink);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.55s var(--ease-out);
+  }
+  .pestana::before {
+    content: '';
+    position: absolute;
+    right: -10px;
+    bottom: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
     background: var(--accent);
-    color: var(--on-accent);
+    transform: scale(0);
+    transition: transform 0.4s var(--ease-out) 0.15s;
   }
-  .mosaico {
-    columns: 3 320px;
-    column-gap: 40px;
+  .pestana:hover {
+    color: var(--ink);
+  }
+  .pestana[aria-pressed='true'] {
+    color: var(--ink);
+  }
+  .pestana[aria-pressed='true']::after {
+    transform: scaleX(1);
+  }
+  .pestana[aria-pressed='true']::before {
+    transform: scale(1);
+  }
+  .pestanas {
+    padding-right: 12px;
+  }
+
+  .panel-vista--indice {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(24px, 4vw, 48px) var(--gutter) clamp(80px, 10vw, 144px);
+  }
+  .panel-vista[hidden] {
+    display: none;
   }
   .obra__vacio {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 48px var(--gutter) 120px;
     font-size: 20px;
     color: var(--muted);
+  }
+
+  @media (max-width: 760px) {
+    .cabeza__in {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        'eti'
+        'titulo'
+        'intro';
+    }
+    .barra {
+      padding-right: 0;
+    }
+    .pestanas--vista {
+      width: 100%;
+      border-top: 1px solid var(--line);
+      order: -1;
+    }
+    .pestanas {
+      gap: 16px;
+    }
+    .pestana {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pestana::after,
+    .pestana::before {
+      transition: none;
+    }
   }
 </style>
 
 <script>
   const CLAVE = 'obra:vista';
-  const botones = document.querySelectorAll<HTMLButtonElement>('[data-vista-boton]');
-  const paneles = document.querySelectorAll<HTMLElement>('[data-vista]');
-  const elegir = (vista: string) => {
-    botones.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vistaBoton === vista)));
-    paneles.forEach((p) => (p.hidden = p.dataset.vista !== vista));
+  const raiz = document.querySelector<HTMLElement>('[data-obra]');
+
+  if (raiz) {
+    const filtros = [...raiz.querySelectorAll<HTMLButtonElement>('[data-filtro]')];
+    const vistas = [...raiz.querySelectorAll<HTMLButtonElement>('[data-vista-boton]')];
+    const paneles = [...raiz.querySelectorAll<HTMLElement>('[data-panel]')];
+    const salas = [...raiz.querySelectorAll<HTMLElement>('[data-sala]')];
+    const filas = [...raiz.querySelectorAll<HTMLElement>('[data-filtrable]')];
+    const total = raiz.querySelector('[data-total]');
+
+    const filtrar = (id: string) => {
+      filtros.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filtro === id)));
+      salas.forEach((s) => (s.hidden = id !== 'todo' && s.dataset.sala !== id));
+      let n = 0;
+      filas.forEach((f) => {
+        const ver = id === 'todo' || f.dataset.tecnica === id;
+        f.hidden = !ver;
+        if (ver) {
+          n++;
+          const num = f.querySelector('[data-num]');
+          if (num) num.textContent = String(n).padStart(2, '0');
+        }
+      });
+      if (total) total.textContent = String(n);
+    };
+
+    const elegirVista = (vista: string, guardar = true) => {
+      vistas.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vistaBoton === vista)));
+      paneles.forEach((p) => (p.hidden = p.dataset.panel !== vista));
+      raiz.dataset.vista = vista;
+      if (!guardar) return;
+      try {
+        localStorage.setItem(CLAVE, vista);
+      } catch {
+        /* almacenamiento no disponible */
+      }
+    };
+
+    filtros.forEach((b) => b.addEventListener('click', () => filtrar(b.dataset.filtro ?? 'todo')));
+    vistas.forEach((b) => b.addEventListener('click', () => elegirVista(b.dataset.vistaBoton ?? 'sala')));
+
     try {
-      localStorage.setItem(CLAVE, vista);
+      const guardada = localStorage.getItem(CLAVE);
+      if (guardada === 'sala' || guardada === 'indice') elegirVista(guardada, false);
     } catch {
-      /* almacenamiento no disponible */
+      /* sin almacenamiento: vista por defecto */
     }
-  };
-  botones.forEach((b) => b.addEventListener('click', () => elegir(b.dataset.vistaBoton ?? 'indice')));
-  try {
-    const guardada = localStorage.getItem(CLAVE);
-    if (guardada === 'mosaico' || guardada === 'indice') elegir(guardada);
-  } catch {
-    /* sin almacenamiento: vista por defecto */
   }
 </script>

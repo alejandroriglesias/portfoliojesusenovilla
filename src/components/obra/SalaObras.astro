@@ -1,0 +1,360 @@
+---
+/**
+ * Vista «Sala» del índice de obra: una pared por técnica, con las obras
+ * colgadas enteras (sin recortar) a la misma altura, en filas justificadas
+ * como en una exposición. Mismo color de pared y sombra que la ficha.
+ *
+ * - Filas justificadas solo con CSS: cada pieza crece en proporción a su
+ *   ancho/alto (flex-grow = proporción), así todas comparten altura.
+ * - Al entrar en pantalla, cada obra sube y aparece (scroll-driven, sin JS).
+ * - Al pasar por una obra, se adelanta y el resto de la pared se atenúa.
+ * - La imagen pulsada crece hasta la ficha (TransicionObras).
+ */
+import { getImage } from 'astro:assets';
+import type { Obra, Tecnica } from '../../lib/contenido';
+import { esMarcador } from '../../lib/contenido';
+
+interface Grupo {
+  tecnica: Tecnica;
+  obras: Obra[];
+  /** Etiqueta concreta de cada obra («Grabado · Manera negra»…). */
+  etiquetas: string[];
+}
+interface Props {
+  grupos: Grupo[];
+}
+
+const { grupos } = Astro.props;
+const ANCHOS = [320, 480, 720, 960];
+
+const salas = await Promise.all(
+  grupos.map(async (g, gi) => ({
+    id: g.tecnica.id,
+    numero: `(${String(gi + 1).padStart(2, '0')})`,
+    nombre: g.tecnica.data.nombre,
+    resumen: esMarcador(g.tecnica.data.resumen) ? undefined : g.tecnica.data.resumen,
+    piezas: await Promise.all(
+      g.obras.map(async (o, i) => {
+        const im = o.data.imagen;
+        const anchos = [...ANCHOS.filter((a) => a < im.width), Math.min(im.width, 960)];
+        const img = await getImage({ src: im, widths: [...new Set(anchos)], format: 'webp', quality: 78 });
+        // En el grabado, la subtécnica; en el resto, solo el año.
+        const sub = g.etiquetas[i].split(' · ')[1];
+        return {
+          href: `/obra/${o.id}`,
+          src: img.src,
+          srcset: img.srcSet.attribute,
+          ancho: im.width,
+          alto: im.height,
+          ratio: +(im.width / im.height).toFixed(4),
+          titulo: o.data.titulo,
+          meta: [sub, o.data.anio].filter(Boolean).join(' · '),
+          alt: o.data.alt ?? o.data.titulo,
+          aviso: import.meta.env.DEV && (o.data.ejemplo || !o.data.publicada) ? (o.data.ejemplo ? 'ejemplo' : 'oculta') : undefined,
+        };
+      })
+    ),
+  }))
+);
+---
+
+<div class="salas">
+  {
+    salas.map((s, si) => (
+      <section class="sala" data-sala={s.id} aria-labelledby={`sala-${s.id}`}>
+        <header class="sala__cabeza">
+          <p class="sala__n">{s.numero}</p>
+          <h2 id={`sala-${s.id}`} class="sala__titulo">
+            {s.nombre}
+          </h2>
+          <div class="sala__lado">
+            <p class="sala__cuenta">
+              {s.piezas.length} {s.piezas.length === 1 ? 'obra' : 'obras'}
+            </p>
+            {s.resumen && <p class="sala__resumen">{s.resumen}</p>}
+            <a class="sala__enlace" href={`/tecnicas/${s.id}`}>
+              Sobre la técnica <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </header>
+
+        <ul class="pared" role="list">
+          {s.piezas.map((p, i) => (
+            <li class="pieza" style={`--r: ${p.ratio}`}>
+              <a class="pieza__enlace" href={p.href}>
+                <span class="pieza__marco">
+                  <img
+                    src={p.src}
+                    srcset={p.srcset}
+                    sizes="(max-width: 640px) 60vw, 34vw"
+                    width={p.ancho}
+                    height={p.alto}
+                    alt={p.alt}
+                    loading={si === 0 && i < 6 ? 'eager' : 'lazy'}
+                    decoding="async"
+                  />
+                </span>
+                <span class="pieza__pie">
+                  <span class="pieza__titulo">{p.titulo}</span>
+                  {(p.meta || p.aviso) && (
+                    <span class="pieza__meta">
+                      {p.meta}
+                      {p.aviso && <span class="pieza__aviso"> · {p.aviso}</span>}
+                    </span>
+                  )}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</div>
+
+<style>
+  .salas {
+    display: flex;
+    flex-direction: column;
+  }
+  .sala {
+    --h: clamp(160px, 20vw, 280px);
+    --hueco: clamp(28px, 4vw, 64px);
+    padding: clamp(56px, 7vw, 104px) var(--gutter) clamp(64px, 8vw, 120px);
+    background: var(--band);
+  }
+  .sala + .sala {
+    border-top: 1px solid rgba(20, 16, 10, 0.08);
+  }
+  .sala[hidden] {
+    display: none;
+  }
+
+  /* ---------- Cabecera de cada pared ---------- */
+  .sala__cabeza {
+    max-width: var(--container);
+    margin: 0 auto clamp(40px, 5vw, 72px);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 340px);
+    align-items: end;
+    gap: 12px clamp(16px, 3vw, 48px);
+  }
+  .sala__n,
+  .sala__cuenta {
+    margin: 0;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sala__n {
+    align-self: start;
+    padding-top: 0.6em;
+  }
+  .sala__titulo {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(48px, 8.5vw, 140px);
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+  }
+  .sala__lado {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 0.4em;
+  }
+  .sala__cuenta {
+    color: var(--ink);
+  }
+  .sala__resumen {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text-soft);
+  }
+  .sala__enlace {
+    align-self: flex-start;
+    font: 600 13px/1.4 var(--font-body);
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) no-repeat left bottom / 100% 1px;
+    transition: background-size 0.5s var(--ease-out);
+  }
+  .sala__enlace:hover {
+    background-position: right bottom;
+    background-size: 0 1px;
+  }
+
+  /* ---------- Pared: filas justificadas ---------- */
+  .pared {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--hueco) * 1.1) var(--hueco);
+  }
+  /* La última fila no se estira de más */
+  .pared::after {
+    content: '';
+    flex: 999 1 0;
+  }
+  .pieza {
+    flex: var(--r) 1 calc(var(--r) * var(--h));
+    min-width: 0;
+    max-width: calc(var(--r) * var(--h) * 1.6);
+  }
+  .pieza__enlace {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      opacity 0.45s ease,
+      transform 0.6s var(--ease-out);
+  }
+  .pieza__marco {
+    display: block;
+    aspect-ratio: var(--r);
+    background: var(--card);
+    box-shadow:
+      0 1px 2px rgba(20, 16, 10, 0.08),
+      0 16px 34px -14px rgba(20, 16, 10, 0.3);
+    transition: box-shadow 0.6s var(--ease-out);
+  }
+  .pieza__marco img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .pieza__pie {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .pieza__titulo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pieza__titulo::before {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 7px;
+    margin-right: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    vertical-align: 0.12em;
+    transition:
+      width 0.35s var(--ease-out),
+      margin-right 0.35s var(--ease-out);
+  }
+  .pieza__meta {
+    font-size: 13px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pieza__aviso {
+    color: var(--accent);
+  }
+
+  /* Al pasar por una obra: se adelanta y el resto se atenúa */
+  .pieza__enlace:hover,
+  .pieza__enlace:focus-visible {
+    transform: translateY(-6px);
+  }
+  .pieza__enlace:hover .pieza__marco,
+  .pieza__enlace:focus-visible .pieza__marco {
+    box-shadow:
+      0 2px 4px rgba(20, 16, 10, 0.1),
+      0 30px 60px -18px rgba(20, 16, 10, 0.42);
+  }
+  .pieza__enlace:hover .pieza__titulo::before,
+  .pieza__enlace:focus-visible .pieza__titulo::before {
+    width: 7px;
+    margin-right: 8px;
+  }
+  @media (hover: hover) {
+    .pared:has(.pieza__enlace:hover) .pieza__enlace:not(:hover) {
+      opacity: 0.45;
+    }
+  }
+  .pieza__enlace:focus-visible {
+    outline: none;
+  }
+  .pieza__enlace:focus-visible .pieza__marco {
+    outline: 2px solid var(--accent);
+    outline-offset: 6px;
+  }
+
+  /* Entrada al hacer scroll (navegadores con scroll-driven animations) */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .pieza {
+        animation: colgar linear both;
+        animation-timeline: view();
+        animation-range: entry 5% entry 75%;
+      }
+    }
+  }
+  @keyframes colgar {
+    from {
+      opacity: 0;
+      transform: translateY(48px) scale(0.97);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .sala {
+      --h: clamp(120px, 36vw, 190px);
+      --hueco: 18px;
+    }
+    /* En móvil las filas son cortas: una obra sola puede ocupar el ancho */
+    .pieza {
+      max-width: calc(var(--r) * var(--h) * 2.6);
+    }
+    .sala__cabeza {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+    }
+    .sala__n {
+      padding-top: 0;
+    }
+    .pieza__enlace {
+      gap: 10px;
+    }
+    .pieza__titulo {
+      font-size: 14px;
+    }
+    .pieza__meta {
+      font-size: 12px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pieza__enlace,
+    .pieza__marco,
+    .pieza__titulo::before {
+      transition: none;
+    }
+    .pieza__enlace:hover,
+    .pieza__enlace:focus-visible {
+      transform: none;
+    }
+  }
+</style>
