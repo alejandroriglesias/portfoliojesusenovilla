@@ -1,0 +1,207 @@
+---
+/**
+ * Transiciones entre páginas (View Transitions entre documentos, sin SPA).
+ *
+ * - Todas las páginas: fundido suave al navegar.
+ * - Miniatura → ficha: la obra pulsada (portada, índice, técnicas…) crece
+ *   hasta su sitio en la galería de la ficha.
+ * - Ficha → atrás: la vista que está en pantalla vuelve a encogerse en su
+ *   miniatura, si esa miniatura está visible.
+ *
+ * Solo una imagen por página puede llamarse «obra»: el script se la pone a la
+ * miniatura pulsada justo antes de salir. Va en <head> y sin defer porque
+ * «pagereveal» se dispara antes del primer pintado.
+ * Navegadores sin soporte: navegación normal. Con movimiento reducido: nada.
+ */
+---
+
+<script is:inline>
+  (function () {
+    if (!window.CSSViewTransitionRule || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var CLAVE = 'transicion-obra';
+    var nombrada = null;
+    var guardar = function (v) {
+      try {
+        v ? sessionStorage.setItem(CLAVE, JSON.stringify(v)) : sessionStorage.removeItem(CLAVE);
+      } catch (e) {}
+    };
+    var leer = function () {
+      try {
+        return JSON.parse(sessionStorage.getItem(CLAVE));
+      } catch (e) {
+        return null;
+      }
+    };
+    var ruta = function (href) {
+      try {
+        return new URL(href, location.href).pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/';
+      } catch (e) {
+        return '';
+      }
+    };
+    var esFicha = function (r) {
+      return /^\/obra\/[^/]+$/.test(r);
+    };
+    var nombrar = function (img) {
+      if (nombrada) nombrada.style.viewTransitionName = '';
+      nombrada = img;
+      if (img) img.style.viewTransitionName = 'obra';
+    };
+    var heroes = function () {
+      return document.querySelectorAll('[data-galeria-obra] [data-marco] img');
+    };
+    var visible = function (el) {
+      var r = el.getBoundingClientRect();
+      return r.width > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
+    };
+
+    // Clic en una miniatura que lleva a una ficha: esa imagen es la que crecerá.
+    document.addEventListener(
+      'click',
+      function (e) {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var a = e.target.closest && e.target.closest('a[href]');
+        if (!a || a.target === '_blank') return;
+        var destino = ruta(a.href);
+        var img = esFicha(destino) && a.querySelector('img');
+        if (!img) {
+          guardar(null);
+          return;
+        }
+        // En una ficha, la imagen principal ya se llama «obra»: se le quita.
+        heroes().forEach(function (h) {
+          h.style.viewTransitionName = 'none';
+        });
+        nombrar(img);
+        guardar({ a: destino, src: img.currentSrc || img.src });
+      },
+      true
+    );
+
+    // Saliendo de una ficha: la vista que llena la pantalla es la que encoge.
+    window.addEventListener('pageswap', function () {
+      var vistas = heroes();
+      if (!vistas.length || leer()) return;
+      var mejor = 0;
+      var area = 0;
+      vistas.forEach(function (v, i) {
+        var r = v.getBoundingClientRect();
+        var s = Math.max(0, Math.min(r.right, innerWidth) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0));
+        if (s > area) {
+          area = s;
+          mejor = i;
+        }
+      });
+      guardar({ desde: ruta(location.href) });
+      vistas.forEach(function (v, i) {
+        v.style.viewTransitionName = i === mejor && area > 0 ? 'obra' : 'none';
+      });
+    });
+
+    window.addEventListener('pagereveal', function (e) {
+      var g = leer();
+      guardar(null); // siempre, también si el navegador se saltó la transición
+      nombrar(null);
+      heroes().forEach(function (h) {
+        h.style.viewTransitionName = '';
+      });
+      if (!g || !e.viewTransition) return;
+      var aqui = ruta(location.href);
+
+      if (g.a === aqui && g.src) {
+        // Llegando a la ficha: mientras carga la imagen grande, se ve la miniatura.
+        var hero = heroes()[0];
+        if (hero && !hero.complete) {
+          hero.style.background = 'url("' + g.src + '") center / cover no-repeat';
+          hero.addEventListener(
+            'load',
+            function () {
+              hero.style.background = '';
+            },
+            { once: true }
+          );
+        }
+        return;
+      }
+
+      if (g.desde) {
+        // Volviendo a una lista: la miniatura de esa obra, si se ve, recibe la imagen.
+        var enlaces = document.querySelectorAll('a[href]');
+        for (var i = 0; i < enlaces.length; i++) {
+          if (ruta(enlaces[i].href) !== g.desde) continue;
+          var img = enlaces[i].querySelector('img');
+          if (img && visible(img)) {
+            nombrar(img);
+            e.viewTransition.finished.finally(function () {
+              nombrar(null);
+            });
+            break;
+          }
+        }
+      }
+    });
+  })();
+</script>
+
+<style is:global>
+  @media (prefers-reduced-motion: no-preference) {
+    @view-transition {
+      navigation: auto;
+    }
+    [data-galeria-obra] [data-marco]:first-child img {
+      view-transition-name: obra;
+    }
+    ::view-transition-old(root) {
+      animation: vt-salir 0.3s ease both;
+    }
+    ::view-transition-new(root) {
+      animation: vt-entrar 0.55s ease 0.12s both;
+    }
+    ::view-transition-group(obra) {
+      animation-duration: 0.75s;
+      animation-timing-function: cubic-bezier(0.65, 0, 0.2, 1);
+    }
+    ::view-transition-old(obra),
+    ::view-transition-new(obra) {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      mix-blend-mode: normal;
+    }
+    ::view-transition-old(obra) {
+      animation: vt-obra-sale 0.75s linear both;
+    }
+    ::view-transition-new(obra) {
+      animation: vt-obra-entra 0.75s linear both;
+    }
+  }
+  @keyframes vt-salir {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes vt-entrar {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes vt-obra-sale {
+    0%,
+    85% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes vt-obra-entra {
+    0%,
+    30% {
+      opacity: 0;
+    }
+    85%,
+    100% {
+      opacity: 1;
+    }
+  }
+</style>

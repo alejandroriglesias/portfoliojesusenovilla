@@ -1,0 +1,584 @@
+---
+/**
+ * Galería de la ficha de obra: las vistas apiladas, cada una a pantalla
+ * completa y entera (sin recortar), como colgadas en una pared.
+ *
+ * - Escritorio: columna que se recorre con el scroll de la página; a la
+ *   izquierda, rombos de progreso y contador fijos.
+ * - Móvil: carrusel horizontal con scroll-snap y puntos debajo.
+ * - «Ver completa» (o clic en la imagen) abre un visor a pantalla completa
+ *   con una versión grande y zoom al pulsar.
+ * - La primera imagen lleva view-transition-name «obra»: es la que crece
+ *   desde la miniatura pulsada en la portada o en el índice (TransicionObras).
+ */
+import type { ImageMetadata } from 'astro';
+import { getImage } from 'astro:assets';
+
+interface Vista {
+  imagen: ImageMetadata;
+  etiqueta: string;
+}
+interface Props {
+  vistas: Vista[];
+  /** Texto alternativo de la obra; las vistas secundarias añaden su etiqueta. */
+  alt: string;
+}
+
+const { vistas, alt } = Astro.props;
+const ANCHOS = [480, 720, 960, 1280, 1600, 2000];
+
+const datos = await Promise.all(
+  vistas.map(async (v, i) => {
+    const w = v.imagen.width;
+    // Los anchos estándar que la foto admite, más su ancho real (nunca se amplía).
+    const anchos = [...ANCHOS.filter((a) => a < w), w];
+    const img = await getImage({
+      src: v.imagen,
+      widths: anchos,
+      sizes: '(max-width: 900px) 100vw, 56vw',
+      format: 'webp',
+      quality: 82,
+    });
+    const grande = await getImage({ src: v.imagen, width: Math.min(w, 3000), format: 'webp', quality: 86 });
+    return {
+      etiqueta: v.etiqueta,
+      src: img.src,
+      srcset: img.srcSet.attribute,
+      ancho: w,
+      alto: v.imagen.height,
+      ratio: +(w / v.imagen.height).toFixed(4),
+      grande: grande.src,
+      alt: i === 0 ? alt : `${alt}. ${v.etiqueta}`,
+    };
+  })
+);
+const n = datos.length;
+const nn = (i: number) => String(i).padStart(2, '0');
+---
+
+<galeria-obra class="galeria" data-galeria-obra>
+  <div class="galeria__pista" data-pista>
+    {
+      datos.map((v, i) => (
+        <figure class="marco" data-marco style={`--ar: ${v.ratio}`}>
+          <img
+            src={v.src}
+            srcset={v.srcset}
+            sizes="(max-width: 900px) 100vw, 56vw"
+            width={v.ancho}
+            height={v.alto}
+            alt={v.alt}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : undefined}
+            decoding={i === 0 ? 'sync' : 'async'}
+            data-grande={v.grande}
+            data-ver={i}
+          />
+          {i > 0 && <figcaption class="marco__pie">{v.etiqueta}</figcaption>}
+          <button class="marco__ver" type="button" data-ver={i}>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+            Ver completa<span class="sr-only">: {v.etiqueta}</span>
+          </button>
+        </figure>
+      ))
+    }
+  </div>
+
+  {
+    n > 1 && (
+      <>
+        <ol class="galeria__puntos" aria-label="Vistas de la obra">
+          {datos.map((v, i) => (
+            <li>
+              <button type="button" data-ir={i} aria-current={i === 0 ? 'true' : undefined}>
+                <span class="sr-only">
+                  Vista {i + 1} de {n}: {v.etiqueta}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+        <p class="galeria__contador" aria-hidden="true">
+          <span data-actual>01</span> / {nn(n)}
+        </p>
+      </>
+    )
+  }
+
+  <dialog class="visor" data-visor aria-label="Vista ampliada de la obra">
+    <div class="visor__lienzo" data-lienzo>
+      <img class="visor__img" alt="" data-visor-img draggable="false" />
+    </div>
+    <p class="visor__pie" data-visor-pie aria-live="polite"></p>
+    <button class="visor__boton visor__cerrar" type="button" data-cerrar>
+      <span class="sr-only">Cerrar</span>
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+    </button>
+    {
+      n > 1 && (
+        <>
+          <button class="visor__boton visor__ant" type="button" data-paso="-1">
+            <span class="sr-only">Vista anterior</span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+          </button>
+          <button class="visor__boton visor__sig" type="button" data-paso="1">
+            <span class="sr-only">Vista siguiente</span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
+        </>
+      )
+    }
+  </dialog>
+</galeria-obra>
+
+<style>
+  .galeria {
+    position: relative;
+    display: block;
+    min-width: 0;
+  }
+
+  /* ---------- Marcos: cada vista entera, centrada sobre la «pared» ---------- */
+  .marco {
+    --pt: clamp(96px, 11vh, 128px);
+    --pb: clamp(40px, 7vh, 72px);
+    --px: clamp(40px, 6vw, 112px);
+    /* Alto disponible para la obra: la imagen se ajusta a él o al ancho, lo que llegue antes. */
+    --alto-disp: calc(100svh - var(--pt) - var(--pb));
+    position: relative;
+    margin: 0;
+    height: 100svh;
+    min-height: 520px;
+    padding: var(--pt) var(--px) var(--pb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--band);
+  }
+  .marco + .marco {
+    background: var(--card);
+  }
+  .marco img {
+    display: block;
+    width: min(100%, calc(max(var(--alto-disp), 520px - var(--pt) - var(--pb)) * var(--ar)));
+    height: auto;
+    aspect-ratio: var(--ar);
+    background: var(--card);
+    box-shadow:
+      0 1px 2px rgba(20, 16, 10, 0.08),
+      0 18px 40px -12px rgba(20, 16, 10, 0.28);
+    cursor: zoom-in;
+  }
+  .marco__pie,
+  .marco__ver {
+    position: absolute;
+    bottom: 20px;
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .marco__pie {
+    left: var(--px);
+    color: var(--muted);
+  }
+  .marco__ver {
+    right: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
+  }
+  .marco:hover .marco__ver,
+  .marco__ver:focus-visible {
+    opacity: 1;
+    transform: none;
+  }
+  .marco__ver:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* ---------- Progreso (rombos) y contador, fijos a la izquierda ---------- */
+  .galeria__puntos {
+    position: fixed;
+    left: calc(var(--gutter) - 6px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.35s ease;
+  }
+  .galeria__puntos button {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .galeria__puntos button::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    transform: rotate(45deg);
+    background: rgba(20, 20, 20, 0.28);
+    transition:
+      transform 0.5s var(--ease-out),
+      background 0.4s ease;
+  }
+  .galeria__puntos button[aria-current='true']::after {
+    transform: rotate(45deg) scale(1.7);
+    background: var(--ink);
+  }
+  .galeria__contador {
+    position: fixed;
+    left: var(--gutter);
+    bottom: 22px;
+    z-index: 20;
+    margin: 0;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    transition: opacity 0.35s ease;
+  }
+  /* Fuera de la galería (más abajo en la página) se ocultan. */
+  .galeria:not(.is-visible) .galeria__puntos,
+  .galeria:not(.is-visible) .galeria__contador {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ---------- Visor a pantalla completa ---------- */
+  .visor {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #0b0b0b;
+    color: #fafaf8;
+    overflow: hidden;
+  }
+  .visor::backdrop {
+    background: #0b0b0b;
+  }
+  .visor[open] {
+    animation: visor-entrar 0.35s ease both;
+  }
+  @keyframes visor-entrar {
+    from {
+      opacity: 0;
+    }
+  }
+  .visor__lienzo {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: clamp(56px, 7vh, 80px) clamp(16px, 5vw, 96px);
+    overflow: hidden;
+    cursor: zoom-in;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+  .visor.is-zoom .visor__lienzo {
+    cursor: zoom-out;
+  }
+  .visor__img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    user-select: none;
+    transition: transform 0.45s var(--ease-out);
+    transform-origin: var(--ox, 50%) var(--oy, 50%);
+  }
+  .visor.is-zoom .visor__img {
+    transform: scale(var(--zoom, 2.5));
+    transition: transform 0.45s var(--ease-out), transform-origin 0.08s linear;
+  }
+  .visor__pie {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    margin: 0;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #a8a59e;
+    white-space: nowrap;
+  }
+  .visor__boton {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 1px solid rgba(250, 250, 248, 0.3);
+    border-radius: 50%;
+    background: rgba(11, 11, 11, 0.55);
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.25s ease;
+  }
+  .visor__boton:hover {
+    background: #fafaf8;
+    color: #0b0b0b;
+  }
+  .visor__boton:focus-visible {
+    outline-color: var(--accent-on-dark);
+  }
+  .visor__cerrar {
+    top: 16px;
+    right: 16px;
+  }
+  .visor__ant,
+  .visor__sig {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .visor__ant {
+    left: 16px;
+  }
+  .visor__sig {
+    right: 16px;
+  }
+
+  /* ---------- Móvil y tableta: carrusel horizontal ---------- */
+  @media (max-width: 900px) {
+    .galeria__pista {
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      overscroll-behavior-x: contain;
+    }
+    .galeria__pista::-webkit-scrollbar {
+      display: none;
+    }
+    .marco {
+      --pt: 118px;
+      --pb: 56px;
+      --px: 24px;
+      flex: 0 0 100%;
+      height: min(86svh, calc(100vw / var(--ar) + var(--pt) + var(--pb)));
+      min-height: 420px;
+      --alto-disp: calc(min(86svh, calc(100vw / var(--ar) + var(--pt) + var(--pb))) - var(--pt) - var(--pb));
+      scroll-snap-align: start;
+    }
+    .marco img {
+      width: min(100%, calc(max(var(--alto-disp), 420px - var(--pt) - var(--pb)) * var(--ar)));
+    }
+    .marco__pie {
+      bottom: 22px;
+      left: 24px;
+    }
+    .marco__ver {
+      right: 16px;
+      bottom: 12px;
+      opacity: 1;
+      transform: none;
+    }
+    .galeria__puntos {
+      position: static;
+      transform: none;
+      flex-direction: row;
+      justify-content: center;
+      padding: 10px 0 0;
+    }
+    .galeria__puntos button {
+      width: 26px;
+      height: 28px;
+    }
+    .galeria__contador {
+      display: none;
+    }
+    .galeria:not(.is-visible) .galeria__puntos {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marco__ver,
+    .visor__img,
+    .galeria__puntos button::after {
+      transition: none;
+    }
+    .visor[open] {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  class GaleriaObra extends HTMLElement {
+    private pista!: HTMLElement;
+    private marcos: HTMLElement[] = [];
+    private puntos: HTMLButtonElement[] = [];
+    private actual = 0;
+    private visor!: HTMLDialogElement;
+    private enVisor = 0;
+    private reducir = matchMedia('(prefers-reduced-motion: reduce)');
+    private movil = matchMedia('(max-width: 900px)');
+
+    connectedCallback() {
+      this.pista = this.querySelector('[data-pista]')!;
+      this.marcos = [...this.querySelectorAll<HTMLElement>('[data-marco]')];
+      this.puntos = [...this.querySelectorAll<HTMLButtonElement>('[data-ir]')];
+      this.visor = this.querySelector('[data-visor]')!;
+
+      // Vista activa: la que ocupa el centro de la pantalla (o del carrusel).
+      let pendiente = false;
+      const medir = () => {
+        if (pendiente) return;
+        pendiente = true;
+        requestAnimationFrame(() => {
+          pendiente = false;
+          this.marcar(this.vistaActiva());
+        });
+      };
+      addEventListener('scroll', medir, { passive: true });
+      this.pista.addEventListener('scroll', medir, { passive: true });
+      addEventListener('resize', medir);
+
+      // Rombos y contador solo mientras la galería está en pantalla.
+      new IntersectionObserver(([e]) => this.classList.toggle('is-visible', e.isIntersecting), {
+        rootMargin: '-45% 0px -45% 0px',
+      }).observe(this);
+
+      this.puntos.forEach((b) => b.addEventListener('click', () => this.ir(Number(b.dataset.ir))));
+
+      // Visor
+      this.querySelectorAll<HTMLElement>('[data-ver]').forEach((el) =>
+        el.addEventListener('click', () => this.abrir(Number(el.dataset.ver)))
+      );
+      this.visor.querySelector('[data-cerrar]')?.addEventListener('click', () => this.visor.close());
+      this.visor.querySelectorAll<HTMLElement>('[data-paso]').forEach((b) =>
+        b.addEventListener('click', () => this.mostrar(this.enVisor + Number(b.dataset.paso)))
+      );
+      this.visor.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') this.mostrar(this.enVisor + 1);
+        if (e.key === 'ArrowLeft') this.mostrar(this.enVisor - 1);
+      });
+      this.visor.addEventListener('close', () => {
+        this.visor.classList.remove('is-zoom');
+        this.ir(this.enVisor, false);
+      });
+      const lienzo = this.visor.querySelector<HTMLElement>('[data-lienzo]')!;
+      const img = this.visor.querySelector<HTMLImageElement>('[data-visor-img]')!;
+      const origen = (e: PointerEvent) => {
+        const r = img.getBoundingClientRect();
+        if (!r.width) return;
+        // Coordenadas relativas a la imagen sin escalar (el rect ya incluye la escala, se normaliza).
+        const x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+        const y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+        img.style.setProperty('--ox', `${x * 100}%`);
+        img.style.setProperty('--oy', `${y * 100}%`);
+      };
+      lienzo.addEventListener('click', (e) => {
+        if (e.target !== img) {
+          if (!this.visor.classList.contains('is-zoom')) this.visor.close();
+          else this.visor.classList.remove('is-zoom');
+          return;
+        }
+        if (!this.visor.classList.contains('is-zoom')) {
+          origen(e as PointerEvent);
+          // No ampliar más de lo que la foto aguanta.
+          const z = Math.min(3, Math.max(1.4, img.naturalWidth / (img.getBoundingClientRect().width || 1)));
+          img.style.setProperty('--zoom', z.toFixed(2));
+        }
+        this.visor.classList.toggle('is-zoom');
+      });
+      lienzo.addEventListener('pointermove', (e) => {
+        if (this.visor.classList.contains('is-zoom') && e.pointerType === 'mouse') origen(e);
+      });
+    }
+
+    private vistaActiva() {
+      if (this.movil.matches) {
+        return Math.round(this.pista.scrollLeft / (this.pista.clientWidth || 1));
+      }
+      const centro = innerHeight / 2;
+      let mejor = 0;
+      let dist = Infinity;
+      this.marcos.forEach((m, i) => {
+        const r = m.getBoundingClientRect();
+        const d = Math.abs(r.top + r.height / 2 - centro);
+        if (d < dist) {
+          dist = d;
+          mejor = i;
+        }
+      });
+      return mejor;
+    }
+
+    private marcar(i: number) {
+      if (i === this.actual) return;
+      this.actual = i;
+      this.puntos.forEach((b, j) => (j === i ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
+      const c = this.querySelector('[data-actual]');
+      if (c) c.textContent = String(i + 1).padStart(2, '0');
+    }
+
+    private ir(i: number, suave = true) {
+      const m = this.marcos[i];
+      if (!m) return;
+      const behavior: ScrollBehavior = suave && !this.reducir.matches ? 'smooth' : 'instant';
+      if (this.movil.matches) this.pista.scrollTo({ left: m.offsetLeft, behavior });
+      else scrollTo({ top: m.getBoundingClientRect().top + scrollY, behavior });
+    }
+
+    private abrir(i: number) {
+      this.mostrar(i);
+      this.visor.showModal();
+    }
+
+    private mostrar(i: number) {
+      const n = this.marcos.length;
+      i = ((i % n) + n) % n;
+      this.enVisor = i;
+      const origen = this.marcos[i].querySelector('img')!;
+      const img = this.visor.querySelector<HTMLImageElement>('[data-visor-img]')!;
+      this.visor.classList.remove('is-zoom');
+      // Primero la versión que ya está cargada; luego la grande.
+      img.src = origen.currentSrc || origen.src;
+      img.alt = origen.alt;
+      const grande = origen.dataset.grande;
+      if (grande) {
+        const pre = new Image();
+        pre.onload = () => {
+          if (this.enVisor === i) img.src = grande;
+        };
+        pre.src = grande;
+      }
+      const pie = this.visor.querySelector('[data-visor-pie]');
+      const etiqueta = this.marcos[i].querySelector('figcaption')?.textContent;
+      if (pie) pie.textContent = n > 1 ? `${String(i + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}${etiqueta ? ` · ${etiqueta}` : ''}` : '';
+    }
+  }
+
+  if (!customElements.get('galeria-obra')) customElements.define('galeria-obra', GaleriaObra);
+</script>

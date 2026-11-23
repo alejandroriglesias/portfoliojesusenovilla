@@ -83,7 +83,13 @@
   --footer-bg: var(--black);
   --container: 1440px;
 }
-[data-paleta='ficha'],
+[data-paleta='ficha'] {
+  --bg: var(--paper);
+  --band: #efece6;
+  --card: #e4e0d8;
+  --footer-bg: var(--black);
+  --container: 1440px;
+}
 [data-paleta='luz'] {
   --footer-bg: var(--black);
   --container: 1440px;

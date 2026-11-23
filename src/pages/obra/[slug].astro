@@ -1,17 +1,21 @@
 ---
 /**
- * Ficha de obra (v2) — prototipo 11-ficha-v2.
+ * Ficha de obra (v3): pantalla partida.
+ * - Izquierda: las vistas de la obra apiladas, a pantalla completa (GaleriaObra).
+ * - Derecha: panel fijo con ruta, título, texto, cartela con los datos y
+ *   desplegables (técnica, envío).
+ * Debajo: «Cómo se hizo» (si hay proceso) y anterior / siguiente.
+ * Al llegar desde una miniatura, la imagen crece hasta su sitio (TransicionObras).
  */
 import type { GetStaticPaths } from 'astro';
 import { getEntry, render } from 'astro:content';
 import { getImage } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Lupa from '../../components/ficha/Lupa.astro';
+import GaleriaObra from '../../components/ficha/GaleriaObra.astro';
 import TiraProceso from '../../components/ficha/TiraProceso.astro';
-import SobreLaTecnica from '../../components/ficha/SobreLaTecnica.astro';
-import ConsultaObra from '../../components/ficha/ConsultaObra.astro';
 import AnteriorSiguiente from '../../components/ficha/AnteriorSiguiente.astro';
-import { getObras, slugTecnica, type Obra } from '../../lib/contenido';
+import { getObras, slugTecnica, esMarcador, type Obra } from '../../lib/contenido';
+import { getAjustes } from '../../lib/ajustes';
 import { obraJsonLd } from '../../lib/datos-estructurados';
 
 export const getStaticPaths = (async () => {
@@ -40,6 +44,7 @@ const { obra, indice, total, anterior, siguiente } = Astro.props;
 const d = obra.data;
 const t = d.tecnica;
 const esGrabado = t.discriminant === 'grabado';
+const ajustes = await getAjustes();
 
 const principal = await getEntry('tecnicas', t.discriminant);
 const sub = esGrabado ? await getEntry('tecnicas', t.value.subtecnica) : undefined;
@@ -81,12 +86,19 @@ const ficha = [
 
 const tieneDescripcion = !!obra.body?.trim();
 const { Content: Descripcion } = await render(obra);
+const tieneTecnica = !!tecnicaConcreta?.body?.trim();
+const { Content: TextoTecnica } = tecnicaConcreta ? await render(tecnicaConcreta) : { Content: null };
+
+// Consulta por correo (o, si no hay correo válido, a la página de contacto).
+const emailValido = !!ajustes.email && !esMarcador(ajustes.email) && ajustes.email.includes('@');
+const asunto = `Consulta sobre «${d.titulo}»${d.anio ? ` (${d.anio})` : ''}`;
+const hrefConsulta = emailValido ? `mailto:${ajustes.email}?subject=${encodeURIComponent(asunto)}` : '/contacto';
+const textoConsulta = d.estado === 'vendida' ? 'Preguntar por una obra similar' : 'Consultar esta obra';
+const envio = ajustes.condicionesEnvio && !esMarcador(ajustes.condicionesEnvio) ? ajustes.condicionesEnvio : undefined;
 
 // Letras del título: una por span, con retardo escalonado.
-const palabras = d.titulo.split(/\s+/);
-const letrasMax = Math.max(...palabras.map((p) => p.length));
 let k = 0;
-const palabrasLetras = palabras.map((p) => [...p].map((ch) => ({ ch, retardo: 150 + k++ * 90 })));
+const palabrasLetras = d.titulo.split(/\s+/).map((p) => [...p].map((ch) => ({ ch, retardo: 260 + k++ * 32 })));
 
 const og = await getImage({ src: d.imagen, width: 1200, format: 'jpg', quality: 78 });
 const descripcionSeo =
@@ -108,13 +120,6 @@ const jsonLd = Astro.site
       },
     ]
   : undefined;
-
-let num = 1;
-const sec = () => `(${String(num++).padStart(2, '0')})`;
-const nFicha = sec();
-const nProceso = d.proceso.length ? sec() : '';
-const nTecnica = tecnicaConcreta?.body?.trim() ? sec() : '';
-const nConsulta = sec();
 ---
 
 <BaseLayout
@@ -125,102 +130,154 @@ const nConsulta = sec();
   imagenOg={og.src}
   jsonLd={jsonLd}
 >
-  <section class="hero" aria-labelledby="titulo-obra">
-    <div class="hero__in">
-      {
-        import.meta.env.DEV && (!d.publicada || d.ejemplo) && (
-          <p class="aviso-dev">{d.ejemplo ? 'Obra de ejemplo' : 'Obra oculta'}: no se publica. {d.notas}</p>
-        )
-      }
-      <div class="hero__barra">
-        <a class="hero__volver" href="/obra">
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
-          Índice
-        </a>
-        <span>
-          <a href={`/tecnicas/${t.discriminant}`}>{nombrePrincipal}s</a>
-          {sub && (
-            <>
-              {' / '}
-              <a href={`/tecnicas/${sub.id}`}>{sub.data.nombre}</a>
-            </>
-          )}
-        </span>
-        <span class="hero__pos">
-          <span class="sr-only">Obra </span>{n2(indice)} <span class="hero__total"><span class="sr-only">de</span>/ {String(total).padStart(2, '0')}</span>
-        </span>
-      </div>
+  <div class="obra">
+    <GaleriaObra vistas={vistas} alt={altBase} />
 
-      <Lupa vistas={vistas} alt={altBase} zoom={3} pie={edicion}>
-        <p slot="info" class="hero__dato">
-          {nombrePrincipal}{d.anio && ` · ${d.anio}`}
-        </p>
-      </Lupa>
-
-      <h1 id="titulo-obra" class="hero__titulo" style={`--n: ${letrasMax}`} data-ajustar>
-        <span class="sr-only">{d.titulo}</span>
+    <section class="panel" aria-labelledby="titulo-obra">
+      <div class="panel__in">
         {
-          palabrasLetras.map((letras) => (
-            <span class="palabra" aria-hidden="true">
-              {letras.map((l) => (
-                <span class="letra" style={`animation-delay: ${l.retardo}ms`}>
-                  {l.ch}
-                </span>
-              ))}
-            </span>
-          ))
+          import.meta.env.DEV && (!d.publicada || d.ejemplo) && (
+            <p class="aviso-dev">{d.ejemplo ? 'Obra de ejemplo' : 'Obra oculta'}: no se publica. {d.notas}</p>
+          )
         }
-      </h1>
-    </div>
-  </section>
+        <div class="panel__cabeza">
+          <nav class="miga" aria-label="Ruta">
+            <a href="/obra">Obra</a>
+            <span aria-hidden="true">/</span>
+            <a href={`/tecnicas/${t.discriminant}`}>{nombrePrincipal}</a>
+            {
+              sub && (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <a href={`/tecnicas/${sub.id}`}>{sub.data.nombre}</a>
+                </>
+              )
+            }
+          </nav>
+          <p class="panel__pos">
+            <span class="sr-only">Obra </span>{n2(indice)}<span class="panel__total"><span class="sr-only"> de</span> / {String(total).padStart(2, '0')}</span>
+          </p>
+        </div>
 
-  <section class="ficha" aria-labelledby="ficha-titulo">
-    <h2 id="ficha-titulo" class="etiqueta ficha__etiqueta">{nFicha} Ficha</h2>
-    <dl class="ficha__datos">
-      {
-        ficha.map((f) => (
-          <div class="ficha__dato">
-            <dt>{f.dt}</dt>
-            <dd>{f.dd}</dd>
-          </div>
-        ))
-      }
-      {
-        estado && (
-          <div class="ficha__dato">
-            <dt>Estado</dt>
-            <dd class="ficha__estado">
-              <span class="punto" style={`background:${estado.color}`} aria-hidden="true" />
-              {estado.texto}
-            </dd>
-          </div>
-        )
-      }
-    </dl>
+        <h1 id="titulo-obra" class="panel__titulo">
+          <span class="sr-only">{d.titulo}</span>
+          {
+            palabrasLetras.map((letras) => (
+              <span class="palabra" aria-hidden="true">
+                {letras.map((l) => (
+                  <span class="letra" style={`animation-delay: ${l.retardo}ms`}>
+                    {l.ch}
+                  </span>
+                ))}
+              </span>
+            ))
+          }
+        </h1>
 
-    <div class="ficha__texto">
-      {d.entradilla ? <p class="ficha__entradilla">{d.entradilla}</p> : <span />}
-      <div class="ficha__cuerpo">
         {
-          tieneDescripcion && (
-            <div class="ficha__descripcion">
-              <Descripcion />
+          (d.entradilla || tieneDescripcion) && (
+            <div class="panel__texto">
+              {d.entradilla && <p class="panel__entradilla">{d.entradilla}</p>}
+              {tieneDescripcion && (
+                <div class="panel__descripcion">
+                  <Descripcion />
+                </div>
+              )}
             </div>
           )
         }
-        <div class="ficha__botones">
-          <a class="boton boton--acento" href="#consultar">Consultar esta obra</a>
-          {d.proceso.length > 0 && <a class="boton boton--borde" href="#proceso">Ver el proceso</a>}
+
+        <div class="cartela">
+          <div class="cartela__cabeza">
+            <h2 class="cartela__etiqueta">La obra</h2>
+            <p class="cartela__tipo">{esGrabado ? 'Grabado original' : 'Obra original'}</p>
+          </div>
+          <dl class="cartela__datos">
+            {
+              ficha.map((f) => (
+                <div>
+                  <dt>{f.dt}</dt>
+                  <dd>{f.dd}</dd>
+                </div>
+              ))
+            }
+            {
+              estado && (
+                <div>
+                  <dt>Estado</dt>
+                  <dd class="cartela__estado">
+                    <span class="punto" style={`background:${estado.color}`} aria-hidden="true" />
+                    {estado.texto}
+                  </dd>
+                </div>
+              )
+            }
+          </dl>
+          {
+            d.paleta && (
+              <div class="cartela__colores">
+                <span class="cartela__mini">Colores</span>
+                <span class="muestras">
+                  {d.paleta.map((c) => (
+                    <span class="muestra" style={`background:${c}`} title={c} />
+                  ))}
+                </span>
+              </div>
+            )
+          }
+          <a class="cartela__consulta" href={hrefConsulta} id="consultar">
+            <span class="punto punto--acento" aria-hidden="true"></span>
+            {textoConsulta}
+            <span class="flecha" aria-hidden="true">→</span>
+          </a>
+        </div>
+
+        <div class="desplegables">
+          {
+            tieneTecnica && TextoTecnica && (
+              <details class="desplegable">
+                <summary>Sobre la técnica · {nombreConcreto}</summary>
+                <div class="desplegable__cuerpo">
+                  <TextoTecnica />
+                  <a class="desplegable__enlace" href={`/tecnicas/${tecnicaConcreta!.id}`}>
+                    Más obras en {nombreConcreto.toLowerCase()} →
+                  </a>
+                </div>
+              </details>
+            )
+          }
+          {
+            d.proceso.length > 0 && (
+              <a class="desplegable desplegable--enlace" href="#proceso">
+                Cómo se hizo <span aria-hidden="true">↓</span>
+              </a>
+            )
+          }
+          {
+            envio && (
+              <details class="desplegable">
+                <summary>Envío</summary>
+                <div class="desplegable__cuerpo">
+                  <p>{envio}</p>
+                </div>
+              </details>
+            )
+          }
+          <details class="desplegable">
+            <summary>Consultas y encargos</summary>
+            <div class="desplegable__cuerpo">
+              <p>
+                Para preguntar por esta obra, su disponibilidad o un encargo, escribe
+                {emailValido ? <> a <a href={hrefConsulta}>{ajustes.email}</a></> : <> desde la <a href="/contacto">página de contacto</a></>}.
+              </p>
+            </div>
+          </details>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
-  <TiraProceso pasos={d.proceso} titulo={d.titulo} numero={nProceso} />
-
-  {tecnicaConcreta && <SobreLaTecnica tecnica={tecnicaConcreta} numero={nTecnica} />}
-
-  <ConsultaObra titulo={d.titulo} anio={d.anio} estado={d.estado} numero={nConsulta} />
+  <TiraProceso pasos={d.proceso} titulo={d.titulo} numero="" />
 
   {
     total > 1 && (
@@ -234,205 +291,343 @@ const nConsulta = sec();
 
 <style>
   .aviso-dev {
-    margin: 0 0 24px;
+    margin: 0;
     padding: 12px 16px;
-    border: 1px solid var(--accent-on-dark);
-    color: var(--accent-on-dark);
+    border: 1px solid var(--accent);
+    color: var(--accent);
     font-size: 14px;
   }
 
-  /* ---------- Hero negro ---------- */
-  .hero {
-    background: var(--black);
-    color: var(--paper);
-    padding: clamp(96px, 9vw, 128px) var(--gutter) 24px;
-    overflow: hidden;
+  /* ---------- Pantalla partida ---------- */
+  .obra {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(min(100%, 380px), 1fr);
+    background: var(--paper);
   }
-  .hero__in {
-    max-width: 1344px;
-    margin: 0 auto;
+  .panel {
+    position: relative;
+    background: var(--paper);
   }
-  .hero__barra {
+  .panel__in {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: clamp(112px, 14vh, 150px) clamp(24px, 1rem + 3vw, 72px) clamp(40px, 6vh, 64px);
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    gap: clamp(28px, 4vh, 40px);
+    container-type: inline-size;
+  }
+
+  .panel__cabeza {
+    display: flex;
+    align-items: baseline;
     justify-content: space-between;
-    gap: 12px 24px;
-    font-size: 13px;
-    letter-spacing: 0.12em;
+    gap: 16px;
+  }
+  .miga,
+  .panel__pos {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     font-weight: 600;
-    color: #a8a59e;
+    color: var(--muted);
   }
-  .hero__barra a {
+  .miga {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+  .miga a,
+  .desplegable__enlace,
+  .panel__descripcion :global(a),
+  .desplegable__cuerpo :global(a) {
+    position: relative;
     color: inherit;
     text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) no-repeat right bottom / 0 1px;
+    transition: background-size 0.5s var(--ease-out);
   }
-  .hero__barra a:hover {
-    color: var(--paper);
-    text-decoration: underline;
-    text-underline-offset: 5px;
+  .miga a:hover,
+  .desplegable__enlace:hover,
+  .panel__descripcion :global(a:hover),
+  .desplegable__cuerpo :global(a:hover) {
+    background-position: left bottom;
+    background-size: 100% 1px;
   }
-  .hero__volver {
+  .panel__pos {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .panel__total {
+    color: var(--muted);
+  }
+
+  /* Título: se adapta al ancho del panel (cqi) */
+  .panel__titulo {
+    margin: -8px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.24em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(36px, min(9.5cqi, 7vh), 84px);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    overflow-wrap: anywhere;
+  }
+  .palabra {
+    display: inline-flex;
+    flex-wrap: wrap;
+    overflow: hidden;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+  }
+  .letra {
+    display: inline-block;
+    animation: subir 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes subir {
+    from {
+      transform: translateY(105%);
+    }
+    to {
+      transform: none;
+    }
+  }
+
+  .panel__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 36em;
+    margin-top: -8px;
+    animation: aparecer 0.8s ease 0.45s both;
+  }
+  .panel__entradilla {
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .panel__descripcion {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--text-soft);
+  }
+  .panel__descripcion :global(p) {
+    margin: 0 0 0.9em;
+  }
+  .panel__descripcion :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+
+  /* ---------- Cartela ---------- */
+  .cartela {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: clamp(22px, 3cqi, 32px);
+    background: var(--band);
+    border-radius: 14px;
+    animation: aparecer 0.8s ease 0.6s both;
+  }
+  .cartela__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 16px;
+  }
+  .cartela__etiqueta,
+  .cartela__mini,
+  .cartela__datos dt {
+    margin: 0;
+    font: 600 11px/1.2 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .cartela__etiqueta {
+    color: var(--ink);
+  }
+  .cartela__tipo {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .cartela__datos {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 24px;
+  }
+  .cartela__datos div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .cartela__datos dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(17px, 1.3vw, 20px);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+  }
+  .cartela__estado {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .punto--acento {
+    background: var(--accent);
+  }
+  .cartela__colores {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .muestras {
+    display: flex;
+    gap: 8px;
+  }
+  .muestra {
+    width: 16px;
+    height: 16px;
+    transform: rotate(45deg);
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+  .cartela__consulta {
+    align-self: flex-start;
     display: inline-flex;
     align-items: center;
     gap: 10px;
     min-height: var(--tap);
-    color: var(--paper) !important;
-  }
-  .hero__pos {
-    font-variant-numeric: tabular-nums;
+    padding: 0 20px;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
     color: var(--paper);
+    font: 600 14px/1 var(--font-body);
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    transition: background 0.3s ease;
   }
-  .hero__total {
-    color: #a8a59e;
+  .cartela__consulta:hover {
+    background: var(--accent);
   }
-  .hero :focus-visible {
-    outline-color: var(--accent-on-dark);
+  .cartela__consulta:hover .punto--acento {
+    background: var(--paper);
   }
-  .hero__dato {
-    margin: 0;
-    font-size: 13px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: var(--accent-on-dark);
-  }
-
-  /* Título gigante: se adapta a la palabra más larga para no desbordar. */
-  .hero__titulo {
-    position: relative;
-    z-index: 2;
-    margin: -0.3em 0 0;
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 0.25em;
-    font-weight: 800;
-    font-size: clamp(
-      48px,
-      min(24vw, calc((min(100vw, 1440px) - 2 * var(--gutter)) / (var(--n) * 1.04))),
-      380px
-    );
-    line-height: 0.8;
-    letter-spacing: -0.055em;
-    color: var(--paper);
-    mix-blend-mode: difference;
-    pointer-events: none;
-  }
-  .palabra {
-    white-space: nowrap;
-  }
-  .letra {
+  .flecha {
     display: inline-block;
-    animation: subir 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transition: transform 0.35s ease;
   }
-  @keyframes subir {
-    from {
-      transform: translateY(45%) rotate(4deg);
-      opacity: 0;
-    }
-    to {
-      transform: none;
-      opacity: 1;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .letra {
-      animation: none;
-    }
-  }
-  @media (max-width: 600px) {
-    .hero {
-      padding-top: 124px;
-    }
-    .hero__titulo {
-      margin-top: 0.15em;
-    }
+  .cartela__consulta:hover .flecha {
+    transform: translateX(5px);
   }
 
-  /* ---------- Ficha ---------- */
-  .ficha {
-    max-width: var(--container);
-    margin: 0 auto;
-    padding: clamp(64px, 8vw, 112px) var(--gutter);
-  }
-  .ficha__etiqueta {
-    font-family: var(--font-body);
-    margin-bottom: 32px;
-  }
-  .ficha__datos {
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
-    column-gap: 32px;
-  }
-  .ficha__dato {
-    padding: 24px 0;
-    border-top: 2px solid var(--ink);
+  /* ---------- Desplegables ---------- */
+  .desplegables {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    border-top: 1px solid var(--line);
+    animation: aparecer 0.8s ease 0.75s both;
   }
-  .ficha__dato dt {
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
+  .desplegable {
+    border-bottom: 1px solid var(--line);
   }
-  .ficha__dato dd {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(22px, 2.2vw, 30px);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-  }
-  .ficha__estado {
+  .desplegable summary,
+  .desplegable--enlace {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 52px;
+    font: 600 12px/1.3 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
   }
-  .punto {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
+  .desplegable summary::-webkit-details-marker {
+    display: none;
   }
-  .ficha__texto {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-    gap: 40px 80px;
-    margin-top: clamp(56px, 7vw, 96px);
-    align-items: start;
+  .desplegable summary::after {
+    content: '+';
+    font: 400 20px/1 var(--font-body);
+    transition: transform 0.35s var(--ease-out);
   }
-  .ficha__entradilla {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(28px, 3.4vw, 52px);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
+  .desplegable[open] summary::after {
+    transform: rotate(45deg);
   }
-  .ficha__cuerpo {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+  .desplegable--enlace span {
+    font-size: 15px;
   }
-  .ficha__descripcion {
-    font-size: 18px;
+  .desplegable__cuerpo {
+    padding: 0 0 22px;
+    font-size: 15px;
     line-height: 1.65;
     color: var(--text-soft);
   }
-  .ficha__descripcion :global(p) {
-    margin: 0 0 1em;
+  .desplegable__cuerpo :global(p) {
+    margin: 0 0 0.9em;
   }
-  .ficha__descripcion :global(p:last-child) {
-    margin-bottom: 0;
+  .desplegable__enlace {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--ink);
   }
-  .ficha__botones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+  .desplegable[open] .desplegable__cuerpo {
+    animation: aparecer 0.45s ease both;
+  }
+
+  /* ---------- Móvil y tableta: una columna ---------- */
+  @media (max-width: 900px) {
+    .obra {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .panel__in {
+      position: static;
+      height: auto;
+      overflow: visible;
+      padding: 28px var(--gutter) 72px;
+    }
+    .panel__titulo {
+      font-size: clamp(36px, 11cqi, 64px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .letra,
+    .panel__texto,
+    .cartela,
+    .desplegables,
+    .desplegable[open] .desplegable__cuerpo {
+      animation: none;
+    }
   }
 </style>
