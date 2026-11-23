@@ -75,12 +75,20 @@ git remote add origin https://github.com/USUARIO/jesusenovilla-web.git
 git push -u origin main
 ```
 
-### 2. Netlify
-1. *Add new site → Import an existing project →* elige el repositorio. La configuración se lee de `netlify.toml` (Node 24, `npm run build`, carpeta `dist`).
-2. (Opcional) El repositorio que usa Keystatic ya viene en `keystatic.config.ts`
-   (`alejandroriglesias/portfoliojesusenovilla`); solo si cambia, añade en
-   *Site configuration → Environment variables* `PUBLIC_KEYSTATIC_GITHUB_REPO = usuario/repositorio`.
-3. Despliega. Comprueba la URL provisional (`*.netlify.app`).
+### 2. Cloudflare (alojamiento)
+La web se aloja en **Cloudflare Workers** (plan gratuito: unos 3.000 minutos de compilación al mes, ~1.000 publicaciones; el tráfico a los archivos estáticos es ilimitado).
+
+1. En dash.cloudflare.com: *Workers & Pages → Create → Import a repository* → elige el repositorio.
+2. Ajustes de compilación:
+   - Build command: `npm run build`
+   - Deploy command: `npx wrangler deploy` (el adaptador deja la configuración del Worker en `dist/server/wrangler.json` y Wrangler la encuentra solo)
+   - Variable de entorno de compilación `NODE_VERSION = 24` (Astro 7 necesita Node ≥ 22.23).
+3. Despliega y comprueba la URL provisional (`*.workers.dev`).
+
+Cada commit en `main` (también los que hace el panel al guardar) vuelve a publicar la web en 1–3 minutos.
+Las redirecciones 301 salen de `src/lib/redirecciones.mjs` (se escriben en `_redirects` al compilar) y las cabeceras de `public/_headers`.
+
+Para probar en local con el mismo motor que Cloudflare: `npm run build` y `npx astro preview`.
 
 ### 3. Keystatic (edición en producción)
 El panel usa **Keystatic Cloud**: quien edita entra con su cuenta de correo (sin GitHub) y Keystatic Cloud guarda los cambios como commits en el repositorio.
@@ -91,9 +99,9 @@ El panel usa **Keystatic Cloud**: quien edita entra con su cuenta de correo (sin
 - En local, `npm run dev` guarda en los archivos del proyecto. Para probar el modo nube en local: `PUBLIC_KEYSTATIC_MODO=cloud` en `.env`.
 
 ### 4. Dominio
-1. En Netlify: *Domain management → Add domain →* `jesusenovilla.com` (y `www`).
-2. En el proveedor del dominio, cambia los DNS a los que indique Netlify. El HTTPS se activa solo.
-3. Cuando el dominio apunte a Netlify, el WordPress deja de verse; guarda antes una copia (exportación WXR y `wp-content/uploads`) por si acaso.
+1. Guarda antes una copia del WordPress (exportación WXR y `wp-content/uploads`): cuando el dominio apunte a Cloudflare, dejará de verse.
+2. Añade `jesusenovilla.com` a Cloudflare (*Add a domain*) y cambia en el registrador los servidores DNS por los que indique Cloudflare.
+3. En el Worker: *Settings → Domains & Routes → Add → Custom domain* → `jesusenovilla.com` (y `www`). El HTTPS se activa solo.
 
 ### 5. Buscadores
 La web antigua tenía `noindex`; esta es indexable (`robots.txt`, `sitemap-index.xml`, Open Graph y datos estructurados `Person` / `VisualArtwork`).

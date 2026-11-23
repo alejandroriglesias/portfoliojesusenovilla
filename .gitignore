@@ -13,3 +13,7 @@ migracion/
 
 # Configuración local de Claude Code
 .claude/
+
+# Cloudflare (Wrangler): estado local y variables de desarrollo
+.wrangler/
+.dev.vars*
