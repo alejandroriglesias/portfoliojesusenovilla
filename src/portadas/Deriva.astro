@@ -18,7 +18,9 @@ import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ComunesTaller from '../components/portada/ComunesTaller.astro';
 import { getDatosPortada } from '../lib/portada';
-import { usuarioInstagram } from '../lib/ajustes';
+import { esMarcador } from '../lib/ajustes';
+import { getEntradasBlog } from '../lib/contenido';
+import Redes from '../components/Redes.astro';
 import type { Props as PropsPortada } from './tipos';
 
 type Props = PropsPortada;
@@ -58,7 +60,16 @@ const filasConFoco = filas.map((fila) =>
     return { ...p, enfocable };
   })
 );
-const insta = usuarioInstagram(ajustes.instagram);
+const aviso = ajustes.avisoPortada && !esMarcador(ajustes.avisoPortada) ? ajustes.avisoPortada : undefined;
+const hayBlog = (await getEntradasBlog()).length > 0;
+// Enlaces rápidos bajo el muro (como el pie de la portada de referencia).
+const enlaces = [
+  { href: '#obra', texto: 'Toda la obra ↓' },
+  { href: '/obra#tecnicas', texto: 'Técnicas' },
+  { href: '/sobre-mi', texto: 'Sobre mí' },
+  ...(hayBlog ? [{ href: '/blog', texto: 'Blog' }] : []),
+  { href: '/contacto', texto: 'Contacto' },
+];
 ---
 
 <BaseLayout cabecera="superpuesta" paleta="deriva" canonica={canonica} noindex={noindex}>
@@ -108,10 +119,22 @@ const insta = usuarioInstagram(ajustes.instagram);
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20" /></svg>
         <span class="deriva__pista-raton">Arrastra para recorrer</span><span class="deriva__pista-tactil">Desliza para recorrer</span>
       </p>
-      <a class="deriva__enlace" href="#obra">
-        <span class="punto" aria-hidden="true"></span>Ver toda la obra <span aria-hidden="true">↓</span>
-      </a>
-      {ajustes.instagram && <a class="deriva__enlace" href={ajustes.instagram} rel="me noopener">{insta}</a>}
+      <div class="deriva__izq">
+        {
+          aviso && (
+            <p class="deriva__aviso">
+              <span class="punto" aria-hidden="true" />
+              {aviso}
+            </p>
+          )
+        }
+        <nav class="deriva__rapidos" aria-label="Enlaces rápidos">
+          {enlaces.map((e) => <a href={e.href}>{e.texto}</a>)}
+        </nav>
+      </div>
+      <div class="deriva__der">
+        <Redes tono="claro" etiqueta="Sigue mi obra" />
+      </div>
     </div>
   </section>
 
@@ -273,10 +296,78 @@ const insta = usuarioInstagram(ajustes.instagram);
     bottom: 22px;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
-    gap: 8px 24px;
+    gap: 14px 24px;
     pointer-events: none;
+  }
+  .deriva__izq,
+  .deriva__der {
+    pointer-events: auto;
+  }
+  .deriva__izq {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .deriva__aviso {
+    position: relative;
+    max-width: 42ch;
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.55;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .deriva__aviso .punto {
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+  }
+  /* El punto late despacio, como un aviso vivo */
+  .deriva__aviso .punto::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: latido 2.8s ease-out infinite;
+  }
+  @keyframes latido {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    60%,
+    100% {
+      transform: scale(2.8);
+      opacity: 0;
+    }
+  }
+  .deriva__rapidos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+  }
+  .deriva__rapidos a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) no-repeat right 75% / 0 1px;
+    transition: background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .deriva__rapidos a:hover {
+    background-position: left 75%;
+    background-size: 100% 1px;
   }
   .deriva__pista {
     position: absolute;
@@ -312,32 +403,18 @@ const insta = usuarioInstagram(ajustes.instagram);
   .deriva.ya-arrastrado .deriva__pista {
     opacity: 0;
   }
-  .deriva__enlace {
-    pointer-events: auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    min-height: var(--tap);
-    padding: 0 16px;
-    border-radius: var(--radius-pill);
-    background: rgba(245, 243, 238, 0.88);
-    backdrop-filter: blur(8px);
-    color: var(--ink);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-decoration: none;
-  }
-  .deriva__enlace:hover {
-    background: var(--ink);
-    color: var(--bg);
-  }
   .punto {
+    position: relative;
+    display: inline-block;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--accent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .deriva__aviso .punto::after {
+      animation: none;
+    }
   }
   @media (max-width: 640px) {
     .deriva {
@@ -358,9 +435,38 @@ const insta = usuarioInstagram(ajustes.instagram);
     .deriva__lema {
       top: calc(50% + clamp(40px, calc((100vw - 2 * var(--gutter)) / 7.6), 96px) * 1.05);
     }
-    .deriva__enlace {
-      min-height: 40px;
-      font-size: 12px;
+    /* En móvil, banda clara esmerilada para que se lea sobre las obras */
+    .deriva__pie {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      gap: 10px 16px;
+      padding: 14px var(--gutter) 14px;
+      background: rgba(245, 243, 238, 0.9);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+    .deriva__izq {
+      width: 100%;
+      gap: 8px;
+    }
+    .deriva__rapidos {
+      flex-wrap: nowrap;
+      gap: 0 18px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-right: calc(-1 * var(--gutter));
+      padding-right: var(--gutter);
+    }
+    .deriva__rapidos::-webkit-scrollbar {
+      display: none;
+    }
+    .deriva__rapidos a {
+      white-space: nowrap;
+    }
+    .deriva__aviso {
+      font-size: 11px;
     }
     .deriva__lema {
       letter-spacing: 0.2em;

@@ -370,6 +370,9 @@ export default config({
           description: 'Aparece en el pie y en Contacto.',
         }),
         instagram: fields.url({ label: 'Instagram (URL)' }),
+        facebook: fields.url({ label: 'Facebook (URL)', description: 'Opcional. Si se rellena, aparece su icono en la portada y en el pie.' }),
+        tiktok: fields.url({ label: 'TikTok (URL)', description: 'Opcional.' }),
+        youtube: fields.url({ label: 'YouTube (URL)', description: 'Opcional.' }),
         taller: fields.text({ label: 'Taller (ciudad)', description: 'Se muestra en Contacto.' }),
         encargos: fields.text({ label: 'Encargos', description: 'P. ej. «Sí, consultar plazos». Se muestra en Contacto.' }),
         portadaActiva: fields.select({
@@ -387,6 +390,11 @@ export default config({
           defaultValue: 'luz',
         }),
         frasePortada: fields.text({ label: 'Frase de portada', multiline: true }),
+        avisoPortada: fields.text({
+          label: 'Aviso en la portada',
+          description: 'Nota breve abajo a la izquierda del muro de obras (p. ej. «Nueva exposición en …, del 3 al 28 de marzo»). Vacío = no se muestra.',
+          multiline: true,
+        }),
         condicionesEnvio: fields.text({
           label: 'Condiciones de envío',
           description: 'Se muestra en el bloque «¿Te interesa esta obra?» de cada ficha.',

@@ -1,6 +1,7 @@
 ---
 import { getAjustes } from '../lib/ajustes';
 import { getEntradasBlog } from '../lib/contenido';
+import Redes from './Redes.astro';
 
 const ajustes = await getAjustes();
 const hayBlog = (await getEntradasBlog()).length > 0;
@@ -11,11 +12,11 @@ const anio = new Date().getFullYear();
   <div class="pie__barra">
     <span>© {anio} Jesús Senovilla</span>
     <nav aria-label="Pie" class="pie__nav">
-      {ajustes.instagram && <a href={ajustes.instagram} rel="me noopener">Instagram</a>}
       {hayBlog && <a href="/blog">Blog</a>}
       <a href="/contacto">Contacto</a>
       <a href="#arriba">Volver arriba ↑</a>
     </nav>
+    <Redes tono="oscuro" />
   </div>
 </footer>
 
