@@ -2,7 +2,7 @@
 // completa el resto (punto de entrada y archivos estáticos) al compilar.
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "jesusenovilla-web",
+  "name": "portfoliojesusenovilla",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true }
