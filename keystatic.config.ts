@@ -72,7 +72,7 @@ const textoEnriquecido = (label: string, carpeta: string, description?: string) 
 
 export default config({
   // Cada guardado desde el panel es un commit en la rama principal del repositorio;
-  // Netlify detecta el cambio y vuelve a publicar la web (1–2 minutos).
+  // Cloudflare detecta el cambio y vuelve a publicar la web (1–2 minutos).
   storage: usarNube ? { kind: 'cloud' } : { kind: 'local' },
   cloud: { project: proyectoNube },
   locale: 'es-ES',
@@ -80,7 +80,7 @@ export default config({
     brand: { name: 'Jesús Senovilla' },
     navigation: {
       Contenido: ['obras', 'tecnicas', 'blog'],
-      Páginas: ['sobreMi', 'ajustes'],
+      Páginas: ['sobreMi', 'legal', 'ajustes'],
     },
   },
 
@@ -319,6 +319,38 @@ export default config({
         cuerpo: textoEnriquecido('Texto', 'blog'),
       },
     }),
+    // ======================= LEGAL =======================
+    legal: collection({
+      label: 'Legal',
+      slugField: 'titulo',
+      path: 'src/content/legal/*',
+      format: { contentField: 'cuerpo' },
+      entryLayout: 'content',
+      columns: ['titulo', 'actualizado'],
+      previewUrl: '/{slug}',
+      schema: {
+        titulo: fields.slug({
+          name: { label: 'Título', validation: { isRequired: true } },
+          slug: {
+            label: 'Dirección web',
+            description: 'No la cambies en las páginas existentes: el pie de la web enlaza a ellas.',
+          },
+        }),
+        actualizado: fields.date({
+          label: 'Última actualización',
+          defaultValue: { kind: 'today' },
+          validation: { isRequired: true },
+        }),
+        resumen: fields.text({
+          label: 'Resumen',
+          description: 'Una o dos frases al principio de la página, en lenguaje llano.',
+          multiline: true,
+        }),
+        orden: fields.integer({ label: 'Orden en el pie', defaultValue: 100 }),
+        cuerpo: textoEnriquecido('Texto', 'legal'),
+      },
+    }),
+
   },
 
   singletons: {

@@ -1,0 +1,228 @@
+---
+/**
+ * Páginas legales (Aviso legal, Privacidad, Cookies, Condiciones de venta),
+ * editables en el panel → Legal. Índice lateral con las demás páginas.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Prosa from '../components/Prosa.astro';
+import { fechaISO, fechaLarga } from '../lib/fechas';
+
+type Legal = CollectionEntry<'legal'>;
+
+export const getStaticPaths = (async () => {
+  const paginas = (await getCollection('legal')).sort((a, b) => a.data.orden - b.data.orden);
+  return paginas.map((pagina) => ({ params: { legal: pagina.id }, props: { pagina, paginas } }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  pagina: Legal;
+  paginas: Legal[];
+}
+const { pagina, paginas } = Astro.props;
+const d = pagina.data;
+const { Content, headings } = await render(pagina);
+const apartados = headings.filter((h) => h.depth === 2);
+---
+
+<BaseLayout titulo={d.titulo} descripcion={d.resumen}>
+  <article class="legal">
+    <header class="legal__cabeza">
+      <p class="legal__eti"><span class="punto" aria-hidden="true"></span>Información legal</p>
+      <h1 class="legal__titulo">{d.titulo}</h1>
+      {d.resumen && <p class="legal__resumen">{d.resumen}</p>}
+      <p class="legal__fecha">
+        Última actualización: <time datetime={fechaISO(d.actualizado)}>{fechaLarga(d.actualizado)}</time>
+      </p>
+    </header>
+
+    <div class="legal__cuerpo">
+      <aside class="legal__lado">
+        <nav aria-label="Páginas legales" class="legal__nav">
+          <p class="legal__nav-eti">Páginas</p>
+          <ul role="list">
+            {
+              paginas.map((p) => (
+                <li>
+                  <a href={`/${p.id}`} aria-current={p.id === pagina.id ? 'page' : undefined}>
+                    {p.data.titulo}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+        {
+          apartados.length > 2 && (
+            <nav aria-label="En esta página" class="legal__nav legal__nav--apartados">
+              <p class="legal__nav-eti">En esta página</p>
+              <ol role="list">
+                {apartados.map((h) => (
+                  <li>
+                    <a href={`#${h.slug}`}>{h.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )
+        }
+      </aside>
+
+      <div class="legal__texto">
+        <Prosa>
+          <Content />
+        </Prosa>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .legal {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(48px, 7vw, 104px) var(--gutter) clamp(80px, 10vw, 144px);
+  }
+  .legal__cabeza {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: clamp(32px, 4vw, 56px);
+    border-bottom: 1px solid var(--line);
+  }
+  .legal__eti {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .legal__titulo {
+    margin: 0;
+    font-weight: 800;
+    font-size: clamp(44px, 7.5vw, 120px);
+    line-height: 0.9;
+    letter-spacing: -0.045em;
+  }
+  .legal__resumen {
+    margin: 0;
+    max-width: 40em;
+    font-size: clamp(18px, 1.6vw, 21px);
+    line-height: 1.5;
+    color: var(--text-soft);
+  }
+  .legal__fecha {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .legal__cuerpo {
+    display: grid;
+    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+    gap: clamp(32px, 6vw, 96px);
+    padding-top: clamp(32px, 4vw, 56px);
+  }
+  .legal__lado {
+    position: sticky;
+    top: 120px;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .legal__nav ul,
+  .legal__nav ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .legal__nav-eti {
+    margin: 0 0 10px;
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .legal__nav a {
+    position: relative;
+    display: block;
+    padding: 7px 0 7px 16px;
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.25s ease;
+  }
+  .legal__nav a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: scale(0);
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .legal__nav a:hover {
+    color: var(--ink);
+  }
+  .legal__nav a[aria-current='page'] {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .legal__nav a[aria-current='page']::before,
+  .legal__nav a:hover::before {
+    transform: scale(1);
+  }
+  .legal__nav--apartados a {
+    font-size: 14px;
+    padding-block: 5px;
+  }
+  .legal__texto {
+    min-width: 0;
+  }
+  .legal__texto :global(h2) {
+    scroll-margin-top: 110px;
+  }
+  .legal__texto :global(.prosa) {
+    max-width: 720px;
+    font-size: 17px;
+  }
+
+  @media (max-width: 860px) {
+    .legal__cuerpo {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .legal__lado {
+      position: static;
+    }
+    .legal__nav--apartados {
+      display: none;
+    }
+    .legal__nav ul {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 4px 18px;
+    }
+    .legal__nav ul a {
+      padding-left: 14px;
+    }
+  }
+</style>

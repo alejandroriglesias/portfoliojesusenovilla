@@ -136,4 +136,14 @@ const sobreMi = defineCollection({
     }),
 });
 
-export const collections = { obras, tecnicas, blog, sobreMi };
+const legal = defineCollection({
+  loader: glob({ pattern: '**/*.mdoc', base: './src/content/legal' }),
+  schema: z.object({
+    titulo: z.string(),
+    actualizado: z.coerce.date(),
+    resumen: textoOpcional,
+    orden: z.number().default(100),
+  }),
+});
+
+export const collections = { obras, tecnicas, blog, sobreMi, legal };

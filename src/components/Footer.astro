@@ -1,10 +1,11 @@
 ---
-import { getAjustes } from '../lib/ajustes';
+import { getCollection } from 'astro:content';
 import { getEntradasBlog } from '../lib/contenido';
 import Redes from './Redes.astro';
 
-const ajustes = await getAjustes();
 const hayBlog = (await getEntradasBlog()).length > 0;
+// Páginas legales (panel → Legal), en el orden indicado allí.
+const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.data.orden);
 const anio = new Date().getFullYear();
 ---
 
@@ -18,6 +19,18 @@ const anio = new Date().getFullYear();
     </nav>
     <Redes tono="oscuro" />
   </div>
+  {
+    legales.length > 0 && (
+      <div class="pie__legal">
+        <nav aria-label="Información legal" class="pie__legal-nav">
+          {legales.map((l) => (
+            <a href={`/${l.id}`}>{l.data.titulo}</a>
+          ))}
+        </nav>
+        <p class="pie__pago">Pago por transferencia o Bizum · Sin cookies de seguimiento</p>
+      </div>
+    )
+  }
 </footer>
 
 <style>
@@ -25,7 +38,8 @@ const anio = new Date().getFullYear();
     background: var(--footer-bg);
     color: var(--footer-text);
   }
-  .pie__barra {
+  .pie__barra,
+  .pie__legal {
     max-width: var(--container);
     margin: 0 auto;
     padding: 32px var(--gutter);
@@ -51,6 +65,44 @@ const anio = new Date().getFullYear();
   .pie__nav a:hover {
     text-decoration: underline;
     text-underline-offset: 5px;
+  }
+
+  /* Fila legal: más pequeña y discreta, como en la referencia */
+  .pie__legal {
+    padding-top: 0;
+    padding-bottom: 28px;
+    border-top: 1px solid rgba(250, 250, 248, 0.1);
+    padding-top: 18px;
+  }
+  .pie__legal-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 22px;
+  }
+  .pie__legal-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--footer-text);
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) no-repeat right 70% / 0 1px;
+    transition:
+      background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
+      color 0.3s ease;
+  }
+  .pie__legal-nav a:hover {
+    color: var(--footer-link);
+    background-position: left 70%;
+    background-size: 100% 1px;
+  }
+  .pie__pago {
+    margin: 0;
+    font-size: 12px;
+    color: #8f8c85;
   }
   .pie :focus-visible {
     outline-color: var(--accent-on-dark);

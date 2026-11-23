@@ -13,6 +13,7 @@ import { getImage } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import GaleriaObra from '../../components/ficha/GaleriaObra.astro';
 import TiraProceso from '../../components/ficha/TiraProceso.astro';
+import ComoComprar from '../../components/ficha/ComoComprar.astro';
 import AnteriorSiguiente from '../../components/ficha/AnteriorSiguiente.astro';
 import { getObras, slugTecnica, esMarcador, type Obra } from '../../lib/contenido';
 import { getAjustes } from '../../lib/ajustes';
@@ -108,6 +109,8 @@ const asunto = `Consulta sobre «${d.titulo}»${d.anio ? ` (${d.anio})` : ''}`;
 const hrefConsulta = emailValido ? `mailto:${ajustes.email}?subject=${encodeURIComponent(asunto)}` : '/contacto';
 const textoConsulta = d.estado === 'vendida' ? 'Preguntar por una obra similar' : 'Consultar esta obra';
 const envio = ajustes.condicionesEnvio && !esMarcador(ajustes.condicionesEnvio) ? ajustes.condicionesEnvio : undefined;
+// «Cómo comprar» solo tiene sentido si la obra se puede comprar.
+const seVende = d.estado !== 'vendida' && d.estado !== 'no-a-la-venta';
 
 // Letras del título: una por span, con retardo escalonado.
 let k = 0;
@@ -260,6 +263,13 @@ const jsonLd = Astro.site
             )
           }
           {
+            seVende && (
+              <a class="desplegable desplegable--enlace" href="#comprar">
+                Cómo comprar · transferencia o Bizum <span aria-hidden="true">↓</span>
+              </a>
+            )
+          }
+          {
             d.proceso.length > 0 && (
               <a class="desplegable desplegable--enlace" href="#proceso">
                 Cómo se hizo <span aria-hidden="true">↓</span>
@@ -289,6 +299,8 @@ const jsonLd = Astro.site
       </div>
     </section>
   </div>
+
+  {seVende && <ComoComprar titulo={d.titulo} hrefConsulta={hrefConsulta} envio={envio} />}
 
   <TiraProceso pasos={d.proceso} titulo={d.titulo} numero="" />
 
