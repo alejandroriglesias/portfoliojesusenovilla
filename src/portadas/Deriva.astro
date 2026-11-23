@@ -192,6 +192,7 @@ const enlaces = [
     flex: 0 0 auto;
     height: var(--alto);
     width: calc(var(--alto) * var(--ratio));
+    overflow: hidden;
     color: var(--ink);
     text-decoration: none;
     transition:
@@ -205,45 +206,120 @@ const enlaces = [
     object-fit: cover;
     background: var(--card);
     user-select: none;
+    transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .pieza:hover,
   .pieza:focus-visible {
-    transform: translateY(-6px) scale(1.015);
-    box-shadow: 0 24px 50px rgba(20, 16, 10, 0.22);
+    transform: translateY(-6px);
+    box-shadow: 0 28px 56px -18px rgba(20, 16, 10, 0.4);
     z-index: 2;
+  }
+  /* La obra se acerca un poco dentro de su marco */
+  .pieza:hover img,
+  .pieza:focus-visible img {
+    transform: scale(1.045);
   }
   .pieza:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 4px;
   }
-  /* Cartela que aparece al pasar por la obra */
+
+  /* ---------- Cartela de museo dentro del cuadro ----------
+     Una tarjeta de papel en la esquina inferior que se despliega de izquierda
+     a derecha; el título sube y los datos lo siguen. Al salir se recoge
+     más deprisa para no estorbar. */
   .pieza__cartela {
     position: absolute;
-    left: 0;
-    bottom: -2px;
-    transform: translateY(100%);
+    left: 12px;
+    bottom: 12px;
+    max-width: calc(100% - 24px);
     display: flex;
     flex-direction: column;
-    padding-top: 10px;
-    font-size: 13px;
-    line-height: 1.35;
-    opacity: 0;
-    transition: opacity 0.35s ease;
+    gap: 4px;
+    padding: 11px 16px 10px 14px;
+    border-radius: 3px;
+    background: rgba(250, 248, 242, 0.95);
+    box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.35);
     pointer-events: none;
-    white-space: nowrap;
+    clip-path: inset(0 100% 0 0 round 3px);
+    transition: clip-path 0.38s cubic-bezier(0.5, 0, 0.75, 0);
   }
   .pieza:hover .pieza__cartela,
   .pieza:focus-visible .pieza__cartela {
-    opacity: 1;
+    clip-path: inset(0 0 0 0 round 3px);
+    transition: clip-path 0.7s cubic-bezier(0.65, 0, 0.2, 1) 0.08s;
+  }
+  .pieza__titulo,
+  .pieza__meta {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
   }
   .pieza__titulo {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 16px;
+    font-size: 15px;
+    line-height: 1.2;
     letter-spacing: -0.01em;
   }
+  /* El punto bermellón de la web, delante del título */
+  .pieza__titulo::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    vertical-align: 0.14em;
+    transform: scale(0);
+    transition: transform 0.3s ease;
+  }
   .pieza__meta {
+    padding-left: 14px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--muted);
+  }
+  .pieza:hover .pieza__titulo,
+  .pieza:hover .pieza__meta,
+  .pieza:focus-visible .pieza__titulo,
+  .pieza:focus-visible .pieza__meta {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.5s ease 0.32s,
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.32s;
+  }
+  .pieza:hover .pieza__meta,
+  .pieza:focus-visible .pieza__meta {
+    transition-delay: 0.42s;
+  }
+  .pieza:hover .pieza__titulo::before,
+  .pieza:focus-visible .pieza__titulo::before {
+    transform: scale(1);
+    transition: transform 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) 0.55s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pieza img,
+    .pieza__cartela,
+    .pieza__titulo,
+    .pieza__meta,
+    .pieza__titulo::before {
+      transition: none !important;
+    }
+    .pieza:hover img,
+    .pieza:focus-visible img {
+      transform: none;
+    }
   }
 
   /* Un velo muy suave en los bordes para que el texto respire */
