@@ -364,7 +364,7 @@ const pestanas = [
   const reducir = matchMedia('(prefers-reduced-motion: reduce)');
 
   // Scroll suave con inercia (no con movimiento reducido).
-  const lenis = reducir.matches ? undefined : new Lenis({ autoRaf: true, lerp: 0.09, anchors: true });
+  const lenis = reducir.matches ? undefined : new Lenis({ autoRaf: true, lerp: 0.09, anchors: true, allowNestedScroll: true });
 
   /** Coloca la raya de un grupo bajo su pestaña activa. */
   const moverRaya = (grupo: HTMLElement, animar = true, destino?: HTMLElement) => {

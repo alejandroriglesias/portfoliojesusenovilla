@@ -1,13 +1,16 @@
 ---
 /**
- * Vista «Sala» del índice de obra: una pared por técnica, con las obras
- * colgadas enteras (sin recortar) a la misma altura, en filas justificadas
- * como en una exposición. Mismo color de pared y sombra que la ficha.
+ * Vista «Sala» del índice de obra: una pared por técnica con un carrusel
+ * horizontal (como las colecciones de la referencia), con el estilo de la
+ * ficha: obras enteras, sin recortar, a la misma altura y con su sombra
+ * sobre el color de pared.
  *
- * - Filas justificadas solo con CSS: cada pieza crece en proporción a su
- *   ancho/alto (flex-grow = proporción), así todas comparten altura.
- * - Al entrar en pantalla, cada obra sube y aparece (scroll-driven, sin JS).
- * - Al pasar por una obra, se adelanta y el resto de la pared se atenúa.
+ * - El carril sale por la derecha de la pantalla, invitando a deslizar.
+ * - Se recorre con flechas, arrastrando con el ratón (con inercia), con el
+ *   gesto lateral del trackpad, con el dedo o con el teclado.
+ * - Barra de progreso fina bajo el carril, como el selector de la ficha.
+ * - Al entrar la pared en pantalla, las obras llegan desde la derecha una
+ *   tras otra. Al pasar el ratón, la obra se adelanta.
  * - La imagen pulsada crece hasta la ficha (TransicionObras).
  */
 import { getImage } from 'astro:assets';
@@ -30,7 +33,7 @@ const ANCHOS = [320, 480, 720, 960];
 const salas = await Promise.all(
   grupos.map(async (g, gi) => ({
     id: g.tecnica.id,
-    numero: `(${String(gi + 1).padStart(2, '0')})`,
+    numero: String(gi + 1).padStart(2, '0'),
     nombre: g.tecnica.data.nombre,
     resumen: esMarcador(g.tecnica.data.resumen) ? undefined : g.tecnica.data.resumen,
     piezas: await Promise.all(
@@ -62,51 +65,83 @@ const salas = await Promise.all(
   {
     salas.map((s, si) => (
       <section class="sala" data-sala={s.id} aria-labelledby={`sala-${s.id}`}>
-        <header class="sala__cabeza">
-          <p class="sala__n">{s.numero}</p>
-          <h2 id={`sala-${s.id}`} class="sala__titulo">
-            {s.nombre}
-          </h2>
-          <div class="sala__lado">
-            <p class="sala__cuenta">
-              {s.piezas.length} {s.piezas.length === 1 ? 'obra' : 'obras'}
+        <carrusel-sala class="sala__in">
+          <header class="sala__cabeza">
+            <p class="sala__n" aria-hidden="true">
+              {s.numero}
             </p>
-            {s.resumen && <p class="sala__resumen">{s.resumen}</p>}
-            <a class="sala__enlace" href={`/tecnicas/${s.id}`}>
-              Sobre la técnica <span aria-hidden="true">→</span>
-            </a>
-          </div>
-        </header>
+            <h2 id={`sala-${s.id}`} class="sala__titulo">
+              {s.nombre}
+            </h2>
+            <div class="sala__lado">
+              <p class="sala__cuenta">
+                <span class="punto" aria-hidden="true" />
+                {s.piezas.length} {s.piezas.length === 1 ? 'obra' : 'obras'}
+              </p>
+              {s.resumen && <p class="sala__resumen">{s.resumen}</p>}
+              <a class="sala__enlace" href={`/tecnicas/${s.id}`}>
+                Sobre la técnica <span aria-hidden="true">→</span>
+              </a>
+            </div>
+            <div class="sala__flechas" role="group" aria-label={`Recorrer ${s.nombre.toLowerCase()}`}>
+              <button class="flecha" type="button" data-paso="-1" aria-label="Obras anteriores">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+              </button>
+              <button class="flecha" type="button" data-paso="1" aria-label="Obras siguientes">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </button>
+            </div>
+          </header>
 
-        <ul class="pared" role="list">
-          {s.piezas.map((p, i) => (
-            <li class="pieza" style={`--r: ${p.ratio}`}>
-              <a class="pieza__enlace" href={p.href}>
-                <span class="pieza__marco">
-                  <img
-                    src={p.src}
-                    srcset={p.srcset}
-                    sizes="(max-width: 640px) 60vw, 34vw"
-                    width={p.ancho}
-                    height={p.alto}
-                    alt={p.alt}
-                    loading={si === 0 && i < 6 ? 'eager' : 'lazy'}
-                    decoding="async"
-                  />
-                </span>
-                <span class="pieza__pie">
-                  <span class="pieza__titulo">{p.titulo}</span>
-                  {(p.meta || p.aviso) && (
-                    <span class="pieza__meta">
-                      {p.meta}
-                      {p.aviso && <span class="pieza__aviso"> · {p.aviso}</span>}
-                    </span>
-                  )}
+          <ul class="carril" role="list" tabindex="0" aria-label={`${s.nombre}: ${s.piezas.length} obras, desplazable en horizontal`} data-carril>
+            {s.piezas.map((p, i) => (
+              <li class="pieza" style={`--r: ${p.ratio}; --i: ${Math.min(i, 8)}`}>
+                <a class="pieza__enlace" href={p.href} draggable="false">
+                  <span class="pieza__marco">
+                    <img
+                      src={p.src}
+                      srcset={p.srcset}
+                      sizes="(max-width: 640px) 70vw, 30vw"
+                      width={p.ancho}
+                      height={p.alto}
+                      alt={p.alt}
+                      loading={si === 0 && i < 5 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      draggable="false"
+                    />
+                  </span>
+                  <span class="pieza__pie">
+                    <span class="pieza__titulo">{p.titulo}</span>
+                    {(p.meta || p.aviso) && (
+                      <span class="pieza__meta">
+                        {p.meta}
+                        {p.aviso && <span class="pieza__aviso"> · {p.aviso}</span>}
+                      </span>
+                    )}
+                  </span>
+                </a>
+              </li>
+            ))}
+            <li class="fin" style={`--i: ${Math.min(s.piezas.length, 8)}`}>
+              <a class="fin__enlace" href={`/tecnicas/${s.id}`} draggable="false">
+                <span class="fin__eti">Fin de la sala</span>
+                <span class="fin__titulo">
+                  Sobre la técnica
+                  <br />
+                  {s.nombre.toLowerCase()} <span aria-hidden="true">→</span>
                 </span>
               </a>
             </li>
-          ))}
-        </ul>
+          </ul>
+
+          <div class="progreso" aria-hidden="true">
+            <span class="progreso__barra" data-barra />
+            <span class="progreso__pista">
+              <span class="progreso__raton">Arrastra para recorrer</span>
+              <span class="progreso__tactil">Desliza para recorrer</span>
+            </span>
+          </div>
+        </carrusel-sala>
       </section>
     ))
   }
@@ -118,10 +153,13 @@ const salas = await Promise.all(
     flex-direction: column;
   }
   .sala {
-    --h: clamp(160px, 20vw, 280px);
-    --hueco: clamp(28px, 4vw, 64px);
-    padding: clamp(56px, 7vw, 104px) var(--gutter) clamp(64px, 8vw, 120px);
+    --h: clamp(240px, 27vw, 400px);
+    --hueco: clamp(28px, 3.4vw, 56px);
+    /* Margen izquierdo alineado con el contenedor de la web */
+    --margen: max(var(--gutter), calc((100vw - var(--container)) / 2 + var(--gutter)));
+    padding: clamp(64px, 8vw, 120px) 0 clamp(56px, 7vw, 96px);
     background: var(--band);
+    overflow: hidden;
   }
   .sala + .sala {
     border-top: 1px solid rgba(20, 16, 10, 0.08);
@@ -129,44 +167,69 @@ const salas = await Promise.all(
   .sala[hidden] {
     display: none;
   }
-
-  /* ---------- Cabecera de cada pared ---------- */
-  .sala__cabeza {
-    max-width: var(--container);
-    margin: 0 auto clamp(40px, 5vw, 72px);
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) minmax(0, 340px);
-    align-items: end;
-    gap: 12px clamp(16px, 3vw, 48px);
+  .sala__in {
+    display: block;
   }
-  .sala__n,
-  .sala__cuenta {
-    margin: 0;
-    font: 600 12px/1 var(--font-body);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
+
+  /* ---------- Cabecera ---------- */
+  /* Título en su propia línea (con las flechas a la derecha) y, debajo,
+     número de obras, resumen y enlace: así cabe «Acuarela» a cualquier tamaño. */
+  .sala__cabeza {
+    padding: 0 var(--margen);
+    margin-bottom: clamp(36px, 4.5vw, 64px);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'n titulo flechas'
+      '. lado lado';
+    align-items: end;
+    gap: 18px clamp(16px, 2.4vw, 36px);
   }
   .sala__n {
+    grid-area: n;
     align-self: start;
-    padding-top: 0.6em;
+    margin: 0;
+    padding-top: 0.5em;
+    font: 600 13px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
   }
   .sala__titulo {
+    grid-area: titulo;
+    min-width: 0;
     margin: 0;
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: clamp(48px, 8.5vw, 140px);
+    font-size: clamp(52px, 8vw, 132px);
     line-height: 0.86;
     letter-spacing: -0.045em;
   }
   .sala__lado {
+    grid-area: lado;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-bottom: 0.4em;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 28px;
+  }
+  .sala__resumen {
+    max-width: 46em;
   }
   .sala__cuenta {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--ink);
+  }
+  .punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
   }
   .sala__resumen {
     margin: 0;
@@ -187,44 +250,93 @@ const salas = await Promise.all(
     background-position: right bottom;
     background-size: 0 1px;
   }
-
-  /* ---------- Pared: filas justificadas ---------- */
-  .pared {
-    max-width: var(--container);
-    margin: 0 auto;
-    padding: 0;
-    list-style: none;
+  .sala__flechas {
+    grid-area: flechas;
     display: flex;
-    flex-wrap: wrap;
-    gap: calc(var(--hueco) * 1.1) var(--hueco);
+    gap: 8px;
+    padding-bottom: 0.2em;
   }
-  /* La última fila no se estira de más */
-  .pared::after {
-    content: '';
-    flex: 999 1 0;
+  .flecha {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border: 1px solid rgba(20, 20, 20, 0.22);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      background 0.3s ease,
+      color 0.3s ease,
+      border-color 0.3s ease,
+      opacity 0.3s ease;
   }
+  .flecha:hover:not(:disabled) {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .flecha:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  /* ---------- Carril ---------- */
+  .carril {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--hueco);
+    margin: 0;
+    padding: 12px var(--margen) 28px;
+    list-style: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--margen);
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    cursor: grab;
+  }
+  .carril::-webkit-scrollbar {
+    display: none;
+  }
+  .carril:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .carril.is-arrastrando {
+    cursor: grabbing;
+    scroll-snap-type: none;
+    user-select: none;
+  }
+  .carril.is-arrastrando .pieza__enlace,
+  .carril.is-arrastrando .fin__enlace {
+    pointer-events: none;
+  }
+
   .pieza {
-    flex: var(--r) 1 calc(var(--r) * var(--h));
-    min-width: 0;
-    max-width: calc(var(--r) * var(--h) * 1.6);
+    flex: 0 0 auto;
+    width: min(calc(var(--h) * var(--r)), 78vw);
+    scroll-snap-align: start;
   }
   .pieza__enlace {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     color: var(--ink);
     text-decoration: none;
-    transition:
-      opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
-      transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .pieza__marco {
     display: block;
+    overflow: hidden;
     aspect-ratio: var(--r);
     background: var(--card);
     box-shadow:
       0 1px 2px rgba(20, 16, 10, 0.08),
-      0 16px 34px -14px rgba(20, 16, 10, 0.3);
+      0 18px 36px -14px rgba(20, 16, 10, 0.32);
     transition: box-shadow 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .pieza__marco img {
@@ -232,17 +344,20 @@ const salas = await Promise.all(
     width: 100%;
     height: 100%;
     object-fit: cover;
+    user-select: none;
+    -webkit-user-drag: none;
+    transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .pieza__pie {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
     min-width: 0;
   }
   .pieza__titulo {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.25;
     letter-spacing: -0.01em;
     overflow: hidden;
@@ -263,7 +378,10 @@ const salas = await Promise.all(
       margin-right 0.35s var(--ease-out);
   }
   .pieza__meta {
-    font-size: 13px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--muted);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -272,27 +390,24 @@ const salas = await Promise.all(
   .pieza__aviso {
     color: var(--accent);
   }
-
-  /* Al pasar por una obra: se adelanta y el resto se atenúa */
   .pieza__enlace:hover,
   .pieza__enlace:focus-visible {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
   }
   .pieza__enlace:hover .pieza__marco,
   .pieza__enlace:focus-visible .pieza__marco {
     box-shadow:
       0 2px 4px rgba(20, 16, 10, 0.1),
-      0 30px 60px -18px rgba(20, 16, 10, 0.42);
+      0 34px 64px -20px rgba(20, 16, 10, 0.45);
+  }
+  .pieza__enlace:hover img,
+  .pieza__enlace:focus-visible img {
+    transform: scale(1.04);
   }
   .pieza__enlace:hover .pieza__titulo::before,
   .pieza__enlace:focus-visible .pieza__titulo::before {
     width: 7px;
     margin-right: 8px;
-  }
-  @media (hover: hover) {
-    .pared:has(.pieza__enlace:hover) .pieza__enlace:not(:hover) {
-      opacity: 0.45;
-    }
   }
   .pieza__enlace:focus-visible {
     outline: none;
@@ -302,72 +417,144 @@ const salas = await Promise.all(
     outline-offset: 6px;
   }
 
-  /* Entrada al hacer scroll (navegadores con scroll-driven animations) */
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .pieza {
-        animation: colgar linear both;
-        animation-timeline: view();
-        animation-range: entry 0% cover 28%;
-      }
-      .sala__titulo,
-      .sala__lado {
-        animation: titular linear both;
-        animation-timeline: view();
-        animation-range: entry 10% cover 32%;
-      }
-      .sala__lado {
-        animation-range: entry 25% cover 38%;
-      }
+  /* Tarjeta final */
+  .fin {
+    flex: 0 0 auto;
+    width: clamp(220px, 22vw, 300px);
+    height: var(--h);
+    scroll-snap-align: start;
+  }
+  .fin__enlace {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px;
+    border: 1px solid rgba(20, 20, 20, 0.18);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      background 0.4s ease,
+      color 0.4s ease;
+  }
+  .fin__enlace:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .fin__eti {
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+  .fin__titulo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(24px, 2.2vw, 32px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  /* Llegada desde la derecha, una tras otra, al entrar la pared */
+  /* (Se anima el contenido, no la tarjeta: así no se mueven los puntos de ajuste) */
+  /* Solo se ocultan si el script del carrusel está activo (:defined): sin JS,
+     las obras se ven siempre. */
+  @media (prefers-reduced-motion: no-preference) {
+    carrusel-sala:defined:not(.is-visible) .pieza__enlace,
+    carrusel-sala:defined:not(.is-visible) .fin__enlace {
+      opacity: 0;
+      translate: 80px 0;
+    }
+    .pieza__enlace {
+      transition:
+        transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+        opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i) * 70ms),
+        translate 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i) * 70ms);
+    }
+    .fin__enlace {
+      transition:
+        background 0.4s ease,
+        color 0.4s ease,
+        opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i) * 70ms),
+        translate 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i) * 70ms);
     }
   }
-  /* El tramo de entrada lleva su propia curva: la obra sube y frena suave */
-  @keyframes colgar {
-    from {
-      opacity: 0;
-      transform: translateY(64px) scale(0.95);
-      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
-    }
+
+  /* ---------- Progreso ---------- */
+  .progreso {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin: 8px var(--margen) 0;
   }
-  @keyframes titular {
-    from {
-      opacity: 0;
-      transform: translateY(32px);
-      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* Raya de progreso: el tramo oscuro es la parte visible del carril */
+  .progreso__barra {
+    position: relative;
+    flex: 1;
+    height: 2px;
+    background: rgba(20, 20, 20, 0.14);
+    overflow: hidden;
+  }
+  .progreso__barra::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: calc(var(--visible, 0.3) * 100%);
+    background: var(--ink);
+    transform: translateX(calc(var(--avance, 0) * (1 / var(--visible, 0.3) - 1) * 100%));
+  }
+  .progreso__pista {
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .progreso__tactil {
+    display: none;
+  }
+  @media (hover: none) {
+    .progreso__raton {
+      display: none;
+    }
+    .progreso__tactil {
+      display: inline;
     }
   }
 
   @media (max-width: 760px) {
     .sala {
-      --h: clamp(120px, 36vw, 190px);
-      --hueco: 18px;
-    }
-    /* En móvil las filas son cortas: una obra sola puede ocupar el ancho */
-    .pieza {
-      max-width: calc(var(--r) * var(--h) * 2.6);
+      --h: clamp(220px, 62vw, 320px);
+      --hueco: 20px;
     }
     .sala__cabeza {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 14px;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas:
+        'n titulo'
+        'lado lado';
+      gap: 14px 16px;
     }
-    .sala__n {
-      padding-top: 0;
+    .sala__flechas {
+      display: none;
     }
-    .pieza__enlace {
-      gap: 10px;
+    /* «Grabado»/«Acuarela» ≈ 5,6 em en Syne 800: que quepan junto al número */
+    .sala__titulo {
+      font-size: clamp(34px, 10.5vw, 64px);
     }
     .pieza__titulo {
-      font-size: 14px;
-    }
-    .pieza__meta {
-      font-size: 12px;
+      font-size: 15px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .pieza__enlace,
     .pieza__marco,
-    .pieza__titulo::before {
+    .pieza__marco img,
+    .pieza__titulo::before,
+    .flecha,
+    .fin__enlace {
       transition: none;
     }
     .pieza__enlace:hover,
@@ -376,3 +563,132 @@ const salas = await Promise.all(
     }
   }
 </style>
+
+<script>
+  class CarruselSala extends HTMLElement {
+    private carril!: HTMLElement;
+    private barra!: HTMLElement | null;
+    private flechas: HTMLButtonElement[] = [];
+    private reducir = matchMedia('(prefers-reduced-motion: reduce)');
+
+    connectedCallback() {
+      this.carril = this.querySelector('[data-carril]')!;
+      this.barra = this.querySelector('[data-barra]');
+      this.flechas = [...this.querySelectorAll<HTMLButtonElement>('[data-paso]')];
+
+      // Llegada de las obras al entrar la pared en pantalla.
+      new IntersectionObserver(
+        ([e], obs) => {
+          if (!e.isIntersecting) return;
+          this.classList.add('is-visible');
+          obs.disconnect();
+        },
+        { threshold: 0.15 }
+      ).observe(this);
+
+      // Progreso y estado de las flechas.
+      let pendiente = false;
+      const actualizar = () => {
+        if (pendiente) return;
+        pendiente = true;
+        requestAnimationFrame(() => {
+          pendiente = false;
+          this.pintarProgreso();
+        });
+      };
+      this.carril.addEventListener('scroll', actualizar, { passive: true });
+      addEventListener('resize', actualizar);
+      this.pintarProgreso();
+
+      this.flechas.forEach((b) =>
+        b.addEventListener('click', () => {
+          const paso = Number(b.dataset.paso) * this.carril.clientWidth * 0.75;
+          this.carril.scrollBy({ left: paso, behavior: this.reducir.matches ? 'instant' : 'smooth' });
+        })
+      );
+
+      this.arrastre();
+    }
+
+    private pintarProgreso() {
+      const { scrollLeft, scrollWidth, clientWidth } = this.carril;
+      const max = Math.max(1, scrollWidth - clientWidth);
+      const visible = Math.min(1, clientWidth / scrollWidth);
+      this.barra?.style.setProperty('--visible', visible.toFixed(4));
+      this.barra?.style.setProperty('--avance', (scrollLeft / max).toFixed(4));
+      const [ant, sig] = this.flechas;
+      if (ant) ant.disabled = scrollLeft <= 2;
+      if (sig) sig.disabled = scrollLeft >= max - 2;
+    }
+
+    /** Arrastrar con el ratón, con inercia al soltar (en táctil, el desplazamiento nativo). */
+    private arrastre() {
+      const c = this.carril;
+      let activo: { id: number; x: number; t: number; recorrido: number } | null = null;
+      let velocidad = 0;
+      let marco = 0;
+
+      c.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        cancelAnimationFrame(marco);
+        activo = { id: e.pointerId, x: e.clientX, t: performance.now(), recorrido: 0 };
+        velocidad = 0;
+      });
+      addEventListener(
+        'pointermove',
+        (e) => {
+          if (!activo || e.pointerId !== activo.id) return;
+          const ahora = performance.now();
+          const dx = e.clientX - activo.x;
+          activo.recorrido += Math.abs(dx);
+          if (activo.recorrido > 6 && !c.classList.contains('is-arrastrando')) {
+            c.classList.add('is-arrastrando');
+            try {
+              c.setPointerCapture(activo.id);
+            } catch {
+              /* sin captura */
+            }
+          }
+          c.scrollLeft -= dx;
+          velocidad = velocidad * 0.3 + (dx / Math.max(8, ahora - activo.t)) * 0.7;
+          activo.x = e.clientX;
+          activo.t = ahora;
+        },
+        { passive: true }
+      );
+      const soltar = (e: PointerEvent) => {
+        if (!activo || e.pointerId !== activo.id) return;
+        const arrastro = activo.recorrido > 6;
+        const quieto = performance.now() - activo.t > 90;
+        activo = null;
+        if (arrastro) {
+          // El clic que sigue a un arrastre no abre la obra.
+          const bloquear = (ev: Event) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+          };
+          addEventListener('click', bloquear, { capture: true, once: true });
+          setTimeout(() => removeEventListener('click', bloquear, { capture: true }), 0);
+        }
+        if (!arrastro || quieto || this.reducir.matches) {
+          c.classList.remove('is-arrastrando');
+          return;
+        }
+        // Inercia: px/ms que se frenan; al parar vuelve el ajuste a cada obra.
+        let v = Math.max(-4, Math.min(4, velocidad)) * 16;
+        const paso = () => {
+          c.scrollLeft -= v;
+          v *= 0.92;
+          if (Math.abs(v) > 0.5) marco = requestAnimationFrame(paso);
+          else c.classList.remove('is-arrastrando');
+        };
+        marco = requestAnimationFrame(paso);
+      };
+      addEventListener('pointerup', soltar);
+      addEventListener('pointercancel', soltar);
+      c.addEventListener('dragstart', (e) => e.preventDefault());
+    }
+  }
+
+  if (!customElements.get('carrusel-sala')) customElements.define('carrusel-sala', CarruselSala);
+</script>
