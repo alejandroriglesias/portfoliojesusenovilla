@@ -1,17 +1,26 @@
 ---
 /**
- * Vista «en casa»: la obra colgada en un salón, sobre un aparador de nogal,
- * con luz de ventana. Escena dibujada con CSS/SVG (no es una foto), con
- * acabado fotográfico: pared de cal con textura, luz que entra por una
- * ventana (con sombras de hojas), suelo de roble en perspectiva, sombras de
- * contacto, grano y viñeteado.
+ * Vista «en casa»: la obra montada sobre una fotografía real de un salón
+ * (aparador de roble acanalado, pared blanca con luz de ventana).
  *
- * Todo se mide en centímetros reales (--cm = px por cm): si la ficha tiene
- * medidas, la obra sale a escala respecto al aparador (160 cm); si no, con un
- * tamaño típico de su técnica y el pie lo dice.
- * Obra sobre papel (grabado, acuarela): marco negro fino, paspartú y cristal.
- * Lienzo: sin marco, con canto y sombra.
+ * Foto: Imani Bahati en Unsplash (licencia Unsplash: uso libre, también
+ * comercial, sin atribución obligatoria).
+ * https://unsplash.com/photos/UrQeWGobTnI
+ *
+ * Cómo se monta:
+ * - Escala: el aparador mide unos 2250 px en la foto original (2400 × 2999) y
+ *   unos 180 cm en la realidad → 12,5 px por cm. Dentro de la foto, 1em = 1 cm.
+ * - La obra cuelga en la pared libre sobre la lámpara, a la izquierda de las
+ *   ramas del jarrón. Si es más grande que ese hueco, se reduce (y deja de
+ *   estar a escala).
+ * - Realismo: encima de la obra se superpone la propia foto en modo
+ *   «multiplicar», así la sombra de la ventana cruza también el cuadro; la
+ *   sombra arrojada va hacia la derecha, como la de la lámpara.
+ * - Papel: marco negro fino, paspartú y reflejo de cristal. Lienzo: canto.
  */
+import { getImage } from 'astro:assets';
+import salon from '../../assets/ambiente/salon.jpg';
+
 interface Props {
   src: string;
   srcset: string;
@@ -26,197 +35,62 @@ interface Props {
 
 const { src, srcset, ratio, tipo, ladoLargo, aEscala } = Astro.props;
 
-// Medidas en cm de la obra y de lo que cuelga (con paspartú y marco).
-const ancho = ratio >= 1 ? ladoLargo : ladoLargo * ratio;
-const alto = ratio >= 1 ? ladoLargo / ratio : ladoLargo;
+// ---- Geometría de la foto original (px) ----
+const FOTO = { w: 2400, h: 2999 };
+const PX_CM = 12.5;
+const CENTRO_X = 640; // centro del hueco libre en la pared
+const BASE_Y = 1040; // borde inferior de la obra (por encima de la lámpara)
+const MAX = { w: 88, h: 74 }; // cm que caben en ese hueco
+
+// ---- Medidas de lo que cuelga (cm) ----
 const PASPARTU = tipo === 'papel' ? Math.max(5, Math.min(10, ladoLargo * 0.12)) : 0;
 const MARCO = tipo === 'papel' ? 2.4 : 0;
-const exterior = { w: ancho + 2 * (PASPARTU + MARCO), h: alto + 2 * (PASPARTU + MARCO) };
+const ancho = ratio >= 1 ? ladoLargo : ladoLargo * ratio;
+const alto = ratio >= 1 ? ladoLargo / ratio : ladoLargo;
+const bruto = { w: ancho + 2 * (PASPARTU + MARCO), h: alto + 2 * (PASPARTU + MARCO) };
+// Si no cabe en el hueco de la pared, se reduce todo en proporción.
+const reduccion = Math.min(1, MAX.w / bruto.w, MAX.h / bruto.h);
+const exterior = { w: bruto.w * reduccion, h: bruto.h * reduccion };
+const escala = aEscala && reduccion === 1;
 
-// Escena (cm): suelo visible, aparador, hueco hasta la obra y aire por encima.
-const SUELO = 34;
-const APARADOR = { w: 160, h: 62 };
-const HUECO = 24;
-const altoEscena = SUELO + APARADOR.h + HUECO + exterior.h + 48;
-const anchoEscena = Math.max(250, exterior.w * 2.1);
-// En pantallas estrechas (móvil) se encuadra más cerca.
-const anchoEstrecho = Math.max(186, exterior.w * 1.25);
+// Rectángulo de la obra en % de la foto (para recortar la capa de luz).
+const rect = {
+  izq: ((CENTRO_X - (exterior.w * PX_CM) / 2) / FOTO.w) * 100,
+  der: 100 - ((CENTRO_X + (exterior.w * PX_CM) / 2) / FOTO.w) * 100,
+  arr: ((BASE_Y - exterior.h * PX_CM) / FOTO.h) * 100,
+  aba: 100 - (BASE_Y / FOTO.h) * 100,
+};
 
-// Jarrón con pampas a la izquierda de la obra, según el sitio que quede sobre
-// el aparador: grande, pequeño o ninguno (para que las plumas no tapen la obra).
-const espacio = APARADOR.w / 2 - exterior.w / 2;
-const jarron =
-  espacio >= 48 ? { escala: 1, izq: Math.max(-80, -exterior.w / 2 - 46) }
-  : espacio >= 30 ? { escala: 0.62, izq: Math.max(-80, -exterior.w / 2 - 29) }
-  : null;
+const fondo = await getImage({ src: salon, widths: [800, 1200, 1600, 2400], format: 'webp', quality: 80 });
+const fondoSizes = '(max-width: 900px) 100vw, 56vw';
 
-const r = (x: number) => +x.toFixed(2);
+const r = (x: number) => +x.toFixed(3);
 const estilo = [
-  `--escena-w: ${r(anchoEscena)}`,
-  `--escena-w-estrecha: ${r(anchoEstrecho)}`,
-  `--escena-h: ${r(altoEscena)}`,
-  `--suelo: ${SUELO}`,
-  `--aparador-w: ${APARADOR.w}`,
-  `--aparador-h: ${APARADOR.h}`,
-  `--hueco: ${HUECO}`,
   `--obra-w: ${r(exterior.w)}`,
   `--obra-h: ${r(exterior.h)}`,
-  `--paspartu: ${r(PASPARTU)}`,
-  `--marco: ${MARCO}`,
-  ...(jarron ? [`--jarron-izq: ${r(jarron.izq)}`, `--jarron-escala: ${jarron.escala}`] : []),
+  `--paspartu: ${r(PASPARTU * reduccion)}`,
+  `--marco: ${r(MARCO * reduccion)}`,
+  `--x: ${r((CENTRO_X / FOTO.w) * 100)}%`,
+  `--base: ${r(100 - (BASE_Y / FOTO.h) * 100)}%`,
+  `--recorte: inset(${r(rect.arr)}% ${r(rect.der)}% ${r(rect.aba)}% ${r(rect.izq)}%)`,
 ].join('; ');
-const pie = aEscala ? 'Así quedaría en casa · a escala' : 'Así quedaría en casa · recreación orientativa';
+const pie = escala ? 'La obra colgada en un salón, a escala' : 'La obra colgada en un salón (recreación orientativa)';
 ---
 
 <figure class:list={['ambiente', `ambiente--${tipo}`]} data-marco data-ambiente style={estilo}>
-  <div class="escena" aria-hidden="true">
-    <!-- Pared de cal: color, manchas suaves y caída de luz -->
-    <div class="pared"></div>
+  <div class="foto" aria-hidden="true">
+    <img class="foto__fondo" src={fondo.src} srcset={fondo.srcSet.attribute} sizes={fondoSizes} alt="" loading="lazy" decoding="async" draggable="false" />
 
-    <!-- Luz de ventana sobre la pared, con montantes y sombras de hojas -->
-    <svg class="ventana" viewBox="0 0 100 140" preserveAspectRatio="none">
-      <defs>
-        <filter id="amb-difuso" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="2.6" />
-        </filter>
-        <filter id="amb-hojas" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="1.6" />
-        </filter>
-        <mask id="amb-mascara-ventana">
-          <rect width="100" height="140" fill="#000" />
-          <g fill="#fff" filter="url(#amb-difuso)">
-            <rect x="8" y="6" width="38" height="58" />
-            <rect x="52" y="6" width="38" height="58" />
-            <rect x="8" y="70" width="38" height="62" />
-            <rect x="52" y="70" width="38" height="62" />
-          </g>
-          <g fill="#000" filter="url(#amb-hojas)" opacity="0.85">
-            <ellipse cx="22" cy="20" rx="9" ry="3.4" transform="rotate(-28 22 20)" />
-            <ellipse cx="33" cy="14" rx="7" ry="2.6" transform="rotate(18 33 14)" />
-            <ellipse cx="16" cy="34" rx="8" ry="2.8" transform="rotate(-50 16 34)" />
-            <ellipse cx="64" cy="22" rx="6" ry="2.4" transform="rotate(-12 64 22)" />
-            <ellipse cx="74" cy="12" rx="8" ry="2.6" transform="rotate(32 74 12)" />
-            <ellipse cx="28" cy="46" rx="5" ry="2" transform="rotate(-70 28 46)" />
-            <path d="M4 10 C 20 22, 30 30, 46 52" stroke="#000" stroke-width="1.1" fill="none" />
-            <path d="M60 4 C 66 14, 72 18, 86 24" stroke="#000" stroke-width="0.9" fill="none" />
-          </g>
-        </mask>
-        <linearGradient id="amb-luz" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#fff4dd" />
-          <stop offset="1" stop-color="#ffe3b8" />
-        </linearGradient>
-      </defs>
-      <rect width="100" height="140" fill="url(#amb-luz)" mask="url(#amb-mascara-ventana)" />
-    </svg>
-
-    <!-- Suelo de roble en perspectiva y zócalo -->
-    <div class="suelo"><div class="suelo__plano"></div></div>
-    <div class="zocalo"></div>
-
-    <!-- Obra colgada -->
     <div class="cuadro">
       <div class="cuadro__obra">
-        <img src={src} srcset={srcset} sizes="(max-width: 900px) 60vw, 30vw" alt="" loading="lazy" decoding="async" draggable="false" />
+        <img src={src} srcset={srcset} sizes="(max-width: 900px) 50vw, 25vw" alt="" loading="lazy" decoding="async" draggable="false" />
       </div>
     </div>
 
-    <!-- Aparador de nogal con puertas acanaladas -->
-    <div class="aparador__sombra-pared"></div>
-    <div class="aparador__sombra-suelo"></div>
-    <svg class="aparador" viewBox="0 0 160 62" preserveAspectRatio="none">
-      <defs>
-        <filter id="amb-veta" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.9" numOctaves="3" seed="7" />
-          <feColorMatrix values="0 0 0 0 0.16  0 0 0 0 0.09  0 0 0 0 0.04  0 0 0 0.55 0" />
-          <feComposite in2="SourceGraphic" operator="in" />
-        </filter>
-        <linearGradient id="amb-nogal" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#7a5236" />
-          <stop offset="0.45" stop-color="#6a452c" />
-          <stop offset="1" stop-color="#4e3220" />
-        </linearGradient>
-        <linearGradient id="amb-sombra-cuerpo" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#000" stop-opacity="0" />
-          <stop offset="1" stop-color="#000" stop-opacity="0.28" />
-        </linearGradient>
-        <pattern id="amb-acanalado" width="1.7" height="10" patternUnits="userSpaceOnUse">
-          <rect width="1.7" height="10" fill="transparent" />
-          <rect x="1.35" width="0.35" height="10" fill="#2a190e" opacity="0.55" />
-          <rect x="0" width="0.35" height="10" fill="#c99a6e" opacity="0.18" />
-        </pattern>
-      </defs>
-      <!-- patas -->
-      <rect x="9" y="50" width="1.6" height="12" fill="#1c1916" />
-      <rect x="149.4" y="50" width="1.6" height="12" fill="#1c1916" />
-      <rect x="11" y="50" width="0.8" height="11" fill="#1c1916" opacity="0.55" />
-      <rect x="148" y="50" width="0.8" height="11" fill="#1c1916" opacity="0.55" />
-      <!-- cuerpo -->
-      <rect x="0" y="6" width="160" height="44" fill="url(#amb-nogal)" />
-      <rect x="0" y="6" width="160" height="44" fill="#000" filter="url(#amb-veta)" opacity="0.9" />
-      <!-- puertas acanaladas -->
-      <rect x="2" y="9" width="156" height="38" fill="url(#amb-acanalado)" />
-      <g stroke="#1e120a" stroke-width="0.45" opacity="0.9">
-        <line x1="41" y1="9" x2="41" y2="47" />
-        <line x1="80" y1="9" x2="80" y2="47" />
-        <line x1="119" y1="9" x2="119" y2="47" />
-      </g>
-      <rect x="0" y="6" width="160" height="44" fill="url(#amb-sombra-cuerpo)" />
-      <!-- tablero -->
-      <rect x="-0.8" y="3.6" width="161.6" height="2.8" fill="#8a5f3f" />
-      <rect x="-0.8" y="3.6" width="161.6" height="0.7" fill="#b38660" />
-      <rect x="-0.8" y="6.2" width="161.6" height="0.5" fill="#2a190e" opacity="0.6" />
-    </svg>
-
-    <!-- Libros, piedra y jarrón con pampas sobre el aparador -->
-    <svg class="libros" viewBox="0 0 34 12">
-      <rect x="0" y="8" width="33" height="4" rx="0.3" fill="#2f3b36" />
-      <rect x="0.4" y="8.6" width="32.2" height="0.5" fill="#efe9dc" opacity="0.7" />
-      <rect x="2" y="4.2" width="29" height="3.8" rx="0.3" fill="#b5543a" />
-      <rect x="2.4" y="4.8" width="28.2" height="0.4" fill="#efe9dc" opacity="0.6" />
-      <rect x="1" y="1.2" width="30.5" height="3" rx="0.3" fill="#e6dccb" />
-      <rect x="1" y="3.6" width="30.5" height="0.6" fill="#000" opacity="0.08" />
-      <radialGradient id="amb-piedra" cx="0.35" cy="0.3" r="0.8">
-        <stop offset="0" stop-color="#d8d3ca" />
-        <stop offset="1" stop-color="#7d776d" />
-      </radialGradient>
-      <ellipse cx="20" cy="-1.6" rx="4.2" ry="3" fill="url(#amb-piedra)" />
-    </svg>
-
-    {jarron && <svg class="jarron" viewBox="0 0 44 96">
-      <defs>
-        <radialGradient id="amb-ceramica" cx="0.32" cy="0.35" r="0.75">
-          <stop offset="0" stop-color="#f1ece3" />
-          <stop offset="0.65" stop-color="#d9d0c2" />
-          <stop offset="1" stop-color="#a99d8b" />
-        </radialGradient>
-        <filter id="amb-pluma" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="0.9" />
-        </filter>
-      </defs>
-      <!-- tallos -->
-      <g fill="none" stroke="#a48c68" stroke-width="0.45" stroke-linecap="round">
-        <path d="M22 66 C 21 46, 14 26, 6 8" />
-        <path d="M22 66 C 23 44, 26 24, 30 4" />
-        <path d="M22 66 C 24 50, 32 34, 40 20" />
-        <path d="M22 66 C 20 52, 12 42, 3 34" />
-      </g>
-      <!-- plumas de pampas -->
-      <g filter="url(#amb-pluma)" opacity="0.95">
-        <ellipse cx="7" cy="12" rx="3.2" ry="9" fill="#e9dcc4" transform="rotate(-24 7 12)" />
-        <ellipse cx="29.6" cy="9" rx="3" ry="9.5" fill="#efe3cc" transform="rotate(8 29.6 9)" />
-        <ellipse cx="38.5" cy="23" rx="2.8" ry="8" fill="#e3d4b8" transform="rotate(42 38.5 23)" />
-        <ellipse cx="5" cy="36" rx="2.4" ry="6.5" fill="#dccbab" transform="rotate(-58 5 36)" />
-      </g>
-      <!-- jarrón de barro mate -->
-      <ellipse cx="22" cy="95" rx="12" ry="1.6" fill="#000" opacity="0.25" />
-      <path d="M17 64 C 17 68, 9 72, 9 82 C 9 90, 14 95, 22 95 C 30 95, 35 90, 35 82 C 35 72, 27 68, 27 64 Z" fill="url(#amb-ceramica)" />
-      <ellipse cx="22" cy="64" rx="5" ry="1.1" fill="#8f8473" />
-    </svg>}
-
-    <!-- Acabado fotográfico: viñeteado, gradación cálida y grano -->
-    <div class="acabado"></div>
+    <!-- La luz de la habitación sobre la obra: la misma foto, en «multiplicar» y recortada a la obra -->
+    <img class="foto__luz" src={fondo.src} srcset={fondo.srcSet.attribute} sizes={fondoSizes} alt="" loading="lazy" decoding="async" draggable="false" />
   </div>
-  <figcaption class="ambiente__pie">{pie}</figcaption>
+  <figcaption class="sr-only">{pie}</figcaption>
 </figure>
 
 <style>
@@ -227,159 +101,51 @@ const pie = aEscala ? 'Así quedaría en casa · a escala' : 'Así quedaría en 
     min-height: 520px;
     overflow: hidden;
     container-type: size;
-    background: #e9e3d9;
-    /* Texturas (SVG de ruido): manchas de cal, grano fino y veta de roble */
-    --tex-cal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.008' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .4 0 0 0 0 .34 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
-    --tex-grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
-    --tex-veta: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .5' numOctaves='3' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .2 0 0 0 0 .1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
-  }
-  .escena {
-    /* px por centímetro: que quepan el ancho y el alto de la escena */
-    --cm: min(calc(100cqw / var(--escena-w)), calc(100cqh / var(--escena-h)));
-    --base-aparador: calc(var(--suelo) * 0.62 * var(--cm));
-    position: absolute;
-    inset: 0;
+    background: #e6e4e0;
   }
 
-  /* ---------- Pared ---------- */
-  .pared {
+  /* La foto cubre el marco (como object-fit: cover), centrada cerca de la obra.
+     Dentro, 1em = 1 cm de la escena. */
+  .foto {
+    --fw: max(100cqw, calc(100cqh * 0.8003));
+    --fh: calc(var(--fw) * 1.24958);
+    position: absolute;
+    width: var(--fw);
+    height: var(--fh);
+    left: clamp(calc(100cqw - var(--fw)), calc(50cqw - 0.3 * var(--fw)), 0px);
+    top: clamp(calc(100cqh - var(--fh)), calc(50cqh - 0.4 * var(--fh)), 0px);
+    font-size: calc(var(--fw) * 0.0052083);
+  }
+  .foto__fondo,
+  .foto__luz {
     position: absolute;
     inset: 0;
-    background:
-      radial-gradient(90% 70% at 22% 30%, rgba(255, 246, 228, 0.65), transparent 65%),
-      linear-gradient(90deg, rgba(255, 248, 235, 0.25), transparent 45%, rgba(70, 55, 40, 0.18)),
-      linear-gradient(180deg, rgba(60, 48, 36, 0.12), transparent 30%, transparent 75%, rgba(60, 48, 36, 0.16)),
-      var(--tex-cal),
-      #e6dfd3;
-    background-size: auto, auto, auto, 600px 600px, auto;
-    background-blend-mode: normal, normal, normal, multiply, normal;
+    width: 100%;
+    height: 100%;
+    display: block;
+    user-select: none;
   }
-  /* Luz de ventana: cae en la pared a la izquierda de la obra, detrás del jarrón */
-  .ventana {
-    position: absolute;
-    left: calc(50% - 128 * var(--cm));
-    bottom: calc(var(--base-aparador) + (var(--aparador-h) - 8) * var(--cm));
-    width: calc(96 * var(--cm));
-    height: calc(130 * var(--cm));
-    transform: skewX(-22deg);
-    transform-origin: top left;
-    mix-blend-mode: screen;
-    opacity: 0.6;
-  }
-
-  /* ---------- Suelo ---------- */
-  .suelo {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: calc(var(--suelo) * var(--cm));
-    overflow: hidden;
-    perspective: calc(420 * var(--cm));
-    perspective-origin: 50% 0;
-    background: #a97c51;
-  }
-  .suelo__plano {
-    position: absolute;
-    left: -60%;
-    right: -60%;
-    top: 0;
-    height: 600%;
-    transform-origin: 50% 0;
-    transform: rotateX(-78deg);
-    background:
-      /* reflejo de la ventana */
-      radial-gradient(30% 22% at 32% 6%, rgba(255, 240, 215, 0.4), transparent 70%),
-      /* juntas entre tablas, paralelas a la pared */
-      repeating-linear-gradient(180deg, transparent 0 calc(15 * var(--cm) - 1.5px), rgba(45, 26, 12, 0.5) calc(15 * var(--cm) - 1.5px) calc(15 * var(--cm))),
-      /* tablas de tono distinto */
-      repeating-linear-gradient(180deg, rgba(255, 230, 200, 0.07) 0 calc(15 * var(--cm)), rgba(60, 35, 15, 0.1) calc(15 * var(--cm)) calc(30 * var(--cm)), rgba(255, 220, 180, 0.04) calc(30 * var(--cm)) calc(45 * var(--cm))),
-      var(--tex-veta),
-      linear-gradient(180deg, #b48a5e, #9e744b);
-    background-size: auto, auto, auto, 400px 400px, auto;
-    background-blend-mode: normal, normal, normal, multiply, normal;
-  }
-  /* Sombra en el rincón pared-suelo */
-  .suelo::after {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    height: 40%;
-    background: linear-gradient(180deg, rgba(40, 25, 12, 0.35), transparent);
+  /* La luz real (sombra de la ventana) sobre el cuadro */
+  .foto__luz {
+    clip-path: var(--recorte);
+    mix-blend-mode: multiply;
+    filter: brightness(1.12) contrast(1.08);
+    opacity: 0.75;
     pointer-events: none;
-  }
-  .zocalo {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--suelo) * var(--cm));
-    height: calc(8 * var(--cm));
-    background: linear-gradient(180deg, #f6f2ea 0, #f6f2ea 12%, #e4ddd0 14%, #ebe5da 60%, #d8d0c2 100%);
-    box-shadow:
-      0 -1px 0 rgba(0, 0, 0, 0.06),
-      0 calc(1 * var(--cm)) calc(2 * var(--cm)) rgba(40, 25, 12, 0.18);
-  }
-
-  /* ---------- Aparador y objetos ---------- */
-  .aparador {
-    position: absolute;
-    left: 50%;
-    bottom: var(--base-aparador);
-    width: calc(var(--aparador-w) * var(--cm));
-    height: calc(var(--aparador-h) * var(--cm));
-    transform: translateX(-50%);
-    overflow: visible;
-  }
-  .aparador__sombra-pared {
-    position: absolute;
-    left: 50%;
-    bottom: calc(var(--base-aparador) + 12 * var(--cm));
-    width: calc(var(--aparador-w) * var(--cm));
-    height: calc((var(--aparador-h) - 12) * var(--cm));
-    transform: translateX(calc(-50% + 4 * var(--cm)));
-    background: rgba(50, 35, 20, 0.28);
-    filter: blur(calc(4 * var(--cm)));
-  }
-  .aparador__sombra-suelo {
-    position: absolute;
-    left: 50%;
-    bottom: calc(var(--base-aparador) - 3 * var(--cm));
-    width: calc((var(--aparador-w) + 18) * var(--cm));
-    height: calc(9 * var(--cm));
-    transform: translateX(calc(-50% + 5 * var(--cm)));
-    background: radial-gradient(closest-side, rgba(30, 18, 8, 0.5), transparent);
-  }
-  .libros {
-    position: absolute;
-    left: calc(50% + 34 * var(--cm));
-    bottom: calc(var(--base-aparador) + (var(--aparador-h) - 3.6) * var(--cm));
-    width: calc(34 * var(--cm));
-    height: calc(12 * var(--cm));
-    overflow: visible;
-    filter: drop-shadow(calc(0.8 * var(--cm)) calc(0.4 * var(--cm)) calc(0.8 * var(--cm)) rgba(30, 18, 8, 0.35));
-  }
-  .jarron {
-    position: absolute;
-    left: calc(50% + var(--jarron-izq) * var(--cm));
-    bottom: calc(var(--base-aparador) + (var(--aparador-h) - 3.6) * var(--cm) - 1px);
-    width: calc(44 * var(--jarron-escala) * var(--cm));
-    height: calc(96 * var(--jarron-escala) * var(--cm));
-    overflow: visible;
-    filter: drop-shadow(calc(1.2 * var(--cm)) 0 calc(1.4 * var(--cm)) rgba(30, 18, 8, 0.25));
   }
 
   /* ---------- La obra ---------- */
   .cuadro {
     position: absolute;
-    left: 50%;
-    bottom: calc(var(--base-aparador) + (var(--aparador-h) + var(--hueco)) * var(--cm));
-    width: calc(var(--obra-w) * var(--cm));
-    height: calc(var(--obra-h) * var(--cm));
+    left: var(--x);
+    bottom: var(--base);
+    width: calc(var(--obra-w) * 1em);
+    height: calc(var(--obra-h) * 1em);
     transform: translateX(-50%);
-    /* Sombra arrojada hacia la derecha (la luz entra por la izquierda) */
+    /* Sombra hacia la derecha y abajo, como la de la lámpara */
     box-shadow:
-      calc(0.6 * var(--cm)) calc(0.9 * var(--cm)) calc(1.2 * var(--cm)) rgba(30, 20, 10, 0.32),
-      calc(3 * var(--cm)) calc(5 * var(--cm)) calc(9 * var(--cm)) rgba(30, 20, 10, 0.22);
+      0.35em 0.5em 0.7em rgba(30, 24, 18, 0.32),
+      1.6em 2.4em 4.5em rgba(30, 24, 18, 0.2);
   }
   .cuadro__obra {
     position: relative;
@@ -393,112 +159,61 @@ const pie = aEscala ? 'Así quedaría en casa · a escala' : 'Así quedaría en 
     height: 100%;
     object-fit: cover;
   }
-  /* La misma luz de ventana sobre la obra */
-  .cuadro__obra::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(100deg, rgba(255, 244, 222, 0.16), transparent 55%, rgba(40, 28, 16, 0.14));
-    pointer-events: none;
-  }
 
-  /* Papel: marco negro fino con bisel, paspartú blanco y cristal */
+  /* Papel: marco negro fino con bisel, paspartú y cristal */
   .ambiente--papel .cuadro {
-    padding: calc(var(--marco) * var(--cm));
-    background: linear-gradient(135deg, #3a3633, #121110 40%, #1d1b19);
+    padding: calc(var(--marco) * 1em);
+    background: linear-gradient(135deg, #3b3835, #141312 45%, #201e1c);
   }
   .ambiente--papel .cuadro__obra {
-    padding: calc(var(--paspartu) * var(--cm));
-    background: linear-gradient(160deg, #fbf9f4, #f1ede5);
+    padding: calc(var(--paspartu) * 1em);
+    background: linear-gradient(160deg, #fbfaf7, #f0ede6);
     box-shadow:
-      inset 0 0 0 1px rgba(0, 0, 0, 0.18),
-      inset calc(0.4 * var(--cm)) calc(0.4 * var(--cm)) calc(0.8 * var(--cm)) rgba(0, 0, 0, 0.18);
+      inset 0 0 0 1px rgba(0, 0, 0, 0.2),
+      inset 0.25em 0.25em 0.5em rgba(0, 0, 0, 0.16);
   }
   .ambiente--papel .cuadro__obra img {
     box-shadow:
       0 0 0 1px rgba(0, 0, 0, 0.12),
-      inset 0 0 calc(0.6 * var(--cm)) rgba(0, 0, 0, 0.1);
+      inset 0 0 0.4em rgba(0, 0, 0, 0.1);
   }
-  /* Reflejo del cristal */
   .ambiente--papel .cuadro::after {
     content: '';
     position: absolute;
-    inset: calc(var(--marco) * var(--cm));
-    background: linear-gradient(118deg, transparent 0 28%, rgba(255, 255, 255, 0.16) 34%, transparent 46%, transparent 62%, rgba(255, 255, 255, 0.07) 66%, transparent 72%);
+    inset: calc(var(--marco) * 1em);
+    background: linear-gradient(118deg, transparent 0 30%, rgba(255, 255, 255, 0.14) 36%, transparent 47%, transparent 64%, rgba(255, 255, 255, 0.06) 68%, transparent 73%);
     pointer-events: none;
   }
 
-  /* Lienzo: canto visible y bastidor */
+  /* Lienzo: canto del bastidor */
   .ambiente--lienzo .cuadro__obra {
     box-shadow:
-      inset calc(-0.5 * var(--cm)) 0 calc(0.6 * var(--cm)) rgba(0, 0, 0, 0.18),
-      inset 0 calc(-0.4 * var(--cm)) calc(0.6 * var(--cm)) rgba(0, 0, 0, 0.12);
+      inset -0.35em 0 0.45em rgba(0, 0, 0, 0.2),
+      inset 0 -0.3em 0.45em rgba(0, 0, 0, 0.12);
   }
   .ambiente--lienzo .cuadro::before {
     content: '';
     position: absolute;
-    top: calc(0.6 * var(--cm));
-    right: calc(-1.4 * var(--cm));
-    width: calc(1.4 * var(--cm));
-    height: calc(100% - 0.6 * var(--cm));
-    background: linear-gradient(90deg, rgba(40, 30, 20, 0.55), rgba(40, 30, 20, 0.2));
-    transform: skewY(-30deg);
+    top: 0.5em;
+    right: -1.1em;
+    width: 1.1em;
+    height: calc(100% - 0.5em);
+    background: linear-gradient(90deg, rgba(40, 32, 24, 0.5), rgba(40, 32, 24, 0.18));
+    transform: skewY(-35deg);
     transform-origin: left top;
   }
 
-  /* ---------- Acabado fotográfico ---------- */
-  .acabado {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(130% 100% at 40% 40%, transparent 55%, rgba(30, 20, 10, 0.28)),
-      linear-gradient(110deg, rgba(255, 232, 196, 0.1), transparent 50%, rgba(40, 30, 50, 0.08)),
-      var(--tex-grano);
-    background-size: auto, auto, 180px 180px;
-    mix-blend-mode: multiply;
-    opacity: 0.9;
-  }
-
-  .ambiente__pie {
-    position: absolute;
-    left: 50%;
-    bottom: 16px;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    margin: 0;
-    font: 600 11px/1 var(--font-body);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #5f5c55;
-    background: rgba(247, 245, 240, 0.88);
-    backdrop-filter: blur(6px);
-    padding: 8px 12px;
-    border-radius: var(--radius-pill);
-  }
-
   @media (max-width: 900px) {
-    /* Con alto automático (estirado en el carrusel) el contenedor no puede
-       medir su alto: se usa el mínimo garantizado. */
-    .escena {
-      --cm: min(calc(100cqw / var(--escena-w-estrecha)), calc(min(86svh, 125vw, 560px) / var(--escena-h)));
-    }
     .ambiente {
       flex: 0 0 100%;
-      height: auto;
-      align-self: stretch;
-      container-type: inline-size;
-      min-height: min(86svh, 125vw, 560px);
+      height: min(86svh, 125vw);
+      min-height: 420px;
       scroll-snap-align: start;
     }
-    .ambiente__pie {
-      left: 16px;
-      right: 16px;
-      bottom: 14px;
-      transform: none;
-      white-space: normal;
-      text-align: center;
-      line-height: 1.4;
+    /* La cabecera ocupa ~110 px arriba: la foto baja para que la obra quede
+       debajo (se recorta el sofá de abajo). */
+    .foto {
+      top: 104px;
     }
   }
 </style>
