@@ -5,6 +5,9 @@ import Footer from '../components/Footer.astro';
 import AjustarTexto from '../components/AjustarTexto.astro';
 import TransicionObras from '../components/TransicionObras.astro';
 import AvisoCookies from '../components/AvisoCookies.astro';
+// TEMPORAL: prueba de letras (página /tipografias). Quitar al elegir la definitiva.
+import '../styles/fuentes-prueba.css';
+import PruebaFuentes from '../components/PruebaFuentes.astro';
 import { getImage } from 'astro:assets';
 import { getAjustes } from '../lib/ajustes';
 import { getObrasDestacadas } from '../lib/contenido';
@@ -100,6 +103,7 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
     <meta name="twitter:card" content={ogAbsoluta ? 'summary_large_image' : 'summary'} />
     <meta name="theme-color" content={paleta === 'oscura' ? '#0B0B0B' : '#FAFAF8'} />
     <TransicionObras />
+    <PruebaFuentes />
     {bloquesJsonLd.map((b) => <script type="application/ld+json" set:html={JSON.stringify(b)} />)}
   </head>
   <body id="arriba">

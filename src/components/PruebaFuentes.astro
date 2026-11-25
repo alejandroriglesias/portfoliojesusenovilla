@@ -1,0 +1,67 @@
+---
+/**
+ * TEMPORAL — «Probar en toda la web»: si en este navegador se eligió una letra
+ * en /tipografias, se aplica a --font-body en todas las páginas y aparece una
+ * etiqueta abajo a la derecha para volver a la actual. No afecta a nadie más.
+ */
+import { CLAVE_PRUEBA, FUENTES_PRUEBA } from '../lib/fuentes-prueba';
+const mapa = Object.fromEntries(FUENTES_PRUEBA.map((f) => [f.id, { nombre: f.nombre, familia: f.familia }]));
+---
+
+<script is:inline define:vars={{ mapa, CLAVE_PRUEBA }}>
+  (function () {
+    var id = null;
+    try {
+      id = localStorage.getItem(CLAVE_PRUEBA);
+    } catch (e) {}
+    var f = id && mapa[id];
+    if (!f || id === 'inter') return;
+    document.documentElement.style.setProperty('--font-body', f.familia);
+    document.documentElement.dataset.pruebaFuente = id;
+    addEventListener('DOMContentLoaded', function () {
+      var b = document.createElement('div');
+      b.className = 'prueba-fuente';
+      b.innerHTML =
+        '<span>Probando: <strong></strong></span><a href="/tipografias">Cambiar</a><button type="button">Quitar</button>';
+      b.querySelector('strong').textContent = f.nombre;
+      b.querySelector('button').addEventListener('click', function () {
+        try {
+          localStorage.removeItem(CLAVE_PRUEBA);
+        } catch (e) {}
+        location.reload();
+      });
+      document.body.appendChild(b);
+    });
+  })();
+</script>
+
+<style is:global>
+  .prueba-fuente {
+    position: fixed;
+    right: 12px;
+    /* por encima del pie superpuesto de la portada (redes) */
+    bottom: 96px;
+    z-index: 95;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px 8px 14px;
+    border-radius: 999px;
+    background: #141414;
+    color: #fafaf8;
+    font: 500 13px/1 var(--font-body);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  }
+  .prueba-fuente a,
+  .prueba-fuente button {
+    color: #fafaf8;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    background: none;
+    border: 0;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+</style>

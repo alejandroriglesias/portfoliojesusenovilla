@@ -1,0 +1,377 @@
+---
+/**
+ * TEMPORAL — página de prueba de letras (no enlazada, noindex, fuera del
+ * sitemap). Cada bloque aplica una letra candidata a --font-body sobre piezas
+ * reales de la web: menú, título, texto, cartela y versalitas. Syne se queda
+ * en los títulos. «Probar en toda la web» la aplica en todas las páginas, solo
+ * en este navegador (ver PruebaFuentes).
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Firma from '../components/marca/Firma.astro';
+import { FUENTES_PRUEBA, CLAVE_PRUEBA } from '../lib/fuentes-prueba';
+---
+
+<BaseLayout titulo="Prueba de letras" noindex>
+  <section class="tipos">
+    <header class="tipos__cabeza">
+      <p class="tipos__eti"><span class="punto" aria-hidden="true"></span>Página de prueba · no está enlazada</p>
+      <h1 class="tipos__titulo">Letra del menú y del texto</h1>
+      <p class="tipos__intro">
+        Cada bloque muestra la misma pieza de la web con una letra distinta para el menú, los párrafos, los botones y las
+        versalitas. Los títulos siguen en <strong>Syne</strong>. Con «Probar en toda la web» puedes navegar por todas las
+        páginas con esa letra (solo en este navegador) y volver a la actual cuando quieras.
+      </p>
+    </header>
+
+    {
+      FUENTES_PRUEBA.map((f, i) => (
+        <article class="pareja" style={`--font-body: ${f.familia}`} data-fuente={f.id}>
+          <div class="pareja__cabeza">
+            <p class="pareja__n">{String(i + 1).padStart(2, '0')}</p>
+            <div>
+              <h2 class="pareja__nombre">{f.nombre}</h2>
+              <p class="pareja__caracter">{f.caracter}</p>
+            </div>
+            <button type="button" class="pareja__probar" data-probar={f.id}>
+              {f.id === 'inter' ? 'Volver a la actual' : 'Probar en toda la web'}
+            </button>
+          </div>
+
+          <div class="muestra">
+            <div class="muestra__menu">
+              <span class="muestra__firma">
+                <Firma alto="44px" />
+              </span>
+              <nav class="muestra__nav" aria-hidden="true">
+                <span class="is-activo">Obra</span>
+                <span>Técnicas</span>
+                <span>Sobre mí</span>
+              </nav>
+              <span class="muestra__cta">
+                <span class="punto" aria-hidden="true"></span>Contacto
+              </span>
+            </div>
+
+            <div class="muestra__cuerpo">
+              <div class="muestra__texto">
+                <p class="muestra__miga">Obra / Acuarela</p>
+                <p class="muestra__h">Paisaje abstracto</p>
+                <p class="muestra__entradilla">
+                  Trato directo con el artista, de principio a fin. Pagas solo cuando todo está confirmado por escrito.
+                </p>
+                <p class="muestra__parrafo">
+                  Te confirmo la disponibilidad, el precio final con el envío y te paso los datos para el pago. La obra
+                  queda reservada para ti. Por transferencia bancaria o Bizum: sin pasarela ni intermediarios, nunca te
+                  pediré los datos de tu tarjeta.
+                </p>
+                <span class="muestra__boton">
+                  <span class="punto" aria-hidden="true"></span>Consultar esta obra →
+                </span>
+              </div>
+
+              <div class="muestra__lado">
+                <div class="muestra__cartela">
+                  <p class="muestra__eti">La obra</p>
+                  <dl>
+                    <div><dt>Técnica</dt><dd>Acuarela</dd></div>
+                    <div><dt>Año</dt><dd>2019</dd></div>
+                  </dl>
+                </div>
+                <div class="muestra__pie-obra">
+                  <span class="muestra__pie-titulo"><span class="punto" aria-hidden="true"></span>Repollo</span>
+                  <span class="muestra__pie-meta">Óleo · 2019</span>
+                </div>
+                <p class="muestra__legales">Aviso legal · Privacidad · Cookies · Condiciones de venta</p>
+              </div>
+            </div>
+          </div>
+        </article>
+      ))
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .tipos {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(48px, 6vw, 88px) var(--gutter) clamp(80px, 10vw, 140px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(36px, 4vw, 56px);
+  }
+  .tipos__cabeza {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 52em;
+  }
+  .tipos__eti,
+  .muestra__miga,
+  .muestra__eti,
+  .muestra__cartela dt,
+  .muestra__pie-meta,
+  .muestra__legales {
+    margin: 0;
+    font: 600 11px/1.3 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tipos__eti {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .punto {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: 0 0 auto;
+  }
+  .tipos__titulo {
+    margin: 0;
+    font-weight: 800;
+    font-size: clamp(40px, 5vw, 72px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+  .tipos__intro {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--text-soft);
+  }
+
+  /* ---------- Cada pareja ---------- */
+  .pareja {
+    font-family: var(--font-body);
+    border-top: 1px solid var(--line);
+    padding-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .pareja__cabeza {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px 20px;
+  }
+  .pareja__n {
+    margin: 0;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .pareja__nombre {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+  }
+  .pareja__caracter {
+    margin: 4px 0 0;
+    font-size: 15px;
+    color: var(--text-soft);
+  }
+  .pareja__probar {
+    min-height: var(--tap);
+    padding: 0 20px;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink);
+    font: 600 14px/1 var(--font-body);
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .pareja__probar:hover,
+  .pareja.is-elegida .pareja__probar {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .pareja.is-elegida {
+    border-top: 2px solid var(--accent);
+  }
+
+  /* ---------- La muestra ---------- */
+  .muestra {
+    border-radius: 16px;
+    /* el color de pared de la ficha */
+    background: #efece6;
+    overflow: hidden;
+  }
+  .muestra__menu {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: rgba(250, 250, 248, 0.9);
+    border-bottom: 1px solid var(--line);
+  }
+  .muestra__firma {
+    justify-self: start;
+    display: flex;
+  }
+  .muestra__nav {
+    display: flex;
+    gap: 36px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .muestra__nav .is-activo {
+    box-shadow: inset 0 -2px 0 var(--accent);
+    padding-bottom: 4px;
+  }
+  .muestra__cta {
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 22px 12px 18px;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .muestra__cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 28px 48px;
+    padding: 32px 28px 30px;
+  }
+  .muestra__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .muestra__h {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(32px, 3.4vw, 48px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+  .muestra__entradilla {
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.5;
+  }
+  .muestra__parrafo {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--text-soft);
+  }
+  .muestra__boton {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 22px 13px 18px;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .muestra__lado {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .muestra__cartela {
+    padding: 20px;
+    border-radius: 14px;
+    background: var(--paper);
+  }
+  .muestra__eti {
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+  .muestra__cartela dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .muestra__cartela dd {
+    margin: 4px 0 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .muestra__pie-obra {
+    align-self: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 16px 9px 12px;
+    border-radius: 3px;
+    background: rgba(250, 248, 242, 0.95);
+    box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.3);
+  }
+  .muestra__pie-titulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .muestra__pie-meta {
+    padding-left: 14px;
+    font-size: 10.5px;
+  }
+
+  @media (max-width: 760px) {
+    .pareja__cabeza {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+    .pareja__probar {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+    .muestra__menu {
+      grid-template-columns: 1fr auto;
+    }
+    .muestra__nav {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      gap: 18px;
+    }
+    .muestra__cuerpo {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script define:vars={{ CLAVE_PRUEBA }}>
+  const actual = (() => {
+    try {
+      return localStorage.getItem(CLAVE_PRUEBA) || 'inter';
+    } catch {
+      return 'inter';
+    }
+  })();
+  document.querySelector(`[data-fuente="${actual}"]`)?.classList.add('is-elegida');
+  document.querySelectorAll('[data-probar]').forEach((b) =>
+    b.addEventListener('click', () => {
+      try {
+        if (b.dataset.probar === 'inter') localStorage.removeItem(CLAVE_PRUEBA);
+        else localStorage.setItem(CLAVE_PRUEBA, b.dataset.probar);
+      } catch {
+        /* sin almacenamiento: la prueba no se puede aplicar */
+      }
+      location.href = '/';
+    })
+  );
+</script>
