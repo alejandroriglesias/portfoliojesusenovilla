@@ -1,28 +1,35 @@
 ---
 /**
  * TEMPORAL — «Probar en toda la web»: si en este navegador se eligió una letra
- * en /tipografias, se aplica a --font-body en todas las páginas y aparece una
- * etiqueta abajo a la derecha para volver a la actual. No afecta a nadie más.
+ * de títulos en /tipografias, se aplica a --font-display en todas las páginas
+ * y aparece una etiqueta para cambiarla o volver a la actual. No afecta a
+ * nadie más.
  */
 import { CLAVE_PRUEBA, FUENTES_PRUEBA } from '../lib/fuentes-prueba';
-const mapa = Object.fromEntries(FUENTES_PRUEBA.map((f) => [f.id, { nombre: f.nombre, familia: f.familia }]));
+const mapa = Object.fromEntries(
+  FUENTES_PRUEBA.map((f) => [f.id, { nombre: f.nombre, familia: f.familia, unGrosor: !!f.unGrosor, anchura: f.anchura ?? '' }])
+);
 ---
 
 <script is:inline define:vars={{ mapa, CLAVE_PRUEBA }}>
   (function () {
     var id = null;
     try {
+      localStorage.removeItem('prueba:fuente'); // prueba anterior (letra de texto), ya decidida
       id = localStorage.getItem(CLAVE_PRUEBA);
     } catch (e) {}
     var f = id && mapa[id];
-    if (!f || id === 'inter') return;
-    document.documentElement.style.setProperty('--font-body', f.familia);
-    document.documentElement.dataset.pruebaFuente = id;
+    if (!f || id === 'syne') return;
+    var raiz = document.documentElement;
+    raiz.style.setProperty('--font-display', f.familia);
+    raiz.dataset.pruebaTitulos = id;
+    if (f.unGrosor) raiz.classList.add('prueba-un-grosor');
+    if (f.anchura) raiz.style.setProperty('--prueba-anchura', f.anchura);
     addEventListener('DOMContentLoaded', function () {
       var b = document.createElement('div');
       b.className = 'prueba-fuente';
       b.innerHTML =
-        '<span>Probando: <strong></strong></span><a href="/tipografias">Cambiar</a><button type="button">Quitar</button>';
+        '<span>Títulos: <strong></strong></span><a href="/tipografias">Cambiar</a><button type="button">Quitar</button>';
       b.querySelector('strong').textContent = f.nombre;
       b.querySelector('button').addEventListener('click', function () {
         try {
@@ -36,6 +43,14 @@ const mapa = Object.fromEntries(FUENTES_PRUEBA.map((f) => [f.id, { nombre: f.nom
 </script>
 
 <style is:global>
+  /* Letras de un solo grosor: sin negrita artificial */
+  html.prueba-un-grosor {
+    font-synthesis: none;
+  }
+  /* Letras con eje de anchura (Archivo): ensanchada */
+  html[data-prueba-titulos] {
+    font-stretch: var(--prueba-anchura, normal);
+  }
   .prueba-fuente {
     position: fixed;
     right: 12px;
@@ -50,6 +65,7 @@ const mapa = Object.fromEntries(FUENTES_PRUEBA.map((f) => [f.id, { nombre: f.nom
     background: #141414;
     color: #fafaf8;
     font: 500 13px/1 var(--font-body);
+    font-stretch: normal;
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
   }
   .prueba-fuente a,

@@ -15,7 +15,7 @@ import { personaJsonLd } from '../lib/datos-estructurados';
 import { rutaLimpia } from '../lib/rutas';
 // Fuentes que se ven nada más cargar: se precargan (mismo archivo que usa el CSS).
 import fuenteSyne from '@fontsource-variable/syne/files/syne-latin-wght-normal.woff2?url';
-import fuenteInter from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import fuenteTexto from '@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url';
 
 interface Props {
   /** false: sin el pie común (la portada lleva su propio pie superpuesto). */
@@ -91,7 +91,7 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href={fuenteSyne} as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href={fuenteInter} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={fuenteTexto} as="font" type="font/woff2" crossorigin />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Jesús Senovilla" />
