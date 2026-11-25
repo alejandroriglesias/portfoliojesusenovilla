@@ -90,6 +90,11 @@ const obras = defineCollection({
         .transform((m) =>
           m && m.x != null && m.y != null ? { x: m.x, y: m.y, rotacion: m.rotacion ?? 0 } : undefined
         ),
+      // Punto (en %) que se amplía en la foto de detalle de la ficha.
+      detalle: z
+        .object({ x: z.number().nullish(), y: z.number().nullish() })
+        .optional()
+        .transform((d) => ({ x: d?.x ?? 50, y: d?.y ?? 42, elegido: d?.x != null && d?.y != null })),
       destacada: z.boolean().default(false),
       orden: z.number().default(100),
       ejemplo: z.boolean().default(false),
@@ -110,18 +115,6 @@ const tecnicas = defineCollection({
       titular: textoOpcional,
       imagen: image().nullish(),
       orden: z.number().default(100),
-    }),
-});
-
-const blog = defineCollection({
-  loader: glob({ pattern: '**/*.mdoc', base: './src/content/blog' }),
-  schema: ({ image }) =>
-    z.object({
-      titulo: z.string(),
-      fecha: z.coerce.date(),
-      portada: image().nullish(),
-      extracto: textoOpcional,
-      borrador: z.boolean().default(false),
     }),
 });
 
@@ -146,4 +139,4 @@ const legal = defineCollection({
   }),
 });
 
-export const collections = { obras, tecnicas, blog, sobreMi, legal };
+export const collections = { obras, tecnicas, sobreMi, legal };

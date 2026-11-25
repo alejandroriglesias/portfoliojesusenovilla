@@ -1,9 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-import { getEntradasBlog } from '../lib/contenido';
 import Redes from './Redes.astro';
 
-const hayBlog = (await getEntradasBlog()).length > 0;
 // Páginas legales (panel → Legal), en el orden indicado allí.
 const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.data.orden);
 const anio = new Date().getFullYear();
@@ -13,7 +11,6 @@ const anio = new Date().getFullYear();
   <div class="pie__barra">
     <span>© {anio} Jesús Senovilla</span>
     <nav aria-label="Pie" class="pie__nav">
-      {hayBlog && <a href="/blog">Blog</a>}
       <a href="/contacto">Contacto</a>
       <a href="#arriba">Volver arriba ↑</a>
     </nav>

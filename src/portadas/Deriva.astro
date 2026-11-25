@@ -19,7 +19,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ComunesTaller from '../components/portada/ComunesTaller.astro';
 import { getDatosPortada } from '../lib/portada';
 import { esMarcador } from '../lib/ajustes';
-import { getEntradasBlog } from '../lib/contenido';
 import Redes from '../components/Redes.astro';
 import type { Props as PropsPortada } from './tipos';
 
@@ -61,13 +60,11 @@ const filasConFoco = filas.map((fila) =>
   })
 );
 const aviso = ajustes.avisoPortada && !esMarcador(ajustes.avisoPortada) ? ajustes.avisoPortada : undefined;
-const hayBlog = (await getEntradasBlog()).length > 0;
 // Enlaces rápidos bajo el muro (como el pie de la portada de referencia).
 const enlaces = [
   { href: '#obra', texto: 'Toda la obra ↓' },
   { href: '/obra#tecnicas', texto: 'Técnicas' },
   { href: '/sobre-mi', texto: 'Sobre mí' },
-  ...(hayBlog ? [{ href: '/blog', texto: 'Blog' }] : []),
   { href: '/contacto', texto: 'Contacto' },
 ];
 ---

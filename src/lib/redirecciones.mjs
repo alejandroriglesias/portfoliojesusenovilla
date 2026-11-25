@@ -43,3 +43,7 @@ r('/portfolios', '/obra');
 r('/portfolio/test', '/obra');
 r('/pagina-ejemplo', '/');
 r('/feed', '/');
+
+// Blog retirado (noviembre de 2026): sus direcciones llevan al inicio.
+r('/blog', '/');
+r('/blog/*', '/');

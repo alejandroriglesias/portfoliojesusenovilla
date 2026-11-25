@@ -2,7 +2,6 @@ import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
 
 export type Obra = CollectionEntry<'obras'>;
 export type Tecnica = CollectionEntry<'tecnicas'>;
-export type EntradaBlog = CollectionEntry<'blog'>;
 
 /**
  * En producción las obras marcadas como «ejemplo» (imágenes generadas) o como
@@ -49,10 +48,6 @@ export async function etiquetaTecnica(obra: Obra) {
   return `${nombre} · ${sub?.data.nombre ?? t.value.subtecnica}`;
 }
 
-export async function getEntradasBlog() {
-  const entradas = await getCollection('blog', (e) => import.meta.env.DEV || !e.data.borrador);
-  return entradas.sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime());
-}
 
 export async function getSobreMi() {
   const e = await getEntry('sobreMi', 'index');

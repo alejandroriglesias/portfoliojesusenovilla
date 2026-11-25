@@ -79,7 +79,7 @@ export default config({
   ui: {
     brand: { name: 'Jesús Senovilla' },
     navigation: {
-      Contenido: ['obras', 'tecnicas', 'blog'],
+      Contenido: ['obras', 'tecnicas'],
       Páginas: ['sobreMi', 'legal', 'ajustes'],
     },
   },
@@ -222,6 +222,17 @@ export default config({
             layout: [4, 4, 4],
           }
         ),
+        detalle: fields.object(
+          {
+            x: fields.integer({ label: 'Horizontal (%)', description: '0 = borde izquierdo, 100 = borde derecho.', validation: { min: 0, max: 100 } }),
+            y: fields.integer({ label: 'Vertical (%)', description: '0 = arriba, 100 = abajo.', validation: { min: 0, max: 100 } }),
+          },
+          {
+            label: 'Foto de detalle (ficha de obra)',
+            description: 'Punto de la obra que se amplía en la segunda foto. Opcional: si se deja vacío, se usa un punto cercano al centro.',
+            layout: [6, 6],
+          }
+        ),
         destacada: fields.checkbox({
           label: 'Obra destacada',
           description: 'Aparece en la portada.',
@@ -289,36 +300,6 @@ export default config({
       },
     }),
 
-    // ======================= BLOG =======================
-    blog: collection({
-      label: 'Blog',
-      slugField: 'titulo',
-      path: 'src/content/blog/*',
-      format: { contentField: 'cuerpo' },
-      entryLayout: 'content',
-      columns: ['titulo', 'fecha'],
-      previewUrl: '/blog/{slug}',
-      schema: {
-        titulo: fields.slug({ name: { label: 'Título', validation: { isRequired: true } } }),
-        fecha: fields.date({
-          label: 'Fecha',
-          defaultValue: { kind: 'today' },
-          validation: { isRequired: true },
-        }),
-        portada: fields.image({
-          label: 'Imagen de portada',
-          directory: 'src/assets/blog',
-          publicPath: '../../assets/blog/',
-        }),
-        extracto: fields.text({ label: 'Extracto', multiline: true }),
-        borrador: fields.checkbox({
-          label: 'Borrador',
-          description: 'Los borradores no se publican.',
-          defaultValue: false,
-        }),
-        cuerpo: textoEnriquecido('Texto', 'blog'),
-      },
-    }),
     // ======================= LEGAL =======================
     legal: collection({
       label: 'Legal',

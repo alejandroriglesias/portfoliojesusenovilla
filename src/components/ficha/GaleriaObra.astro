@@ -6,6 +6,7 @@
  * - Escritorio: columna que se recorre con el scroll de la página; a la
  *   izquierda, rayas de progreso y contador fijos.
  * - Móvil: carrusel horizontal con scroll-snap y barra segmentada debajo.
+ * - En segunda posición, la foto de detalle (DetalleObra): la obra ampliada.
  * - Al final, la vista «en casa» (AmbienteObra): la obra colgada en una pared.
  * - «Ver completa» (o clic en la imagen) abre un visor a pantalla completa
  *   con una versión grande y zoom al pulsar.
@@ -15,6 +16,7 @@
 import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
 import AmbienteObra from './AmbienteObra.astro';
+import DetalleObra from './DetalleObra.astro';
 
 interface Vista {
   imagen: ImageMetadata;
@@ -26,9 +28,11 @@ interface Props {
   alt: string;
   /** Vista «en casa» con la obra colgada (ver AmbienteObra). */
   ambiente?: { tipo: 'lienzo' | 'papel'; ladoLargo: number; aEscala: boolean };
+  /** Punto (en %) de la foto de detalle; «elegido» si viene del panel. */
+  detalle?: { x: number; y: number; elegido?: boolean };
 }
 
-const { vistas, alt, ambiente } = Astro.props;
+const { vistas, alt, ambiente, detalle } = Astro.props;
 const ANCHOS = [480, 720, 960, 1280, 1600, 2000];
 
 const datos = await Promise.all(
@@ -56,7 +60,18 @@ const datos = await Promise.all(
     };
   })
 );
-const etiquetas = [...datos.map((v) => v.etiqueta), ...(ambiente ? ['En casa'] : [])];
+// Foto de detalle: solo si la imagen tiene resolución para ampliarla sin verse borrosa.
+const principal = vistas[0]?.imagen;
+const conDetalle = !!detalle && !!principal && principal.width >= 1400;
+const miniDetalle = conDetalle
+  ? (await getImage({ src: principal!, width: Math.min(principal!.width, 260), format: 'webp', quality: 70 })).src
+  : undefined;
+const etiquetas = [
+  datos[0]?.etiqueta,
+  ...(conDetalle ? ['Detalle'] : []),
+  ...datos.slice(1).map((v) => v.etiqueta),
+  ...(ambiente ? ['En casa'] : []),
+].filter((e): e is string => !!e);
 const n = etiquetas.length;
 const nn = (i: number) => String(i).padStart(2, '0');
 ---
@@ -65,6 +80,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
   <div class="galeria__pista" data-pista>
     {
       datos.map((v, i) => (
+        <>
         <figure class="marco" data-marco style={`--ar: ${v.ratio}`}>
           <img
             src={v.src}
@@ -85,6 +101,10 @@ const nn = (i: number) => String(i).padStart(2, '0');
             Ver completa<span class="sr-only">: {v.etiqueta}</span>
           </button>
         </figure>
+        {i === 0 && conDetalle && detalle && miniDetalle && (
+          <DetalleObra src={v.grande} mini={miniDetalle} ratio={v.ratio} x={detalle.x} y={detalle.y} auto={!detalle.elegido} alt={v.alt} />
+        )}
+        </>
       ))
     }
     {
@@ -496,7 +516,8 @@ const nn = (i: number) => String(i).padStart(2, '0');
     connectedCallback() {
       this.pista = this.querySelector('[data-pista]')!;
       this.marcos = [...this.querySelectorAll<HTMLElement>('[data-marco]')];
-      this.fotos = this.marcos.filter((m) => !m.hasAttribute('data-ambiente'));
+      // El visor recorre solo las fotos de la obra (ni el detalle ni la vista «en casa»).
+      this.fotos = this.marcos.filter((m) => !m.hasAttribute('data-ambiente') && !m.hasAttribute('data-detalle'));
       this.puntos = [...this.querySelectorAll<HTMLButtonElement>('[data-ir]')];
       this.visor = this.querySelector('[data-visor]')!;
 

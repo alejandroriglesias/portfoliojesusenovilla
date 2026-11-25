@@ -48,7 +48,7 @@
       if (img) img.style.viewTransitionName = 'obra';
     };
     var heroes = function () {
-      return document.querySelectorAll('[data-galeria-obra] [data-marco] img');
+      return document.querySelectorAll('[data-galeria-obra] [data-marco]:not([data-detalle]) img');
     };
     var visible = function (el) {
       var r = el.getBoundingClientRect();

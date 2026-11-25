@@ -4,25 +4,26 @@
  * - variante "solida": fija arriba con fondo (portadas 01, 04–06, páginas interiores).
  * - variante "superpuesta": flota sobre el contenido con mix-blend-mode: difference
  *   (portadas 02, 03 y ficha de obra v2).
+ *   El botón «Contacto» no puede ir dentro de esa mezcla (sobre fotos de tonos
+ *   medios no se leería): va en una capa aparte, encima y en el mismo sitio. La
+ *   capa repite la barra con todo invisible salvo el botón, así coincide la
+ *   colocación en cualquier ancho; en la barra mezclada queda un hueco.
  */
 interface Props {
   variante?: 'solida' | 'superpuesta';
 }
 
-import { getEntradasBlog } from '../lib/contenido';
 import { rutaLimpia } from '../lib/rutas';
 import Firma from './marca/Firma.astro';
 
 const { variante = 'solida' } = Astro.props;
-// El enlace al blog solo aparece cuando hay entradas publicadas.
-const hayBlog = (await getEntradasBlog()).length > 0;
+const superpuesta = variante === 'superpuesta';
 const ruta = rutaLimpia(Astro.url.pathname);
 
 const enlaces = [
   { href: '/obra', texto: 'Obra' },
   { href: '/obra#tecnicas', texto: 'Técnicas' },
   { href: '/sobre-mi', texto: 'Sobre mí' },
-  ...(hayBlog ? [{ href: '/blog', texto: 'Blog' }] : []),
 ];
 
 const activo = (href: string) => {
@@ -49,12 +50,39 @@ const activo = (href: string) => {
         class="cabecera__cta"
         href="/contacto"
         aria-current={activo('/contacto') ? 'page' : undefined}
+        aria-hidden={superpuesta ? 'true' : undefined}
+        tabindex={superpuesta ? -1 : undefined}
       >
+        <span class="cabecera__cta-punto" aria-hidden="true"></span>
         Contacto
+        <svg class="cabecera__cta-flecha" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9" /></svg>
       </a>
     </nav>
   </div>
 </header>
+{
+  superpuesta && (
+    <div class="cabecera cabecera--superpuesta cabecera--capa">
+      <div class="cabecera__barra">
+        <span class="cabecera__marca cabecera__hueco" aria-hidden="true">
+          <Firma alto="var(--alto-firma)" />
+        </span>
+        <div class="cabecera__nav">
+          {enlaces.map((e) => (
+            <span class="cabecera__enlace cabecera__hueco" aria-hidden="true">
+              {e.texto}
+            </span>
+          ))}
+          <a class="cabecera__cta" href="/contacto" aria-current={activo('/contacto') ? 'page' : undefined}>
+            <span class="cabecera__cta-punto" aria-hidden="true" />
+            Contacto
+            <svg class="cabecera__cta-flecha" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9" /></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 <style>
   .cabecera {
@@ -104,14 +132,79 @@ const activo = (href: string) => {
     color: inherit;
   }
 
+  /* Botón de contacto: píldora con el punto bermellón que late despacio y una
+     flecha que aparece al pasar el ratón. */
   .cabecera__cta {
+    position: relative;
     display: inline-flex;
     align-items: center;
+    gap: 9px;
     min-height: var(--tap);
     border-radius: var(--radius-pill);
     font-size: 14px;
     font-weight: 600;
+    letter-spacing: 0.01em;
     text-decoration: none;
+    transition:
+      background 0.35s ease,
+      color 0.35s ease,
+      border-color 0.35s ease,
+      transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 0.35s ease;
+  }
+  .cabecera__cta-punto {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: 0 0 auto;
+  }
+  .cabecera__cta-punto::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: inherit;
+    animation: cta-latido 2.6s ease-out infinite;
+  }
+  @keyframes cta-latido {
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    60%,
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+  .cabecera__cta-flecha {
+    width: 0;
+    margin-left: -9px;
+    opacity: 0;
+    transform: translate(-4px, 4px);
+    transition:
+      width 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+      margin 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+      opacity 0.3s ease,
+      transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .cabecera__cta:hover .cabecera__cta-flecha,
+  .cabecera__cta:focus-visible .cabecera__cta-flecha {
+    width: 14px;
+    margin-left: 0;
+    opacity: 1;
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cabecera__cta-punto::after {
+      animation: none;
+    }
+    .cabecera__cta,
+    .cabecera__cta-flecha {
+      transition: none;
+    }
   }
 
   /* ---------- Sólida ---------- */
@@ -142,13 +235,21 @@ const activo = (href: string) => {
     transform: scaleX(1);
   }
   .cabecera--solida .cabecera__cta {
-    padding: 12px 22px;
+    padding: 12px 22px 12px 18px;
     background: var(--ink);
     color: var(--bg);
-    transition: transform 0.2s ease;
+    box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.45);
   }
-  .cabecera--solida .cabecera__cta:hover {
+  .cabecera--solida .cabecera__cta:hover,
+  .cabecera--solida .cabecera__cta:focus-visible {
+    background: var(--accent);
+    color: var(--on-accent);
     transform: translateY(-2px);
+    box-shadow: 0 12px 26px -10px rgba(200, 55, 26, 0.6);
+  }
+  .cabecera--solida .cabecera__cta:hover .cabecera__cta-punto,
+  .cabecera--solida .cabecera__cta:focus-visible .cabecera__cta-punto {
+    background: var(--on-accent);
   }
 
   /* ---------- Superpuesta (difference) ---------- */
@@ -171,10 +272,46 @@ const activo = (href: string) => {
     text-decoration: underline;
     text-underline-offset: 6px;
   }
+  /* En la barra mezclada el botón solo ocupa su sitio (hueco); el visible
+     está en la capa de encima, sin mezcla. */
   .cabecera--superpuesta .cabecera__cta {
-    padding: 10px 20px;
-    border: 1px solid #ffffff;
-    color: #ffffff;
+    padding: 10px 20px 10px 16px;
+    border: 1px solid transparent;
+  }
+  .cabecera--superpuesta:not(.cabecera--capa) .cabecera__cta {
+    visibility: hidden;
+  }
+  .cabecera--capa {
+    z-index: 41;
+    mix-blend-mode: normal;
+    color: var(--ink);
+    pointer-events: none;
+  }
+  .cabecera__hueco {
+    visibility: hidden;
+  }
+  .cabecera--capa .cabecera__cta {
+    pointer-events: auto;
+    background: var(--ink);
+    border-color: rgba(250, 250, 248, 0.14);
+    color: var(--paper);
+    box-shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.55);
+  }
+  .cabecera--capa .cabecera__cta:hover,
+  .cabecera--capa .cabecera__cta:focus-visible {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px -10px rgba(200, 55, 26, 0.6);
+  }
+  .cabecera--capa .cabecera__cta:hover .cabecera__cta-punto,
+  .cabecera--capa .cabecera__cta:focus-visible .cabecera__cta-punto {
+    background: var(--on-accent);
+  }
+  .cabecera--capa .cabecera__cta:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
   }
   .cabecera--superpuesta :focus-visible {
     outline-color: #ffffff;
