@@ -15,6 +15,8 @@ import fuenteSyne from '@fontsource-variable/syne/files/syne-latin-wght-normal.w
 import fuenteInter from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 
 interface Props {
+  /** false: sin el pie común (la portada lleva su propio pie superpuesto). */
+  pie?: boolean;
   titulo?: string;
   descripcion?: string;
   /** Variante de cabecera: sólida (por defecto) o superpuesta con difference. */
@@ -41,6 +43,7 @@ const {
   imagenOg,
   canonica: canonicaProp,
   jsonLd,
+  pie = true,
 } = Astro.props;
 
 // Imagen para redes: la de la página o, por defecto, la obra destacada.
@@ -105,7 +108,7 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
     <main id="contenido" tabindex="-1">
       <slot />
     </main>
-    <Footer />
+    {pie && <Footer />}
     <AvisoCookies />
     <AjustarTexto />
   </body>

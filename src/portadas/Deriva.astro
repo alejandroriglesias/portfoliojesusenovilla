@@ -15,8 +15,8 @@
  * alto de una tanda). Solo la primera copia de cada obra es enfocable.
  */
 import { getImage } from 'astro:assets';
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ComunesTaller from '../components/portada/ComunesTaller.astro';
 import { getDatosPortada } from '../lib/portada';
 import { esMarcador } from '../lib/ajustes';
 import Redes from '../components/Redes.astro';
@@ -60,16 +60,12 @@ const filasConFoco = filas.map((fila) =>
   })
 );
 const aviso = ajustes.avisoPortada && !esMarcador(ajustes.avisoPortada) ? ajustes.avisoPortada : undefined;
-// Enlaces rápidos bajo el muro (como el pie de la portada de referencia).
-const enlaces = [
-  { href: '#obra', texto: 'Toda la obra ↓' },
-  { href: '/obra#tecnicas', texto: 'Técnicas' },
-  { href: '/sobre-mi', texto: 'Sobre mí' },
-  { href: '/contacto', texto: 'Contacto' },
-];
+// La portada es solo el muro: el pie común no aparece y sus enlaces legales
+// van aquí, superpuestos (como en la portada de referencia).
+const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.data.orden);
 ---
 
-<BaseLayout cabecera="superpuesta" paleta="deriva" canonica={canonica} noindex={noindex}>
+<BaseLayout cabecera="superpuesta" paleta="deriva" canonica={canonica} noindex={noindex} pie={false}>
   <section id="inicio" class="deriva" aria-labelledby="deriva-titulo">
     <muro-deriva class="deriva__muro" data-filas={FILAS}>
       <div class="deriva__escenario" data-escenario>
@@ -125,8 +121,12 @@ const enlaces = [
             </p>
           )
         }
-        <nav class="deriva__rapidos" aria-label="Enlaces rápidos">
-          {enlaces.map((e) => <a href={e.href}>{e.texto}</a>)}
+        <nav class="deriva__rapidos" aria-label="Información legal">
+          {legales.map((l) => {
+            const corto = l.data.titulo.replace(/^Política de /, '');
+            return <a href={`/${l.id}`}>{corto.charAt(0).toUpperCase() + corto.slice(1)}</a>;
+          })}
+          <button type="button" data-abrir-cookies>Configurar cookies</button>
         </nav>
       </div>
       <div class="deriva__der">
@@ -135,7 +135,6 @@ const enlaces = [
     </div>
   </section>
 
-  <ComunesTaller datos={datos} />
 </BaseLayout>
 
 <style>
@@ -425,7 +424,8 @@ const enlaces = [
     flex-wrap: wrap;
     gap: 4px 20px;
   }
-  .deriva__rapidos a {
+  .deriva__rapidos a,
+  .deriva__rapidos button {
     display: inline-flex;
     align-items: center;
     min-height: 32px;
@@ -438,14 +438,22 @@ const enlaces = [
     background: linear-gradient(currentColor, currentColor) no-repeat right 75% / 0 1px;
     transition: background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  .deriva__rapidos a:hover {
+  .deriva__rapidos button {
+    padding: 0;
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .deriva__rapidos a:hover,
+  .deriva__rapidos button:hover {
     background-position: left 75%;
     background-size: 100% 1px;
   }
+  /* La pista va justo encima de la fila del pie, centrada */
   .deriva__pista {
     position: absolute;
     left: 50%;
-    bottom: 0;
+    bottom: calc(100% + 10px);
     transform: translateX(-50%);
     margin: 0;
     min-height: var(--tap);
@@ -492,7 +500,7 @@ const enlaces = [
   @media (max-width: 640px) {
     .deriva {
       --alto: clamp(180px, 34vh, 300px);
-      height: 88svh;
+      height: 100svh;
       min-height: 520px;
     }
     /* En móvil, el nombre en dos líneas y mucho más grande */
@@ -535,7 +543,8 @@ const enlaces = [
     .deriva__rapidos::-webkit-scrollbar {
       display: none;
     }
-    .deriva__rapidos a {
+    .deriva__rapidos a,
+    .deriva__rapidos button {
       white-space: nowrap;
     }
     .deriva__aviso {
@@ -553,6 +562,8 @@ const enlaces = [
 </style>
 
 <script>
+  import { abrirAjustesCookies } from '../lib/consentimiento';
+
   // Velocidad base (px/s) y cuánto la orienta el cursor.
   const BASE = { x: -14, y: -10 };
   const GUIA = 46;
@@ -755,4 +766,7 @@ const enlaces = [
   }
 
   if (!customElements.get('muro-deriva')) customElements.define('muro-deriva', MuroDeriva);
+
+  // «Configurar cookies» del pie superpuesto
+  document.querySelectorAll('[data-abrir-cookies]').forEach((b) => b.addEventListener('click', abrirAjustesCookies));
 </script>

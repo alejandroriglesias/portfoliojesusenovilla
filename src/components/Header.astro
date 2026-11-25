@@ -4,9 +4,10 @@
  * - variante "solida": fija arriba con fondo (portadas 01, 04–06, páginas interiores).
  * - variante "superpuesta": flota sobre el contenido (portada y ficha de obra).
  *
- * Tono adaptativo: un script mira qué hay debajo de la marca y de la
- * navegación (fondo de color o la luminosidad real de la foto) y pone en <html>
- * data-cabecera (navegación) y data-cabecera-marca (firma): «claro» u «oscuro».
+ * Tono adaptativo: un script mira qué hay debajo de la marca, de los enlaces y
+ * del botón (fondo de color o la luminosidad real de la foto) y pone en <html>
+ * data-cabecera (enlaces), data-cabecera-marca (firma) y data-cabecera-boton:
+ * «claro» u «oscuro».
  * Sobre zonas claras, texto negro; sobre oscuras, blanco; con fundido suave.
  */
 interface Props {
@@ -45,16 +46,16 @@ const activo = (href: string) => {
           </a>
         ))
       }
-      <a
-        class="cabecera__cta"
-        href="/contacto"
-        aria-current={activo('/contacto') ? 'page' : undefined}
-      >
-        <span class="cabecera__cta-punto" aria-hidden="true"></span>
-        Contacto
-        <svg class="cabecera__cta-flecha" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9" /></svg>
-      </a>
     </nav>
+    <a
+      class="cabecera__cta"
+      href="/contacto"
+      aria-current={activo('/contacto') ? 'page' : undefined}
+    >
+      <span class="cabecera__cta-punto" aria-hidden="true"></span>
+      Contacto
+      <svg class="cabecera__cta-flecha" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9" /></svg>
+    </a>
   </div>
 </header>
 
@@ -66,15 +67,28 @@ const activo = (href: string) => {
   .cabecera--superpuesta {
     --alto-firma: 68px;
   }
+  /* Marca a la izquierda, enlaces centrados y botón a la derecha */
   .cabecera__barra {
     max-width: var(--container);
     margin: 0 auto;
     padding: 8px var(--gutter);
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas: 'marca nav cta';
     align-items: center;
-    justify-content: space-between;
     gap: 8px 32px;
+  }
+  .cabecera__marca {
+    grid-area: marca;
+    justify-self: start;
+  }
+  .cabecera__nav {
+    grid-area: nav;
+    justify-self: center;
+  }
+  .cabecera__cta {
+    grid-area: cta;
+    justify-self: end;
   }
 
   .cabecera__marca {
@@ -94,7 +108,7 @@ const activo = (href: string) => {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 4px 28px;
+    gap: 4px 36px;
   }
 
   .cabecera__enlace {
@@ -314,13 +328,13 @@ const activo = (href: string) => {
   :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__enlace {
     text-shadow: 0 0 14px rgba(0, 0, 0, 0.45);
   }
-  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__cta {
+  :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__cta {
     background: var(--paper);
     border-color: var(--paper);
     color: var(--ink);
   }
-  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__cta:hover,
-  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__cta:focus-visible {
+  :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__cta:hover,
+  :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__cta:focus-visible {
     background: var(--accent);
     border-color: var(--accent);
     color: var(--on-accent);
@@ -338,6 +352,14 @@ const activo = (href: string) => {
     .cabecera__barra {
       padding-block: 4px;
       row-gap: 0;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'marca marca'
+        'nav cta';
+      column-gap: 12px;
+    }
+    .cabecera__nav {
+      justify-self: start;
     }
     .cabecera--superpuesta .cabecera__barra {
       padding-block: 6px;
@@ -365,7 +387,6 @@ const activo = (href: string) => {
     .cabecera__cta,
     .cabecera--solida .cabecera__cta,
     .cabecera--superpuesta .cabecera__cta {
-      margin-left: auto;
       padding: 8px 14px;
       font-size: 13px;
       white-space: nowrap;
@@ -470,6 +491,11 @@ const activo = (href: string) => {
     if (rm) {
       const t = tonoEn(rm.left + rm.width / 2, rm.top + rm.height / 2);
       if (raiz.dataset.cabeceraMarca !== t) raiz.dataset.cabeceraMarca = t;
+    }
+    const rc = cabecera.querySelector('.cabecera__cta')?.getBoundingClientRect();
+    if (rc) {
+      const t = tonoEn(rc.left + rc.width / 2, rc.top + rc.height / 2);
+      if (raiz.dataset.cabeceraBoton !== t) raiz.dataset.cabeceraBoton = t;
     }
   };
 
