@@ -5,16 +5,13 @@ import Footer from '../components/Footer.astro';
 import AjustarTexto from '../components/AjustarTexto.astro';
 import TransicionObras from '../components/TransicionObras.astro';
 import AvisoCookies from '../components/AvisoCookies.astro';
-// TEMPORAL: prueba de letras (página /tipografias). Quitar al elegir la definitiva.
-import '../styles/fuentes-prueba.css';
-import PruebaFuentes from '../components/PruebaFuentes.astro';
 import { getImage } from 'astro:assets';
 import { getAjustes } from '../lib/ajustes';
 import { getObrasDestacadas } from '../lib/contenido';
 import { personaJsonLd } from '../lib/datos-estructurados';
 import { rutaLimpia } from '../lib/rutas';
 // Fuentes que se ven nada más cargar: se precargan (mismo archivo que usa el CSS).
-import fuenteSyne from '@fontsource-variable/syne/files/syne-latin-wght-normal.woff2?url';
+import fuenteTitulos from '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2?url';
 import fuenteTexto from '@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url';
 
 interface Props {
@@ -90,7 +87,7 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="preload" href={fuenteSyne} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={fuenteTitulos} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={fuenteTexto} as="font" type="font/woff2" crossorigin />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta property="og:type" content="website" />
@@ -103,7 +100,6 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
     <meta name="twitter:card" content={ogAbsoluta ? 'summary_large_image' : 'summary'} />
     <meta name="theme-color" content={paleta === 'oscura' ? '#0B0B0B' : '#FAFAF8'} />
     <TransicionObras />
-    <PruebaFuentes />
     {bloquesJsonLd.map((b) => <script type="application/ld+json" set:html={JSON.stringify(b)} />)}
   </head>
   <body id="arriba">

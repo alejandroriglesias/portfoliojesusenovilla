@@ -133,7 +133,7 @@ const opciones = [
     --mx: 68%;
     --my: 46%;
     --r: 260px;
-    /* «SENOVILLA» en Syne 800 mide ≈ 9.05em: debe caber entero en el ancho. */
+    /* «SENOVILLA» debe caber entero en el ancho (data-ajustar corrige lo que falte). */
     --fs-ap: clamp(24px, calc((100vw - 2 * var(--gutter)) / 9.2), 230px);
     position: relative;
     height: min(100vh, 920px);
@@ -175,7 +175,7 @@ const opciones = [
     font-weight: 800;
     font-size: var(--fs-ap);
     line-height: 0.85;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.015em;
     white-space: nowrap;
   }
   .luz__apellido--rojo {
@@ -335,7 +335,7 @@ const opciones = [
     font-weight: 800;
     font-size: clamp(56px, 9vw, 152px);
     line-height: 0.88;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.015em;
   }
   .obra__controles {
     display: flex;

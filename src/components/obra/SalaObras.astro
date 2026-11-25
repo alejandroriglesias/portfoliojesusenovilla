@@ -203,7 +203,7 @@ const salas = await Promise.all(
     font-weight: 800;
     font-size: clamp(52px, 8vw, 132px);
     line-height: 0.86;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.015em;
   }
   .sala__lado {
     grid-area: lado;
@@ -349,7 +349,7 @@ const salas = await Promise.all(
     transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
   /* Pie de la obra con el lenguaje de la cartela de la portada: título en
-     Syne con el punto bermellón y datos en versalitas. Al pasar el ratón,
+     la letra de títulos con el punto bermellón y datos en versalitas. Al pasar el ratón,
      detrás se despliega la misma tarjeta de papel de izquierda a derecha. */
   .pieza__pie {
     position: relative;
@@ -377,7 +377,7 @@ const salas = await Promise.all(
   .pieza__titulo {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 15px;
+    font-size: 19px;
     line-height: 1.2;
     letter-spacing: -0.01em;
     overflow: hidden;
@@ -478,7 +478,7 @@ const salas = await Promise.all(
     font-weight: 800;
     font-size: clamp(24px, 2.2vw, 32px);
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.012em;
   }
 
   /* Llegada desde la derecha, una tras otra, al entrar la pared */
@@ -565,9 +565,9 @@ const salas = await Promise.all(
     .sala__flechas {
       display: none;
     }
-    /* «Grabado»/«Acuarela» ≈ 5,6 em en Syne 800: que quepan junto al número */
+    /* «Grabado»/«Acuarela» ≈ 2,9em en Instrument Serif: caben de sobra junto al número */
     .sala__titulo {
-      font-size: clamp(34px, 10.5vw, 64px);
+      font-size: clamp(44px, 15vw, 72px);
     }
     .pieza__titulo {
       font-size: 15px;

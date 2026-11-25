@@ -1,7 +1,8 @@
 /* Tokens del sistema visual (BRIEF §4). */
 :root {
   /* Tipografías (autoalojadas con @fontsource-variable) */
-  --font-display: 'Syne Variable', 'Syne', system-ui, sans-serif;
+  /* Títulos: Instrument Serif (un solo grosor; ver font-synthesis en global.css) */
+  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
   --font-body: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
 
   /* Colores base */
@@ -29,14 +30,14 @@
   --fs-h2: clamp(44px, 6vw, 88px);
   --fs-label: 13px;
   --track-label: 0.16em;
-  --track-tight: -0.045em;
+  --track-tight: -0.015em;
   --radius-pill: 999px;
   --tap: 44px;
 
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* Syne es muy ancha: en móvil el titular gigante debe caber ("Senovilla" ≈ 6.9em). */
+/* En móvil el titular gigante debe caber en el ancho. */
 @media (max-width: 640px) {
   :root {
     --fs-hero: clamp(40px, 13.4vw, 64px);

@@ -260,7 +260,7 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
   .pieza__titulo {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 15px;
+    font-size: 19px;
     line-height: 1.2;
     letter-spacing: -0.01em;
   }
@@ -338,10 +338,12 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
     text-align: center;
     white-space: nowrap;
     font-weight: 800;
-    /* «Jesús Senovilla» en Syne 800 ≈ 12em: cabe entero; data-ajustar corrige lo que falte */
-    font-size: clamp(36px, calc((100vw - 2 * var(--gutter)) / 12.4), 210px);
+    /* «Jesús Senovilla» en Instrument Serif ≈ 4,9em: ocupa unos dos tercios del
+       ancho (como en la referencia); data-ajustar corrige lo que falte */
+    --nombre: clamp(56px, calc((100vw - 2 * var(--gutter)) * 0.66 / 4.95), 300px);
+    font-size: var(--nombre);
     line-height: 0.9;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.015em;
     color: #fff;
     mix-blend-mode: difference;
     pointer-events: none;
@@ -350,7 +352,7 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(50% + clamp(36px, calc((100vw - 2 * var(--gutter)) / 12.4), 210px) * 0.5);
+    top: calc(50% + clamp(56px, calc((100vw - 2 * var(--gutter)) * 0.66 / 4.95), 300px) * 0.42);
     margin: 0;
     text-align: center;
     font-size: 13px;
@@ -506,15 +508,16 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
     /* En móvil, el nombre en dos líneas y mucho más grande */
     .deriva__nombre {
       white-space: normal;
-      font-size: clamp(40px, calc((100vw - 2 * var(--gutter)) / 7.6), 96px);
-      line-height: 0.88;
+      /* Dos líneas; «Senovilla» ≈ 3,1em llena el ancho */
+      font-size: clamp(56px, calc((100vw - 2 * var(--gutter)) / 3.3), 130px);
+      line-height: 0.96;
       transform: translateY(-62%);
     }
     .deriva__nombre span {
       display: block;
     }
     .deriva__lema {
-      top: calc(50% + clamp(40px, calc((100vw - 2 * var(--gutter)) / 7.6), 96px) * 1.05);
+      top: calc(50% + clamp(56px, calc((100vw - 2 * var(--gutter)) / 3.3), 130px) * 0.95);
     }
     /* En móvil, banda clara esmerilada para que se lea sobre las obras */
     .deriva__pie {

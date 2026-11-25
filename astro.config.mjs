@@ -28,8 +28,8 @@ export default defineConfig({
     markdoc(),
     keystatic(),
     sitemap({
-      // Fuera del sitemap: las portadas de comparación (noindex), el panel y la prueba de letras.
-      filter: (url) => !/\/(inicio|keystatic|tipografias)(\/|$)/.test(new URL(url).pathname),
+      // Fuera del sitemap: las portadas de comparación (noindex) y el panel.
+      filter: (url) => !/\/(inicio|keystatic)(\/|$)/.test(new URL(url).pathname),
       i18n: undefined,
     }),
     // 301 desde las URL del antiguo WordPress (fase 6) → _redirects de Cloudflare.
