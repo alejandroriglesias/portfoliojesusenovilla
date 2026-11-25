@@ -2,12 +2,12 @@
 /**
  * Cabecera común.
  * - variante "solida": fija arriba con fondo (portadas 01, 04–06, páginas interiores).
- * - variante "superpuesta": flota sobre el contenido con mix-blend-mode: difference
- *   (portadas 02, 03 y ficha de obra v2).
- *   El botón «Contacto» no puede ir dentro de esa mezcla (sobre fotos de tonos
- *   medios no se leería): va en una capa aparte, encima y en el mismo sitio. La
- *   capa repite la barra con todo invisible salvo el botón, así coincide la
- *   colocación en cualquier ancho; en la barra mezclada queda un hueco.
+ * - variante "superpuesta": flota sobre el contenido (portada y ficha de obra).
+ *
+ * Tono adaptativo: un script mira qué hay debajo de la marca y de la
+ * navegación (fondo de color o la luminosidad real de la foto) y pone en <html>
+ * data-cabecera (navegación) y data-cabecera-marca (firma): «claro» u «oscuro».
+ * Sobre zonas claras, texto negro; sobre oscuras, blanco; con fundido suave.
  */
 interface Props {
   variante?: 'solida' | 'superpuesta';
@@ -17,7 +17,6 @@ import { rutaLimpia } from '../lib/rutas';
 import Firma from './marca/Firma.astro';
 
 const { variante = 'solida' } = Astro.props;
-const superpuesta = variante === 'superpuesta';
 const ruta = rutaLimpia(Astro.url.pathname);
 
 const enlaces = [
@@ -50,8 +49,6 @@ const activo = (href: string) => {
         class="cabecera__cta"
         href="/contacto"
         aria-current={activo('/contacto') ? 'page' : undefined}
-        aria-hidden={superpuesta ? 'true' : undefined}
-        tabindex={superpuesta ? -1 : undefined}
       >
         <span class="cabecera__cta-punto" aria-hidden="true"></span>
         Contacto
@@ -60,29 +57,6 @@ const activo = (href: string) => {
     </nav>
   </div>
 </header>
-{
-  superpuesta && (
-    <div class="cabecera cabecera--superpuesta cabecera--capa">
-      <div class="cabecera__barra">
-        <span class="cabecera__marca cabecera__hueco" aria-hidden="true">
-          <Firma alto="var(--alto-firma)" />
-        </span>
-        <div class="cabecera__nav">
-          {enlaces.map((e) => (
-            <span class="cabecera__enlace cabecera__hueco" aria-hidden="true">
-              {e.texto}
-            </span>
-          ))}
-          <a class="cabecera__cta" href="/contacto" aria-current={activo('/contacto') ? 'page' : undefined}>
-            <span class="cabecera__cta-punto" aria-hidden="true" />
-            Contacto
-            <svg class="cabecera__cta-flecha" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9" /></svg>
-          </a>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 <style>
   .cabecera {
@@ -217,6 +191,37 @@ const activo = (href: string) => {
     backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--line);
     color: var(--ink);
+    transition:
+      background 0.45s ease,
+      color 0.45s ease,
+      border-color 0.45s ease;
+  }
+
+  /* ---------- Sobre zonas oscuras (data-cabecera en <html>, ver script) ---------- */
+  :global(html[data-cabecera='oscuro']) .cabecera--solida {
+    background: rgba(14, 13, 12, 0.82);
+    border-bottom-color: rgba(250, 250, 248, 0.1);
+    color: var(--paper);
+  }
+  :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__cta {
+    background: var(--paper);
+    border-color: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.6);
+  }
+  :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__cta:hover,
+  :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__cta:focus-visible {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  :global(html[data-cabecera='oscuro']) .cabecera--solida :focus-visible {
+    outline-color: var(--accent-on-dark);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cabecera--solida {
+      transition: none;
+    }
   }
   .cabecera--solida .cabecera__enlace::after {
     content: '';
@@ -252,69 +257,80 @@ const activo = (href: string) => {
     background: var(--on-accent);
   }
 
-  /* ---------- Superpuesta (difference) ---------- */
+  /* ---------- Superpuesta: texto negro o blanco según lo que haya debajo ---------- */
   .cabecera--superpuesta {
     position: sticky;
     top: 0;
     height: 0;
     z-index: 40;
-    mix-blend-mode: difference;
-    color: #ffffff;
+    color: var(--ink);
   }
   .cabecera--superpuesta .cabecera__barra {
     padding-block: 10px;
   }
+  .cabecera--superpuesta .cabecera__marca,
+  .cabecera--superpuesta .cabecera__enlace {
+    transition:
+      color 0.45s ease,
+      text-shadow 0.45s ease;
+  }
   .cabecera--superpuesta .cabecera__marca {
     font-size: 20px;
+  }
+  .cabecera--superpuesta .cabecera__enlace {
+    text-shadow: 0 0 14px rgba(250, 250, 248, 0.55);
   }
   .cabecera--superpuesta .cabecera__enlace:hover,
   .cabecera--superpuesta .cabecera__enlace[aria-current='page'] {
     text-decoration: underline;
-    text-underline-offset: 6px;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 7px;
   }
-  /* En la barra mezclada el botón solo ocupa su sitio (hueco); el visible
-     está en la capa de encima, sin mezcla. */
   .cabecera--superpuesta .cabecera__cta {
     padding: 10px 20px 10px 16px;
-    border: 1px solid transparent;
-  }
-  .cabecera--superpuesta:not(.cabecera--capa) .cabecera__cta {
-    visibility: hidden;
-  }
-  .cabecera--capa {
-    z-index: 41;
-    mix-blend-mode: normal;
-    color: var(--ink);
-    pointer-events: none;
-  }
-  .cabecera__hueco {
-    visibility: hidden;
-  }
-  .cabecera--capa .cabecera__cta {
-    pointer-events: auto;
+    border: 1px solid var(--ink);
     background: var(--ink);
-    border-color: rgba(250, 250, 248, 0.14);
     color: var(--paper);
-    box-shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.5);
   }
-  .cabecera--capa .cabecera__cta:hover,
-  .cabecera--capa .cabecera__cta:focus-visible {
+  .cabecera--superpuesta .cabecera__cta:hover,
+  .cabecera--superpuesta .cabecera__cta:focus-visible {
     background: var(--accent);
     border-color: var(--accent);
     color: var(--on-accent);
     transform: translateY(-2px);
     box-shadow: 0 12px 26px -10px rgba(200, 55, 26, 0.6);
   }
-  .cabecera--capa .cabecera__cta:hover .cabecera__cta-punto,
-  .cabecera--capa .cabecera__cta:focus-visible .cabecera__cta-punto {
+  .cabecera--superpuesta .cabecera__cta:hover .cabecera__cta-punto,
+  .cabecera--superpuesta .cabecera__cta:focus-visible .cabecera__cta-punto {
     background: var(--on-accent);
   }
-  .cabecera--capa .cabecera__cta:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
+
+  /* Navegación sobre zona oscura */
+  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__nav {
+    color: var(--paper);
   }
-  .cabecera--superpuesta :focus-visible {
-    outline-color: #ffffff;
+  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__enlace {
+    text-shadow: 0 0 14px rgba(0, 0, 0, 0.45);
+  }
+  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__cta {
+    background: var(--paper);
+    border-color: var(--paper);
+    color: var(--ink);
+  }
+  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__cta:hover,
+  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__cta:focus-visible {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta :focus-visible {
+    outline-color: var(--paper);
+  }
+  /* Firma sobre zona oscura (se mira aparte: puede caer sobre otra foto) */
+  :global(html[data-cabecera-marca='oscuro']) .cabecera--superpuesta .cabecera__marca {
+    color: var(--paper);
   }
 
   /* Móvil: marca arriba y navegación en una sola fila (desplazable si no cabe). */
@@ -356,3 +372,121 @@ const activo = (href: string) => {
     }
   }
 </style>
+
+<script>
+  /**
+   * Tono de lo que queda bajo la cabecera: «claro» u «oscuro», por separado
+   * bajo la navegación (data-cabecera) y bajo la firma (data-cabecera-marca).
+   * Se salta la propia cabecera y mira lo que hay debajo: si es una foto, su
+   * luminosidad real en ese punto (con una miniatura en un canvas); si no, el
+   * primer fondo opaco subiendo por el árbol.
+   */
+  const raiz = document.documentElement;
+  const cabecera = document.querySelector<HTMLElement>('.cabecera');
+  const superpuesta = !!cabecera?.classList.contains('cabecera--superpuesta');
+
+  const luminancia = (color: string) => {
+    const m = color.match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    const [r, g, b, a = '1'] = m[1].split(/[\s,\/]+/).filter(Boolean);
+    if (parseFloat(a) < 0.5) return null;
+    return (0.2126 * +r + 0.7152 * +g + 0.0722 * +b) / 255;
+  };
+
+  // Miniatura de cada foto (24 × 24) para leer su luminosidad sin coste.
+  const miniaturas = new WeakMap<HTMLImageElement, Uint8ClampedArray | null>();
+  const N = 24;
+  const lumFoto = (img: HTMLImageElement, x: number, y: number) => {
+    if (!img.complete || !img.naturalWidth) return null;
+    let datos = miniaturas.get(img);
+    if (datos === undefined) {
+      try {
+        const c = document.createElement('canvas');
+        c.width = N;
+        c.height = N;
+        const ctx = c.getContext('2d', { willReadFrequently: true })!;
+        ctx.drawImage(img, 0, 0, N, N);
+        datos = ctx.getImageData(0, 0, N, N).data;
+      } catch {
+        datos = null;
+      }
+      miniaturas.set(img, datos);
+    }
+    if (!datos) return null;
+    // Punto de la pantalla → punto de la imagen (teniendo en cuenta object-fit: cover).
+    const r = img.getBoundingClientRect();
+    const estilo = getComputedStyle(img);
+    let u = (x - r.left) / r.width;
+    let v = (y - r.top) / r.height;
+    if (estilo.objectFit === 'cover') {
+      const s = Math.max(r.width / img.naturalWidth, r.height / img.naturalHeight);
+      const dw = img.naturalWidth * s;
+      const dh = img.naturalHeight * s;
+      u = (x - r.left - (r.width - dw) / 2) / dw;
+      v = (y - r.top - (r.height - dh) / 2) / dh;
+    }
+    const i = Math.min(N - 1, Math.max(0, Math.floor(u * N)));
+    const j = Math.min(N - 1, Math.max(0, Math.floor(v * N)));
+    let suma = 0;
+    let n = 0;
+    for (let dj = -1; dj <= 1; dj++)
+      for (let di = -1; di <= 1; di++) {
+        const ii = Math.min(N - 1, Math.max(0, i + di));
+        const jj = Math.min(N - 1, Math.max(0, j + dj));
+        const k = (jj * N + ii) * 4;
+        suma += (0.2126 * datos[k] + 0.7152 * datos[k + 1] + 0.0722 * datos[k + 2]) / 255;
+        n++;
+      }
+    return suma / n;
+  };
+
+  const tonoEn = (x: number, y: number) => {
+    for (const el of document.elementsFromPoint(x, y)) {
+      if (el.closest('.cabecera, aviso-cookies')) continue;
+      if (el instanceof HTMLImageElement) {
+        const l = lumFoto(el, x, y);
+        if (l !== null) return l < 0.42 ? 'oscuro' : 'claro';
+        continue;
+      }
+      for (let n: Element | null = el; n && n !== raiz; n = n.parentElement) {
+        const l = luminancia(getComputedStyle(n).backgroundColor);
+        if (l !== null) return l < 0.4 ? 'oscuro' : 'claro';
+      }
+      return 'claro';
+    }
+    return 'claro';
+  };
+
+  const medir = () => {
+    if (!cabecera) return;
+    const nav = cabecera.querySelector('.cabecera__nav');
+    const marca = cabecera.querySelector('.cabecera__marca');
+    const rn = nav?.getBoundingClientRect();
+    const rm = marca?.getBoundingClientRect();
+    if (rn) {
+      const t = tonoEn(rn.left + rn.width * 0.45, rn.top + rn.height / 2);
+      if (raiz.dataset.cabecera !== t) raiz.dataset.cabecera = t;
+    }
+    if (rm) {
+      const t = tonoEn(rm.left + rm.width / 2, rm.top + rm.height / 2);
+      if (raiz.dataset.cabeceraMarca !== t) raiz.dataset.cabeceraMarca = t;
+    }
+  };
+
+  let pendiente = false;
+  const actualizar = () => {
+    if (pendiente) return;
+    pendiente = true;
+    requestAnimationFrame(() => {
+      pendiente = false;
+      medir();
+    });
+  };
+  addEventListener('scroll', actualizar, { passive: true });
+  addEventListener('resize', actualizar);
+  addEventListener('load', actualizar);
+  document.addEventListener('load', actualizar, true); // cada foto que termina de cargar
+  // Sobre fondos que se mueven solos (el muro de la portada, carruseles) se repasa a menudo.
+  if (superpuesta) setInterval(() => !document.hidden && actualizar(), 400);
+  actualizar();
+</script>

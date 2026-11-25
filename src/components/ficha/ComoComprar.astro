@@ -2,8 +2,9 @@
 /**
  * «Cómo comprar»: sin pasarela de pago. Cuatro pasos (consulta, confirmación,
  * pago por transferencia o Bizum, envío) y las dos formas de pago.
- * La línea que une los pasos se dibuja al hacer scroll; con movimiento
- * reducido aparece ya dibujada.
+ * Mismo lenguaje que el panel de la ficha: fondo claro, tarjetas suaves con
+ * el color de pared, rayas finas y el punto bermellón. La raya que une los
+ * pasos se dibuja al hacer scroll.
  * No se muestra en obras vendidas o que no están a la venta.
  */
 interface Props {
@@ -37,15 +38,17 @@ const pasos = [
 
 <section id="comprar" class="comprar" aria-labelledby="comprar-titulo">
   <div class="comprar__in">
-    <div class="comprar__cabeza">
-      <p class="comprar__eti"><span class="punto" aria-hidden="true"></span>Sin pasarela de pago</p>
-      <h2 id="comprar-titulo" class="comprar__titulo">Cómo<br />comprar<span class="acento">.</span></h2>
-      <p class="comprar__intro">Trato directo con el artista, de principio a fin. Pagas solo cuando todo está confirmado por escrito.</p>
+    <header class="comprar__cabeza">
+      <div class="comprar__titulos">
+        <p class="comprar__eti"><span class="punto" aria-hidden="true"></span>Sin pasarela de pago</p>
+        <h2 id="comprar-titulo" class="comprar__titulo">Cómo comprar</h2>
+        <p class="comprar__intro">Trato directo con el artista, de principio a fin. Pagas solo cuando todo está confirmado por escrito.</p>
+      </div>
 
       <ul class="metodos" role="list" aria-label="Formas de pago">
         <li class="metodo">
           <span class="metodo__icono" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M12 3l9 5H3z" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M12 3l9 5H3z" /></svg>
           </span>
           <span class="metodo__texto">
             <span class="metodo__nombre">Transferencia</span>
@@ -54,7 +57,7 @@ const pasos = [
         </li>
         <li class="metodo">
           <span class="metodo__icono" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3" /><path d="M10.5 18.5h3M12.8 7.5l-2.6 4h3.6l-2.6 4" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3" /><path d="M10.5 18.5h3M12.8 7.5l-2.6 4h3.6l-2.6 4" /></svg>
           </span>
           <span class="metodo__texto">
             <span class="metodo__nombre">Bizum</span>
@@ -62,134 +65,122 @@ const pasos = [
           </span>
         </li>
       </ul>
-
-      <div class="comprar__acciones">
-        <a class="comprar__boton" href={hrefConsulta}>
-          Consultar esta obra <span class="flecha" aria-hidden="true">→</span>
-        </a>
-        <a class="comprar__enlace" href="/condiciones-de-venta">Condiciones de venta</a>
-      </div>
-    </div>
+    </header>
 
     <ol class="pasos" role="list">
       {
         pasos.map((p, i) => (
-          <li class="paso">
+          <li class="paso" style={`--i: ${i}`}>
             <span class="paso__n" aria-hidden="true">
               {String(i + 1).padStart(2, '0')}
             </span>
-            <div class="paso__cuerpo">
-              <h3 class="paso__titulo">{p.titulo}</h3>
-              <p class="paso__texto">{p.texto}</p>
-            </div>
+            <h3 class="paso__titulo">{p.titulo}</h3>
+            <p class="paso__texto">{p.texto}</p>
           </li>
         ))
       }
     </ol>
-  </div>
 
-  <p class="comprar__aviso">
-    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" /><path d="M9 12l2 2 4-4" /></svg>
-    Los datos de pago te llegarán siempre desde el correo del artista. Si alguien te pide pagar por otra vía, no lo hagas y escríbeme.
-  </p>
+    <div class="comprar__pie">
+      <div class="comprar__acciones">
+        <a class="comprar__boton" href={hrefConsulta}>
+          <span class="punto" aria-hidden="true"></span>
+          Consultar esta obra <span class="flecha" aria-hidden="true">→</span>
+        </a>
+        <a class="comprar__enlace" href="/condiciones-de-venta">Condiciones de venta</a>
+      </div>
+      <p class="comprar__aviso">
+        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" /><path d="M9 12l2 2 4-4" /></svg>
+        Los datos de pago te llegarán siempre desde el correo del artista. Si alguien te pide pagar por otra vía, no lo hagas y escríbeme.
+      </p>
+    </div>
+  </div>
 </section>
 
 <style>
   .comprar {
-    --linea: rgba(250, 250, 248, 0.16);
-    background: var(--black);
-    color: var(--paper);
-    padding: clamp(72px, 9vw, 136px) var(--gutter) clamp(40px, 5vw, 64px);
-  }
-  .comprar :focus-visible {
-    outline-color: var(--accent-on-dark);
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    padding: clamp(64px, 7vw, 104px) var(--gutter) clamp(56px, 6vw, 88px);
   }
   .comprar__in {
     max-width: var(--container);
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    gap: clamp(48px, 7vw, 120px);
-    align-items: start;
-  }
-
-  /* ---------- Cabecera y formas de pago ---------- */
-  .comprar__cabeza {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    position: sticky;
-    top: 110px;
+    gap: clamp(40px, 5vw, 64px);
+  }
+
+  /* ---------- Cabecera: título y formas de pago ---------- */
+  .comprar__cabeza {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
+    align-items: end;
+    gap: 28px clamp(32px, 5vw, 80px);
+  }
+  .comprar__titulos {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
   .comprar__eti {
     margin: 0;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    font: 600 12px/1 var(--font-body);
+    gap: 9px;
+    font: 600 11px/1 var(--font-body);
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #a8a59e;
+    color: var(--muted);
   }
   .punto {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: var(--accent-on-dark);
+    background: var(--accent);
+    flex: 0 0 auto;
   }
   .comprar__titulo {
     margin: 0;
     font-family: var(--font-display);
-    font-weight: 800;
-    /* «comprar.» ≈ 5 em en Syne 800: que quepa en su columna */
-    font-size: clamp(48px, 5.2vw, 88px);
-    line-height: 0.86;
-    letter-spacing: -0.045em;
-  }
-  .acento {
-    color: var(--accent-on-dark);
+    font-weight: 700;
+    font-size: clamp(34px, 3.6vw, 56px);
+    line-height: 1;
+    letter-spacing: -0.035em;
   }
   .comprar__intro {
     margin: 0;
-    max-width: 30em;
-    font-size: 17px;
+    max-width: 34em;
+    font-size: 16px;
     line-height: 1.6;
-    color: #c9c6bf;
+    color: var(--text-soft);
   }
 
   .metodos {
-    margin: 8px 0 0;
+    margin: 0;
     padding: 0;
     list-style: none;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 10px;
   }
   .metodo {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 18px;
-    border: 1px solid var(--linea);
-    border-radius: 16px;
-    background: linear-gradient(160deg, rgba(250, 250, 248, 0.07), rgba(250, 250, 248, 0.02));
-    transition:
-      border-color 0.4s ease,
-      transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-  .metodo:hover {
-    border-color: rgba(242, 113, 79, 0.6);
-    transform: translateY(-3px);
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: var(--band);
   }
   .metodo__icono {
     display: grid;
     place-items: center;
     flex: 0 0 auto;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: rgba(242, 113, 79, 0.14);
-    color: var(--accent-on-dark);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--ink);
   }
   .metodo__texto {
     display: flex;
@@ -200,124 +191,80 @@ const pasos = [
   .metodo__nombre {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 17px;
+    font-size: 16px;
   }
   .metodo__nota {
     font-size: 13px;
-    color: #a8a59e;
+    color: var(--muted);
   }
 
-  .comprar__acciones {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 14px 24px;
-    margin-top: 8px;
-  }
-  .comprar__boton {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 52px;
-    padding: 0 26px;
-    border-radius: var(--radius-pill);
-    background: var(--paper);
-    color: var(--ink);
-    font: 600 15px/1 var(--font-body);
-    text-decoration: none;
-    transition: background 0.3s ease, color 0.3s ease;
-  }
-  .comprar__boton:hover {
-    background: var(--accent);
-    color: var(--on-accent);
-  }
-  .flecha {
-    display: inline-block;
-    transition: transform 0.35s ease;
-  }
-  .comprar__boton:hover .flecha {
-    transform: translateX(5px);
-  }
-  .comprar__enlace {
-    font: 600 14px/1.4 var(--font-body);
-    color: var(--paper);
-    text-decoration: none;
-    background: linear-gradient(currentColor, currentColor) no-repeat left bottom / 100% 1px;
-    transition: background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-  .comprar__enlace:hover {
-    background-position: right bottom;
-    background-size: 0 1px;
-  }
-
-  /* ---------- Pasos con línea que se dibuja ---------- */
+  /* ---------- Pasos: en fila, unidos por una raya fina ---------- */
   .pasos {
     position: relative;
     margin: 0;
     padding: 0;
     list-style: none;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px clamp(20px, 3vw, 44px);
   }
   .pasos::before,
   .pasos::after {
     content: '';
     position: absolute;
-    left: 31px;
-    top: 32px;
-    bottom: 32px;
-    width: 1px;
-    background: var(--linea);
+    left: 18px;
+    right: 18px;
+    top: 18px;
+    height: 1px;
+    background: var(--line);
   }
   .pasos::after {
-    background: var(--accent-on-dark);
-    transform-origin: top;
+    background: var(--ink);
+    transform-origin: left;
   }
   .paso {
     position: relative;
-    display: grid;
-    grid-template-columns: 64px minmax(0, 1fr);
-    gap: 28px;
-    padding: 0 0 clamp(36px, 5vw, 56px);
-  }
-  .paso:last-child {
-    padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
   .paso__n {
     position: relative;
     z-index: 1;
     display: grid;
     place-items: center;
-    width: 64px;
-    height: 64px;
-    border: 1px solid var(--linea);
+    width: 36px;
+    height: 36px;
+    margin-bottom: 8px;
+    border: 1px solid var(--line);
     border-radius: 50%;
-    background: var(--black);
-    font: 700 18px/1 var(--font-display);
+    background: var(--paper);
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.06em;
     font-variant-numeric: tabular-nums;
-    color: var(--paper);
-    transition: border-color 0.5s ease, background 0.5s ease;
+    color: var(--ink);
+    transition:
+      border-color 0.4s ease,
+      background 0.4s ease,
+      color 0.4s ease;
   }
   .paso:hover .paso__n {
-    border-color: var(--accent-on-dark);
-  }
-  .paso__cuerpo {
-    padding-top: 14px;
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
   }
   .paso__titulo {
-    margin: 0 0 10px;
+    margin: 0;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: clamp(24px, 2.4vw, 34px);
-    letter-spacing: -0.02em;
-    line-height: 1.05;
+    font-size: 19px;
+    letter-spacing: -0.015em;
   }
   .paso__texto {
     margin: 0;
-    max-width: 34em;
-    font-size: 16px;
-    line-height: 1.65;
-    color: #c9c6bf;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-soft);
   }
 
   @supports (animation-timeline: view()) {
@@ -325,84 +272,132 @@ const pasos = [
       .pasos::after {
         animation: dibujar linear both;
         animation-timeline: view();
-        animation-range: entry 40% cover 70%;
+        animation-range: entry 30% cover 55%;
       }
       .paso {
         animation: paso-entra linear both;
         animation-timeline: view();
-        animation-range: entry 10% cover 30%;
+        animation-range: entry 5% cover 30%;
       }
     }
   }
   @keyframes dibujar {
     from {
-      transform: scaleY(0);
+      transform: scaleX(0);
     }
   }
   @keyframes paso-entra {
     from {
       opacity: 0;
-      transform: translateY(36px);
+      transform: translateY(20px);
       animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
     }
   }
 
+  /* ---------- Pie: acciones y aviso ---------- */
+  .comprar__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px 40px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .comprar__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  .comprar__boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tap);
+    padding: 0 22px 0 18px;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--paper);
+    font: 600 14px/1 var(--font-body);
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    transition: background 0.3s ease;
+  }
+  .comprar__boton:hover {
+    background: var(--accent);
+  }
+  .comprar__boton:hover .punto {
+    background: var(--paper);
+  }
+  .flecha {
+    display: inline-block;
+    transition: transform 0.35s ease;
+  }
+  .comprar__boton:hover .flecha {
+    transform: translateX(4px);
+  }
+  .comprar__enlace {
+    font: 600 13px/1.4 var(--font-body);
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) no-repeat left bottom / 100% 1px;
+    transition: background-size 0.5s var(--ease-out);
+  }
+  .comprar__enlace:hover {
+    background-position: right bottom;
+    background-size: 0 1px;
+  }
   .comprar__aviso {
-    max-width: var(--container);
-    margin: clamp(56px, 7vw, 96px) auto 0;
-    padding-top: 24px;
-    border-top: 1px solid var(--linea);
+    margin: 0;
+    max-width: 44em;
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    font-size: 14px;
+    gap: 9px;
+    font-size: 13px;
     line-height: 1.55;
-    color: #a8a59e;
+    color: var(--muted);
   }
   .comprar__aviso svg {
     flex: 0 0 auto;
     margin-top: 2px;
-    color: var(--accent-on-dark);
+    color: var(--accent);
   }
 
-  @media (max-width: 900px) {
-    .comprar__in {
-      grid-template-columns: minmax(0, 1fr);
-    }
+  @media (max-width: 980px) {
     .comprar__cabeza {
-      position: static;
-    }
-  }
-  @media (max-width: 520px) {
-    .metodos {
       grid-template-columns: minmax(0, 1fr);
     }
-    .paso {
-      grid-template-columns: 48px minmax(0, 1fr);
-      gap: 18px;
-    }
-    .paso__n {
-      width: 48px;
-      height: 48px;
-      font-size: 15px;
+    .pasos {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .pasos::before,
     .pasos::after {
-      left: 23px;
-      top: 24px;
-      bottom: 24px;
+      display: none;
     }
-    .paso__cuerpo {
-      padding-top: 8px;
+  }
+  @media (max-width: 560px) {
+    .metodos,
+    .pasos {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .paso {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      column-gap: 16px;
+    }
+    .paso__n {
+      grid-row: span 2;
+      margin-bottom: 0;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .metodo,
-    .metodo:hover,
-    .flecha {
+    .paso__n,
+    .flecha,
+    .comprar__boton {
       transition: none;
-      transform: none;
     }
   }
 </style>

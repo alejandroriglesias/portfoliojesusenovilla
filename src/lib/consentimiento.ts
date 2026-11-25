@@ -21,7 +21,7 @@ const CLAVE = 'cookies:consentimiento';
 const VERSION = 1;
 const VIGENCIA_MS = 365 * 24 * 60 * 60 * 1000;
 /** Datos guardados que dependen de «Preferencias»: se borran si se rechaza. */
-const DE_PREFERENCIAS = ['obra:vista'];
+const DE_PREFERENCIAS = ['obra:modo', 'obra:vista'];
 
 export const EVENTO_CAMBIO = 'cookies:cambio';
 export const EVENTO_ABRIR = 'cookies:abrir';

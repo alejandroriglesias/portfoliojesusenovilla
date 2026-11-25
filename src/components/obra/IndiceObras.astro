@@ -1,8 +1,11 @@
 ---
 /**
- * Índice de obras con títulos gigantes (prototipo 02). Al pasar el ratón por
- * una fila, una vista previa de la obra flota junto al cursor.
- * En pantallas táctiles cada fila muestra una miniatura fija.
+ * Índice de obras: lista editorial serena (en la línea de las colecciones de
+ * la referencia). Cada fila lleva su miniatura con la proporción real, el
+ * título y los datos en versalitas. Al pasar el ratón, la fila toma el color
+ * de pared, la miniatura crece un poco, aparece el punto bermellón delante
+ * del título (como en la cartela de la portada) y una flecha; el resto de
+ * filas se atenúa ligeramente.
  */
 import { getImage } from 'astro:assets';
 import type { Obra } from '../../lib/contenido';
@@ -16,49 +19,51 @@ const { obras, etiquetas } = Astro.props;
 
 const filas = await Promise.all(
   obras.map(async (o, i) => {
-    const prev = await getImage({ src: o.data.imagen, width: Math.min(600, o.data.imagen.width), format: 'webp' });
-    const mini = await getImage({ src: o.data.imagen, width: Math.min(120, o.data.imagen.width), format: 'webp' });
+    const im = o.data.imagen;
+    const mini = await getImage({ src: im, width: Math.min(200, im.width), format: 'webp', quality: 75 });
     return {
       obra: o,
       etiqueta: etiquetas[i],
       n: String(i + 1).padStart(2, '0'),
-      preview: prev.src,
       mini: mini.src,
-      ratio: `${o.data.imagen.width} / ${o.data.imagen.height}`,
+      ancho: im.width,
+      alto: im.height,
     };
   })
 );
 ---
 
-<indice-obras class="indice">
+<div class="indice">
   <ul class="indice__lista">
     {
       filas.map((f) => (
         <li data-filtrable data-tecnica={f.obra.data.tecnica.discriminant}>
-          <a class="fila" href={`/obra/${f.obra.id}`} data-preview={f.preview} data-ratio={f.ratio}>
+          <a class="fila" href={`/obra/${f.obra.id}`}>
             <span class="fila__n" data-num>
               {f.n}
             </span>
-            <img class="fila__mini" src={f.mini} alt="" width="44" height="58" loading="lazy" decoding="async" />
+            <span class="fila__mini">
+              <img src={f.mini} alt="" width={f.ancho} height={f.alto} loading="lazy" decoding="async" />
+            </span>
             <span class="fila__titulo">{f.obra.data.titulo}</span>
             <span class="fila__meta">
               {f.etiqueta}
               {f.obra.data.anio && ` · ${f.obra.data.anio}`}
               {import.meta.env.DEV && (f.obra.data.ejemplo || !f.obra.data.publicada) && <span class="fila__ejemplo"> · {f.obra.data.ejemplo ? 'ejemplo' : 'oculta'}</span>}
             </span>
+            <span class="fila__flecha" aria-hidden="true">→</span>
           </a>
         </li>
       ))
     }
   </ul>
-  <img class="indice__preview" data-preview-img alt="" aria-hidden="true" />
-</indice-obras>
+</div>
 
 <style>
   .indice {
     display: block;
     position: relative;
-    border-bottom: 1px solid #dad7d0;
+    border-bottom: 1px solid var(--line);
   }
   .indice__lista {
     list-style: none;
@@ -69,141 +74,160 @@ const filas = await Promise.all(
     display: none;
   }
   .fila {
+    position: relative;
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr) auto;
-    align-items: baseline;
+    grid-template-columns: 44px 72px minmax(0, 1fr) auto 24px;
+    align-items: center;
     gap: 8px 24px;
-    padding: 26px 0;
-    border-top: 1px solid #dad7d0;
+    padding: 14px 16px;
+    margin: 0 -16px;
+    border-top: 1px solid var(--line);
+    border-radius: 10px;
     color: var(--ink);
     text-decoration: none;
+    transition:
+      background 0.45s ease,
+      opacity 0.45s ease;
+  }
+  .indice__lista li:first-child .fila {
+    border-top-color: transparent;
   }
   .fila__n {
-    font-size: 14px;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.08em;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
+  /* Miniatura con la proporción real, centrada en un hueco fijo */
   .fila__mini {
-    display: none;
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 64px;
+  }
+  .fila__mini img {
+    display: block;
+    max-width: 72px;
+    max-height: 64px;
+    width: auto;
+    height: auto;
+    box-shadow:
+      0 1px 2px rgba(20, 16, 10, 0.1),
+      0 8px 16px -8px rgba(20, 16, 10, 0.35);
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .fila__titulo {
-    display: inline-block;
+    min-width: 0;
     font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(32px, 5.2vw, 84px);
-    line-height: 1;
-    letter-spacing: -0.035em;
-    transition:
-      transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
-      color 0.3s ease;
+    font-weight: 600;
+    font-size: clamp(20px, 2vw, 28px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .fila:hover .fila__titulo,
-  .fila:focus-visible .fila__titulo {
-    transform: translateX(24px);
-    color: var(--accent);
+  /* El punto bermellón de la cartela de la portada */
+  .fila__titulo::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    vertical-align: 0.22em;
+    transform: scale(0);
+    transition: transform 0.3s ease;
   }
   .fila__meta {
+    font: 600 11px/1.3 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--muted);
-    font-size: 15px;
     text-align: right;
+    white-space: nowrap;
   }
   .fila__ejemplo {
     color: var(--accent);
+  }
+  .fila__flecha {
+    font-size: 16px;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition:
+      opacity 0.35s ease,
+      transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Pasar el ratón: fondo de pared, miniatura algo mayor, punto y flecha */
+  .fila:hover,
+  .fila:focus-visible {
+    background: var(--band);
+  }
+  .fila:hover .fila__mini img,
+  .fila:focus-visible .fila__mini img {
+    transform: scale(1.08);
+  }
+  .fila:hover .fila__titulo::before,
+  .fila:focus-visible .fila__titulo::before {
+    transform: scale(1);
+    transition: transform 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) 0.08s;
+  }
+  .fila:hover .fila__flecha,
+  .fila:focus-visible .fila__flecha {
+    opacity: 1;
+    transform: none;
+  }
+  @media (hover: hover) {
+    .indice__lista:has(.fila:hover) .fila:not(:hover) {
+      opacity: 0.55;
+    }
   }
   .fila:focus-visible {
     outline-offset: -2px;
   }
 
-  .indice__preview {
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 5;
-    width: 300px;
-    height: auto;
-    pointer-events: none;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
-    opacity: 0;
-    transform: translate(-30%, -50%) rotate(-3deg);
-    transition: opacity 0.25s ease;
-  }
-  .indice__preview.is-visible {
-    opacity: 1;
-  }
-
-  /* Táctil o estrecho: sin vista previa flotante; miniatura en cada fila. */
-  @media (hover: none), (max-width: 760px) {
-    .indice__preview {
-      display: none;
-    }
+  @media (max-width: 760px) {
     .fila {
-      grid-template-columns: 44px minmax(0, 1fr);
+      grid-template-columns: 56px minmax(0, 1fr);
       grid-template-areas:
         'mini titulo'
         'mini meta';
-      align-items: center;
       gap: 4px 16px;
-      padding: 16px 0;
+      padding: 12px 10px;
+      margin: 0 -10px;
     }
-    .fila__n {
+    .fila__n,
+    .fila__flecha {
       display: none;
     }
     .fila__mini {
       grid-area: mini;
-      display: block;
-      width: 44px;
-      height: 58px;
-      object-fit: cover;
-      background: #e6e4df;
+      width: 56px;
+      height: 56px;
+    }
+    .fila__mini img {
+      max-width: 56px;
+      max-height: 56px;
     }
     .fila__titulo {
       grid-area: titulo;
-      font-size: clamp(26px, 7vw, 40px);
+      font-size: 19px;
     }
     .fila__meta {
       grid-area: meta;
       text-align: left;
-      font-size: 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fila,
+    .fila__mini img,
+    .fila__titulo::before,
+    .fila__flecha {
+      transition: none;
     }
   }
 </style>
-
-<script>
-  class IndiceObras extends HTMLElement {
-    connectedCallback() {
-      const img = this.querySelector<HTMLImageElement>('[data-preview-img]');
-      if (!img || !matchMedia('(hover: hover) and (min-width: 761px)').matches) return;
-
-      const mostrar = (fila: HTMLAnchorElement) => {
-        if (img.dataset.actual !== fila.dataset.preview) {
-          img.src = fila.dataset.preview ?? '';
-          img.style.aspectRatio = fila.dataset.ratio ?? '';
-          img.dataset.actual = fila.dataset.preview;
-        }
-        img.classList.add('is-visible');
-      };
-      const mover = (x: number, y: number) => {
-        img.style.left = `${x}px`;
-        img.style.top = `${y}px`;
-      };
-
-      this.querySelectorAll<HTMLAnchorElement>('.fila').forEach((fila) => {
-        fila.addEventListener('pointerenter', () => mostrar(fila));
-        // Con teclado: la vista previa aparece a la derecha de la fila enfocada.
-        fila.addEventListener('focus', () => {
-          const c = this.getBoundingClientRect();
-          const f = fila.getBoundingClientRect();
-          mover(c.width * 0.62, f.top - c.top + f.height / 2);
-          mostrar(fila);
-        });
-        fila.addEventListener('blur', () => img.classList.remove('is-visible'));
-      });
-      this.addEventListener('pointermove', (e) => {
-        const c = this.getBoundingClientRect();
-        mover(e.clientX - c.left, e.clientY - c.top);
-      });
-      this.addEventListener('pointerleave', () => img.classList.remove('is-visible'));
-    }
-  }
-  if (!customElements.get('indice-obras')) customElements.define('indice-obras', IndiceObras);
-</script>

@@ -359,7 +359,8 @@ const pestanas = [
   import 'lenis/dist/lenis.css';
   import { EVENTO_CAMBIO, permite } from '../../lib/consentimiento';
 
-  const CLAVE = 'obra:vista';
+  // Clave nueva (antes «obra:vista»): así todo el mundo vuelve a empezar en «Sala».
+  const CLAVE = 'obra:modo';
   const raiz = document.querySelector<HTMLElement>('[data-obra]');
   const reducir = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -479,6 +480,7 @@ const pestanas = [
     );
 
     try {
+      localStorage.removeItem('obra:vista'); // clave antigua
       const guardada = permite('preferencias') ? localStorage.getItem(CLAVE) : null;
       if (guardada === 'sala' || guardada === 'indice') elegirVista(guardada, false);
     } catch {
