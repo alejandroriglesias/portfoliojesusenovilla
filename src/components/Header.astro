@@ -48,10 +48,12 @@ const instagram = ajustes.instagram && !esMarcador(ajustes.instagram) ? ajustes.
 const obras = await getObras();
 const principales = await getTecnicas('principal');
 const sobreMi = await getSobreMi();
-// Para «Obra», una destacada en color (el grabado ya sale en «Técnicas»).
+// Para «Obra», una obra en color (el grabado ya sale en «Técnicas»): una
+// destacada que no sea grabado o, si no hay, el primer óleo.
 const destacada =
   obras.find((o) => o.data.destacada && o.data.tecnica.discriminant !== 'grabado') ??
-  obras.find((o) => o.data.destacada) ??
+  obras.find((o) => o.data.tecnica.discriminant === 'oleo') ??
+  obras.find((o) => o.data.tecnica.discriminant !== 'grabado') ??
   obras[0];
 const grabado = obras.find((o) => o.data.tecnica.discriminant === 'grabado');
 const mini = async (im?: ImageMetadata | null) =>
