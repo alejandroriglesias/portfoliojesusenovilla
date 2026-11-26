@@ -65,6 +65,22 @@ h3 {
   outline-offset: 3px;
 }
 
+/* Obras: mientras cargan se ve su color dominante (el marco lo lleva de
+   fondo) y la foto aparece con un fundido. Solo con JavaScript (clase «js»,
+   puesta en <head>); la imagen que viaja en la transición entre páginas no
+   se esconde nunca. */
+html.js img[data-fundido]:not(.cargada):not([style*='view-transition-name']) {
+  opacity: 0;
+}
+html.js img[data-fundido].cargada {
+  animation: obra-aparece 0.7s ease both;
+}
+@keyframes obra-aparece {
+  from {
+    opacity: 0;
+  }
+}
+
 /* Cambio entre día y noche: el círculo lo anima el script de la cabecera
    (sin el fundido cruzado por defecto de las transiciones de vista). */
 html.cambiando-tema::view-transition-old(root),

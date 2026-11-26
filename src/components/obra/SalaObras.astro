@@ -16,6 +16,7 @@
 import { getImage } from 'astro:assets';
 import type { Obra, Tecnica } from '../../lib/contenido';
 import { esMarcador } from '../../lib/contenido';
+import { paletaDe } from '../../lib/portada';
 
 interface Grupo {
   tecnica: Tecnica;
@@ -41,10 +42,12 @@ const salas = await Promise.all(
         const im = o.data.imagen;
         const anchos = [...ANCHOS.filter((a) => a < im.width), Math.min(im.width, 960)];
         const img = await getImage({ src: im, widths: [...new Set(anchos)], format: 'webp', quality: 78 });
+        const color = (await paletaDe(o))[0];
         // En el grabado, la subtécnica; en el resto, solo el año.
         const sub = g.etiquetas[i].split(' · ')[1];
         return {
           href: `/obra/${o.id}`,
+          color,
           src: img.src,
           srcset: img.srcSet.attribute,
           ancho: im.width,
@@ -97,7 +100,7 @@ const salas = await Promise.all(
             {s.piezas.map((p, i) => (
               <li class="pieza" style={`--r: ${p.ratio}; --i: ${Math.min(i, 8)}`}>
                 <a class="pieza__enlace" href={p.href} draggable="false">
-                  <span class="pieza__marco">
+                  <span class="pieza__marco" style={`--color-obra: ${p.color}`}>
                     <img
                       src={p.src}
                       srcset={p.srcset}
@@ -108,6 +111,7 @@ const salas = await Promise.all(
                       loading={si === 0 && i < 5 ? 'eager' : 'lazy'}
                       decoding="async"
                       draggable="false"
+                      data-fundido
                     />
                   </span>
                   <span class="pieza__pie">
@@ -333,7 +337,7 @@ const salas = await Promise.all(
     display: block;
     overflow: hidden;
     aspect-ratio: var(--r);
-    background: var(--card);
+    background: var(--color-obra, var(--card));
     box-shadow:
       0 1px 2px rgba(20, 16, 10, 0.08),
       0 18px 36px -14px rgba(20, 16, 10, 0.32);

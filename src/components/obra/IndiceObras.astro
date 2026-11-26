@@ -9,6 +9,7 @@
  */
 import { getImage } from 'astro:assets';
 import type { Obra } from '../../lib/contenido';
+import { paletaDe } from '../../lib/portada';
 
 interface Props {
   obras: Obra[];
@@ -26,6 +27,7 @@ const filas = await Promise.all(
       etiqueta: etiquetas[i],
       n: String(i + 1).padStart(2, '0'),
       mini: mini.src,
+      color: (await paletaDe(o))[0],
       ancho: im.width,
       alto: im.height,
     };
@@ -42,8 +44,8 @@ const filas = await Promise.all(
             <span class="fila__n" data-num>
               {f.n}
             </span>
-            <span class="fila__mini">
-              <img src={f.mini} alt="" width={f.ancho} height={f.alto} loading="lazy" decoding="async" />
+            <span class="fila__mini" style={`--color-obra: ${f.color}`}>
+              <img src={f.mini} alt="" width={f.ancho} height={f.alto} loading="lazy" decoding="async" data-fundido />
             </span>
             <span class="fila__titulo">{f.obra.data.titulo}</span>
             <span class="fila__meta">
@@ -100,6 +102,7 @@ const filas = await Promise.all(
   }
   /* Miniatura con la proporción real, centrada en un hueco fijo */
   .fila__mini {
+    background-color: var(--color-obra, var(--card));
     display: grid;
     place-items: center;
     width: 72px;

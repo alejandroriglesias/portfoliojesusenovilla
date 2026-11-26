@@ -16,6 +16,7 @@ import TiraProceso from '../../components/ficha/TiraProceso.astro';
 import ComoComprar from '../../components/ficha/ComoComprar.astro';
 import AnteriorSiguiente from '../../components/ficha/AnteriorSiguiente.astro';
 import { getObras, slugTecnica, esMarcador, type Obra } from '../../lib/contenido';
+import { paletaDe } from '../../lib/portada';
 import { getAjustes } from '../../lib/ajustes';
 import { obraJsonLd } from '../../lib/datos-estructurados';
 
@@ -43,6 +44,7 @@ interface Props {
 
 const { obra, indice, total, anterior, siguiente } = Astro.props;
 const d = obra.data;
+const colorObra = (await paletaDe(obra))[0];
 const t = d.tecnica;
 const esGrabado = t.discriminant === 'grabado';
 const ajustes = await getAjustes();
@@ -147,7 +149,7 @@ const jsonLd = Astro.site
   jsonLd={jsonLd}
 >
   <div class="obra">
-    <GaleriaObra vistas={vistas} alt={altBase} ambiente={ambiente} detalle={d.detalle} />
+    <GaleriaObra vistas={vistas} alt={altBase} ambiente={ambiente} detalle={d.detalle} color={colorObra} />
 
     <section class="panel" aria-labelledby="titulo-obra">
       <div class="panel__in">

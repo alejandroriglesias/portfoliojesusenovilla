@@ -17,7 +17,7 @@
 import { getImage } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getDatosPortada } from '../lib/portada';
+import { getDatosPortada, paletaDe } from '../lib/portada';
 import { esMarcador } from '../lib/ajustes';
 import Redes from '../components/Redes.astro';
 import type { Props as PropsPortada } from './tipos';
@@ -35,8 +35,10 @@ const piezas = await Promise.all(
   obras.map(async (o, i) => {
     const src = o.data.imagen;
     const img = await getImage({ src, width: Math.min(src.width, 720), format: 'webp', quality: 78 });
+    const color = (await paletaDe(o))[0];
     return {
       href: `/obra/${o.id}`,
+      color,
       src: img.src,
       ratio: +(src.width / src.height).toFixed(4),
       titulo: o.data.titulo,
@@ -83,9 +85,9 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
                           href={p.href}
                           tabindex={foco ? undefined : -1}
                           aria-hidden={foco ? undefined : 'true'}
-                          style={`--ratio: ${p.ratio}`}
+                          style={`--ratio: ${p.ratio}; --color-obra: ${p.color}`}
                         >
-                          <img src={p.src} alt={foco ? p.alt : ''} decoding="async" draggable="false" fetchpriority={tanda === 0 && f < 2 ? 'high' : 'low'} />
+                          <img src={p.src} alt={foco ? p.alt : ''} decoding="async" draggable="false" data-fundido fetchpriority={tanda === 0 && f < 2 ? 'high' : 'low'} />
                           <span class="pieza__cartela">
                             <span class="pieza__titulo">{p.titulo}</span>
                             <span class="pieza__meta">{p.meta}</span>
@@ -183,6 +185,7 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
     padding-right: var(--hueco);
   }
   .pieza {
+    background-color: var(--color-obra, var(--card));
     position: relative;
     display: block;
     flex: 0 0 auto;

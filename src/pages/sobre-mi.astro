@@ -17,6 +17,7 @@ import Prosa from '../components/Prosa.astro';
 import Firma from '../components/marca/Firma.astro';
 import TiraObras from '../components/obra/TiraObras.astro';
 import { getSobreMi, getObras, getTecnicas, getObrasDeTecnica, slugTecnica, esMarcador } from '../lib/contenido';
+import { paletaDe } from '../lib/portada';
 import { getAjustes, usuarioInstagram } from '../lib/ajustes';
 
 const sobreMi = await getSobreMi();
@@ -53,12 +54,14 @@ const tecnicas = await Promise.all(
   principales.map(async (t, i) => {
     const os = grupos[i];
     const rep = os.find((o) => o.data.destacada) ?? os[0];
+    const color = rep ? (await paletaDe(rep))[0] : undefined;
     const im = t.data.imagen ?? (t.id === 'grabado' ? rep?.data.imagenPlancha : null) ?? rep?.data.imagen;
     const img = im
       ? await getImage({ src: im, widths: [360, 540, 720].filter((w) => w <= im.width), format: 'webp', quality: 78 })
       : undefined;
     return {
       id: t.id,
+      color,
       nombre: t.data.nombre,
       lema: esMarcador(t.data.lema) ? undefined : t.data.lema,
       n: os.length,
@@ -226,7 +229,7 @@ const hrefContacto = emailValido ? `mailto:${ajustes.email}` : '/contacto';
           tecnicas.map((t) => (
             <li>
               <a class="tec" href={`/tecnicas#${t.id}`}>
-                <span class="tec__marco">
+                <span class="tec__marco" style={t.color ? `--color-obra: ${t.color}` : undefined}>
                   {t.img && (
                     <img
                       src={t.img.src}
@@ -235,6 +238,7 @@ const hrefContacto = emailValido ? `mailto:${ajustes.email}` : '/contacto';
                       alt=""
                       loading="lazy"
                       decoding="async"
+                      data-fundido
                     />
                   )}
                 </span>
@@ -626,7 +630,7 @@ const hrefContacto = emailValido ? `mailto:${ajustes.email}` : '/contacto';
     margin-bottom: 12px;
     overflow: hidden;
     border-radius: 4px;
-    background: var(--card);
+    background: var(--color-obra, var(--card));
   }
   .tec__marco img {
     display: block;

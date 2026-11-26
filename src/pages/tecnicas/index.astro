@@ -16,6 +16,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import DetalleObra from '../../components/ficha/DetalleObra.astro';
 import TiraObras from '../../components/obra/TiraObras.astro';
 import { getObras, getObrasDeTecnica, getTecnicas, esMarcador, slugTecnica } from '../../lib/contenido';
+import { paletaDe } from '../../lib/portada';
 
 const principales = await getTecnicas('principal');
 const subtecnicas = await getTecnicas('grabado');
@@ -27,6 +28,7 @@ const capitulos = await Promise.all(
   principales.map(async (t, i) => {
     const obras = await getObrasDeTecnica(t.id);
     const rep = obras.find((o) => o.data.destacada) ?? obras[0];
+    const color = rep ? (await paletaDe(rep))[0] : undefined;
 
     // Panel de la cabecera: la imagen de la técnica (panel) o la de la obra
     // representativa; en grabado, mejor la plancha (se ve el grabado en sí).
@@ -75,6 +77,7 @@ const capitulos = await Promise.all(
 
     return {
       id: t.id,
+      color,
       n: n2(i),
       tono: TONOS[t.id] ?? 'papel',
       nombre: t.data.nombre,
@@ -114,7 +117,7 @@ const nn = (n: number) => String(n).padStart(2, '0');
     <nav class="paneles" aria-label="Las tres técnicas">
       {
         capitulos.map((c) => (
-          <a class="panel" href={`#${c.id}`}>
+          <a class="panel" href={`#${c.id}`} style={c.color ? `--color-obra: ${c.color}` : undefined}>
             {c.panel && (
               <img
                 class="panel__img"
@@ -124,6 +127,7 @@ const nn = (n: number) => String(n).padStart(2, '0');
                 alt=""
                 loading="eager"
                 decoding="async"
+                data-fundido
               />
             )}
             <span class="panel__velo" aria-hidden="true" />
@@ -346,7 +350,7 @@ const nn = (n: number) => String(n).padStart(2, '0');
     min-width: 0;
     overflow: hidden;
     border-radius: 6px;
-    background: var(--card);
+    background: var(--color-obra, var(--card));
     color: var(--paper);
     text-decoration: none;
     transition: flex-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1);
