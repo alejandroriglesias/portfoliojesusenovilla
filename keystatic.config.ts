@@ -292,6 +292,26 @@ export default config({
           publicPath: '../../assets/tecnicas/',
         }),
         orden: fields.integer({ label: 'Orden', defaultValue: 100 }),
+        lema: fields.text({
+          label: 'Lema',
+          description: 'Frase corta que resume la técnica (página Técnicas), p. ej. «Capa sobre capa, sin prisa.».',
+        }),
+        materiales: fields.array(fields.text({ label: 'Material' }), {
+          label: 'Materiales',
+          description: 'Página Técnicas: lo que se usa (soporte, pigmentos, herramientas…).',
+          itemLabel: (p) => p.value || 'Material',
+        }),
+        proceso: fields.array(
+          fields.object({
+            titulo: fields.text({ label: 'Paso' }),
+            texto: fields.text({ label: 'Texto', multiline: true }),
+          }),
+          {
+            label: 'El proceso',
+            description: 'Página Técnicas: los pasos, en orden.',
+            itemLabel: (p) => p.fields.titulo.value || 'Paso',
+          }
+        ),
         sobreLaTecnica: textoEnriquecido(
           'Sobre la técnica',
           'tecnicas',
@@ -358,14 +378,19 @@ export default config({
           directory: 'src/assets/sobre-mi',
           publicPath: '../../assets/sobre-mi/',
         }),
-        trayectoria: fields.array(
+        taller: fields.array(
           fields.object({
-            anio: fields.text({ label: 'Año' }),
-            texto: fields.text({ label: 'Texto', description: 'Exposición, premio, formación…' }),
+            imagen: fields.image({
+              label: 'Foto',
+              directory: 'src/assets/sobre-mi',
+              publicPath: '../../assets/sobre-mi/',
+            }),
+            pie: fields.text({ label: 'Pie de foto' }),
           }),
           {
-            label: 'Trayectoria',
-            itemLabel: (p) => [p.fields.anio.value, p.fields.texto.value].filter(Boolean).join(' · ') || 'Hito',
+            label: 'Fotos del taller',
+            description: 'Opcional: el taller, las herramientas, el proceso. Si no hay, la sección no aparece.',
+            itemLabel: (p) => p.fields.pie.value || 'Foto',
           }
         ),
         bio: textoEnriquecido('Biografía', 'sobre-mi'),

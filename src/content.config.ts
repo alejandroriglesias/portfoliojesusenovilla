@@ -115,6 +115,9 @@ const tecnicas = defineCollection({
       titular: textoOpcional,
       imagen: image().nullish(),
       orden: z.number().default(100),
+      lema: textoOpcional,
+      materiales: z.array(z.string()).default([]),
+      proceso: z.array(z.object({ titulo: textoOpcional, texto: textoOpcional })).default([]),
     }),
 });
 
@@ -125,7 +128,7 @@ const sobreMi = defineCollection({
       frase: textoOpcional,
       retrato: image().nullish(),
       firma: image().nullish(),
-      trayectoria: z.array(z.object({ anio: textoOpcional, texto: textoOpcional })).default([]),
+      taller: z.array(z.object({ imagen: image(), pie: textoOpcional })).default([]),
     }),
 });
 

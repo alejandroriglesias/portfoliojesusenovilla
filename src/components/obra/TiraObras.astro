@@ -1,0 +1,178 @@
+---
+/**
+ * Tira horizontal de obras (enteras, a la misma altura, con sombra), con una
+ * tarjeta final opcional («Ver las N →»). Se usa en Técnicas y en Sobre mí.
+ * Toma los colores del bloque que la contiene si este define --c-texto,
+ * --c-tenue, --c-linea, --c-boton y --c-sobre-boton (si no, los de la web).
+ */
+import { getImage } from 'astro:assets';
+import type { Obra } from '../../lib/contenido';
+
+interface Props {
+  obras: Obra[];
+  /** Nombre accesible de la lista. */
+  etiqueta: string;
+  /** Tarjeta final. */
+  fin?: { href: string; texto: string };
+}
+
+const { obras, etiqueta, fin } = Astro.props;
+const ANCHOS = [240, 360, 480];
+
+const items = await Promise.all(
+  obras.map(async (o) => {
+    const im = o.data.imagen;
+    const anchos = [...new Set([...ANCHOS.filter((a) => a < im.width), Math.min(im.width, 480)])];
+    const img = await getImage({ src: im, widths: anchos, format: 'webp', quality: 76 });
+    return {
+      href: `/obra/${o.id}`,
+      src: img.src,
+      srcset: img.srcSet.attribute,
+      ancho: im.width,
+      alto: im.height,
+      ratio: +(im.width / im.height).toFixed(4),
+      titulo: o.data.titulo,
+      meta: o.data.anio ? String(o.data.anio) : '',
+      alt: o.data.alt ?? o.data.titulo,
+    };
+  })
+);
+---
+
+{
+  items.length > 0 && (
+    <ul class="tira" role="list" aria-label={etiqueta}>
+      {items.map((o) => (
+        <li class="tira__item" style={`--r: ${o.ratio}`}>
+          <a class="tira__obra" href={o.href}>
+            <span class="tira__marco">
+              <img
+                src={o.src}
+                srcset={o.srcset}
+                sizes="240px"
+                width={o.ancho}
+                height={o.alto}
+                alt={o.alt}
+                loading="lazy"
+                decoding="async"
+              />
+            </span>
+            <span class="tira__titulo">{o.titulo}</span>
+            {o.meta && <span class="tira__meta">{o.meta}</span>}
+          </a>
+        </li>
+      ))}
+      {fin && (
+        <li class="tira__fin">
+          <a href={fin.href}>
+            {fin.texto} <span aria-hidden="true">→</span>
+          </a>
+        </li>
+      )}
+    </ul>
+  )
+}
+
+<style>
+  .tira {
+    margin: 0;
+    padding: 6px 2px 18px;
+    list-style: none;
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(20px, 2.6vw, 36px);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-linea, var(--line)) transparent;
+  }
+  .tira__item {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+  .tira__obra {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--c-texto, var(--ink));
+    text-decoration: none;
+  }
+  .tira__marco {
+    display: block;
+    height: clamp(150px, 17vw, 220px);
+    aspect-ratio: var(--r);
+    overflow: hidden;
+    background: var(--card);
+    box-shadow:
+      0 1px 2px rgba(20, 16, 10, 0.1),
+      0 14px 30px -14px rgba(20, 16, 10, 0.4);
+    transition:
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.7s ease;
+  }
+  .tira__marco img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .tira__obra:hover .tira__marco,
+  .tira__obra:focus-visible .tira__marco {
+    transform: translateY(-5px);
+    box-shadow:
+      0 2px 4px rgba(20, 16, 10, 0.12),
+      0 24px 44px -18px rgba(20, 16, 10, 0.5);
+  }
+  .tira__obra:focus-visible {
+    outline: none;
+  }
+  .tira__obra:focus-visible .tira__marco {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+  .tira__titulo {
+    max-width: 22ch;
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tira__meta {
+    font: 600 10.5px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-tenue, var(--muted));
+  }
+  .tira__fin {
+    flex: 0 0 auto;
+    align-self: stretch;
+    display: flex;
+  }
+  .tira__fin a {
+    display: grid;
+    place-items: center;
+    min-width: 150px;
+    height: clamp(150px, 17vw, 220px);
+    padding: 0 20px;
+    border: 1px solid var(--c-linea, var(--line));
+    border-radius: 4px;
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--c-texto, var(--ink));
+    text-decoration: none;
+    transition:
+      background 0.3s ease,
+      color 0.3s ease;
+  }
+  .tira__fin a:hover {
+    background: var(--c-boton, var(--ink));
+    color: var(--c-sobre-boton, var(--paper));
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tira__marco {
+      transition: none;
+    }
+  }
+</style>

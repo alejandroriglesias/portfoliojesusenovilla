@@ -1,233 +1,866 @@
 ---
-/** Sobre mí: bio, retrato, firma y trayectoria (prototipos 01 y 02). */
-import { Image } from 'astro:assets';
+/**
+ * Sobre mí — enfoque editorial, sin trayectoria de premios ni exposiciones:
+ * 1. Cabecera: nombre, oficio y retrato (con un leve paralaje) con la firma.
+ * 2. Manifiesto: la frase del panel, palabra a palabra al hacer scroll.
+ * 3. Biografía (texto del panel) con la firma.
+ * 4. En cifras: datos que salen del propio catálogo (obras, técnicas, años).
+ * 5. En el taller: fotos del panel (solo si las hay).
+ * 6. Las tres técnicas, que llevan a Técnicas.
+ * 7. Una selección de obra, alternando técnicas.
+ * 8. Contacto.
+ */
+import { Image, getImage } from 'astro:assets';
 import { render } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getSobreMi } from '../lib/contenido';
+import Prosa from '../components/Prosa.astro';
+import Firma from '../components/marca/Firma.astro';
+import TiraObras from '../components/obra/TiraObras.astro';
+import { getSobreMi, getObras, getTecnicas, getObrasDeTecnica, slugTecnica, esMarcador } from '../lib/contenido';
+import { getAjustes, usuarioInstagram } from '../lib/ajustes';
 
 const sobreMi = await getSobreMi();
 const d = sobreMi.data;
 const { Content: Bio } = await render(sobreMi);
 const tieneBio = !!sobreMi.body?.trim();
+const ajustes = await getAjustes();
+
+const obras = await getObras();
+const principales = await getTecnicas('principal');
+const subtecnicas = await getTecnicas('grabado');
+
+// ---- En cifras (todo sale del catálogo) ----
+const anios = obras.map((o) => o.data.anio).filter((a): a is number => !!a);
+const desde = anios.length ? Math.min(...anios) : undefined;
+const hasta = anios.length ? Math.max(...anios) : undefined;
+const subsConObra = subtecnicas.filter((s) => obras.some((o) => slugTecnica(o) === s.id)).length;
+const nombresTecnicas = principales
+  .map((t) => t.data.nombre.toLowerCase())
+  .join(', ')
+  .replace(/, ([^,]*)$/, ' y $1');
+const cifras = [
+  { n: obras.length, texto: 'obras en el catálogo' },
+  { n: principales.length, texto: `técnicas: ${nombresTecnicas}` },
+  ...(subsConObra > 0 ? [{ n: subsConObra, texto: 'técnicas de grabado con obra' }] : []),
+  ...(desde && hasta && hasta > desde
+    ? [{ n: hasta - desde + 1, texto: `años de obra fechada, de ${desde} a ${hasta}` }]
+    : []),
+];
+
+// ---- Las tres técnicas ----
+const grupos = await Promise.all(principales.map((t) => getObrasDeTecnica(t.id)));
+const tecnicas = await Promise.all(
+  principales.map(async (t, i) => {
+    const os = grupos[i];
+    const rep = os.find((o) => o.data.destacada) ?? os[0];
+    const im = t.data.imagen ?? (t.id === 'grabado' ? rep?.data.imagenPlancha : null) ?? rep?.data.imagen;
+    const img = im
+      ? await getImage({ src: im, widths: [360, 540, 720].filter((w) => w <= im.width), format: 'webp', quality: 78 })
+      : undefined;
+    return {
+      id: t.id,
+      nombre: t.data.nombre,
+      lema: esMarcador(t.data.lema) ? undefined : t.data.lema,
+      n: os.length,
+      img,
+    };
+  })
+);
+
+// ---- Una selección: alterna técnicas (una de cada, por orden) ----
+const seleccion = [];
+for (let i = 0; seleccion.length < 9 && grupos.some((g) => g[i]); i++) {
+  for (const g of grupos) if (g[i] && seleccion.length < 9) seleccion.push(g[i]);
+}
+
+// ---- Manifiesto palabra a palabra ----
+const palabras = (d.frase ?? '').trim().split(/\s+/).filter(Boolean);
+
+// ---- Contacto ----
+const emailValido = !!ajustes.email && !esMarcador(ajustes.email) && ajustes.email.includes('@');
+const insta =
+  ajustes.instagram && !esMarcador(ajustes.instagram)
+    ? { href: ajustes.instagram, texto: usuarioInstagram(ajustes.instagram) }
+    : undefined;
+const taller = esMarcador(ajustes.taller) ? undefined : ajustes.taller;
+const encargos = esMarcador(ajustes.encargos) ? undefined : ajustes.encargos;
+const hrefContacto = emailValido ? `mailto:${ajustes.email}` : '/contacto';
 ---
 
-<BaseLayout titulo="Sobre mí" descripcion="Jesús Senovilla, pintor y grabador: biografía y trayectoria.">
-  <section class="sobre" aria-labelledby="sobre-h1">
-    <div class="sobre__texto">
-      <p class="etiqueta">Sobre mí</p>
-      <h1 id="sobre-h1" class="sobre__h1" data-ajustar>Jesús<br />Senovilla<span class="acento">.</span></h1>
-      {d.frase && <p class="sobre__frase">{d.frase}</p>}
-      {
-        tieneBio && (
-          <div class="sobre__bio">
-            <Bio />
-          </div>
-        )
-      }
-    </div>
+<BaseLayout titulo="Sobre mí" descripcion="Jesús Senovilla, pintor y grabador: quién es, cómo trabaja y una selección de su obra.">
+  <!-- 1. Cabecera -->
+  <section class="hero" aria-labelledby="sobre-h1">
+    <div class="hero__in">
+      <div class="hero__texto">
+        <p class="eti"><span class="punto" aria-hidden="true"></span>Sobre mí</p>
+        <h1 id="sobre-h1" class="hero__nombre">
+          <span class="hero__linea">Jesús</span>
+          <span class="hero__linea">Senovilla<span class="acento">.</span></span>
+        </h1>
+        <p class="hero__oficio">Pintor y grabador</p>
+        <p class="hero__tecnicas">Óleo · Acuarela · Grabado</p>
+        <a class="hero__seguir" href="#manifiesto">Seguir leyendo <span aria-hidden="true">↓</span></a>
+      </div>
 
-    <div class="sobre__imagenes">
-      {
-        d.retrato ? (
-          <Image
-            src={d.retrato}
-            alt="Jesús Senovilla en su taller"
-            widths={[400, 560, 800, 1120]}
-            sizes="(max-width: 900px) 100vw, 520px"
-            class="sobre__retrato"
-          />
-        ) : (
-          <div class="sobre__retrato sobre__hueco">Retrato en el taller</div>
-        )
-      }
-      {
-        d.firma ? (
-          <Image src={d.firma} alt="Firma de Jesús Senovilla" width={400} class="sobre__firma" />
-        ) : (
-          <div class="sobre__firma sobre__firma--hueco">Firma</div>
-        )
-      }
+      <figure class="hero__retrato">
+        <span class="hero__marco">
+          {
+            d.retrato ? (
+              <Image
+                src={d.retrato}
+                alt="Retrato de Jesús Senovilla"
+                widths={[400, 600, 900, 1200].filter((w) => w <= d.retrato!.width)}
+                sizes="(max-width: 860px) 100vw, 46vw"
+                loading="eager"
+                class="hero__foto"
+              />
+            ) : (
+              <span class="hero__hueco">Retrato</span>
+            )
+          }
+        </span>
+        <span class="hero__firma" aria-hidden="true">
+          <Firma alto="clamp(56px, 7vw, 96px)" />
+        </span>
+      </figure>
     </div>
   </section>
 
+  <!-- 2. Manifiesto -->
   {
-    d.trayectoria.length > 0 && (
-      <section class="trayectoria" aria-labelledby="trayectoria-h2">
-        <h2 id="trayectoria-h2" class="trayectoria__h2">
-          Trayectoria<span class="acento">.</span>
-        </h2>
-        <dl class="trayectoria__lista">
-          {d.trayectoria.map((h) => (
-            <div class="hito">
-              <dt>{h.anio}</dt>
-              <dd>{h.texto}</dd>
-            </div>
-          ))}
-        </dl>
+    palabras.length > 0 && (
+      <section id="manifiesto" class="manifiesto" aria-label="Manifiesto">
+        <div class="manifiesto__in">
+          <p class="eti">Manifiesto</p>
+          <p class="manifiesto__frase">
+            {palabras.map((w) => (
+              <>
+                <span class="manifiesto__palabra">{w}</span>{' '}
+              </>
+            ))}
+          </p>
+        </div>
       </section>
     )
   }
 
-  <section class="cta" aria-label="Contacto">
-    <a class="cta__enlace" href="/contacto" data-ajustar>
-      Hablemos<span class="acento">.</span> <span class="cta__flecha" aria-hidden="true">→</span>
-    </a>
+  <!-- 3. Biografía -->
+  {
+    tieneBio && (
+      <section class="bio" aria-labelledby="bio-h2">
+        <div class="bio__in">
+          <div class="bio__lado">
+            <h2 id="bio-h2" class="eti">
+              Biografía
+            </h2>
+            <span class="bio__firma" aria-hidden="true">
+              <Firma alto="64px" />
+            </span>
+          </div>
+          <div class="bio__texto">
+            <Prosa>
+              <Bio />
+            </Prosa>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- 4. En cifras -->
+  <section class="cifras" aria-labelledby="cifras-h2">
+    <div class="cifras__in">
+      <h2 id="cifras-h2" class="eti">En cifras</h2>
+      <dl class="cifras__lista">
+        {
+          cifras.map((c) => (
+            <div class="cifra">
+              <dt class="cifra__texto">{c.texto}</dt>
+              <dd class="cifra__n" data-contar={c.n}>
+                {c.n}
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <!-- 5. En el taller (solo si hay fotos en el panel) -->
+  {
+    d.taller.length > 0 && (
+      <section class="taller" aria-labelledby="taller-h2">
+        <div class="taller__in">
+          <h2 id="taller-h2" class="eti">
+            En el taller
+          </h2>
+          <ul class="taller__fotos" role="list">
+            {d.taller.map((f) => (
+              <li>
+                <figure class="taller__foto">
+                  <Image
+                    src={f.imagen}
+                    alt={f.pie ?? 'El taller de Jesús Senovilla'}
+                    widths={[360, 540, 720].filter((w) => w <= f.imagen.width)}
+                    sizes="(max-width: 760px) 80vw, 30vw"
+                  />
+                  {f.pie && <figcaption>{f.pie}</figcaption>}
+                </figure>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- 6. Las tres técnicas -->
+  <section class="tecs" aria-labelledby="tecs-h2">
+    <div class="tecs__in">
+      <div class="tecs__cabeza">
+        <h2 id="tecs-h2" class="tecs__titulo">Tres técnicas<span class="acento">.</span></h2>
+        <a class="enlace" href="/tecnicas">Conocer las técnicas <span aria-hidden="true">→</span></a>
+      </div>
+      <ul class="tecs__lista" role="list">
+        {
+          tecnicas.map((t) => (
+            <li>
+              <a class="tec" href={`/tecnicas#${t.id}`}>
+                <span class="tec__marco">
+                  {t.img && (
+                    <img
+                      src={t.img.src}
+                      srcset={t.img.srcSet.attribute}
+                      sizes="(max-width: 760px) 100vw, 33vw"
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
+                </span>
+                <span class="tec__nombre">{t.nombre}</span>
+                {t.lema && <span class="tec__lema">{t.lema}</span>}
+                <span class="tec__n">{t.n} obras</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- 7. Una selección -->
+  <section class="seleccion" aria-labelledby="seleccion-h2">
+    <div class="seleccion__in">
+      <h2 id="seleccion-h2" class="eti">Una selección de la obra</h2>
+      <TiraObras obras={seleccion} etiqueta="Una selección de la obra" fin={{ href: '/obra', texto: 'Toda la obra' }} />
+    </div>
+  </section>
+
+  <!-- 8. Contacto -->
+  <section class="contacto" aria-labelledby="contacto-h2">
+    <div class="contacto__in">
+      <h2 id="contacto-h2" class="eti">Contacto</h2>
+      <a class="contacto__titulo" href={hrefContacto}>
+        <span>¿Hablamos<span class="acento">?</span></span>
+        <span class="contacto__flecha" aria-hidden="true">→</span>
+      </a>
+      <ul class="contacto__datos" role="list">
+        {
+          emailValido && (
+            <li>
+              <span class="contacto__eti">Correo</span>
+              <a href={hrefContacto}>{ajustes.email}</a>
+            </li>
+          )
+        }
+        {
+          insta && (
+            <li>
+              <span class="contacto__eti">Instagram</span>
+              <a href={insta.href} rel="me noopener">
+                {insta.texto}
+              </a>
+            </li>
+          )
+        }
+        {
+          taller && (
+            <li>
+              <span class="contacto__eti">Taller</span>
+              <span>{taller}</span>
+            </li>
+          )
+        }
+        {
+          encargos && (
+            <li>
+              <span class="contacto__eti">Encargos</span>
+              <span>{encargos}</span>
+            </li>
+          )
+        }
+      </ul>
+    </div>
   </section>
 </BaseLayout>
 
 <style>
-  .sobre {
-    max-width: var(--container);
-    margin: 0 auto;
-    padding: clamp(56px, 8vw, 112px) var(--gutter);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-    gap: 64px;
+  .eti {
+    margin: 0;
+    display: inline-flex;
     align-items: center;
+    gap: 10px;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
-  .sobre__texto {
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-  }
-  .sobre__h1 {
-    font-weight: 800;
-    font-size: clamp(48px, 7vw, 112px);
-    line-height: 0.9;
-    letter-spacing: -0.015em;
+  .punto {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
   }
   .acento {
     color: var(--accent);
   }
-  .sobre__frase {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(26px, 3vw, 44px);
-    line-height: 1.08;
-    letter-spacing: -0.012em;
+  .enlace {
+    font: 600 14px/1.4 var(--font-body);
+    color: var(--ink);
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) no-repeat left bottom / 100% 1px;
+    transition: background-size 0.5s var(--ease-out);
   }
-  .sobre__bio {
-    max-width: 560px;
-    font-size: 18px;
-    line-height: 1.65;
-    color: var(--text-soft);
-  }
-  .sobre__bio :global(p) {
-    margin: 0 0 1em;
-  }
-  .sobre__bio :global(p:last-child) {
-    margin-bottom: 0;
+  .enlace:hover {
+    background-position: right bottom;
+    background-size: 0 1px;
   }
 
-  .sobre__imagenes {
-    position: relative;
-    justify-self: center;
-    width: 100%;
-    max-width: 520px;
+  /* ---------- 1. Cabecera ---------- */
+  .hero {
+    background: var(--paper);
+    overflow: hidden;
   }
-  .sobre__imagenes :global(.sobre__retrato) {
+  .hero__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(40px, 6vw, 88px) var(--gutter) clamp(64px, 8vw, 120px);
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: end;
+    gap: clamp(32px, 6vw, 96px);
+  }
+  .hero__texto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding-bottom: clamp(8px, 2vw, 32px);
+  }
+  .hero__nombre {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-size: clamp(72px, 11.5vw, 196px);
+    line-height: 0.84;
+    letter-spacing: -0.015em;
+  }
+  .hero__linea {
     display: block;
+  }
+  .hero__oficio {
+    margin: 10px 0 0;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(26px, 2.6vw, 40px);
+    line-height: 1.1;
+  }
+  .hero__tecnicas {
+    margin: 0;
+    font: 600 12px/1 var(--font-body);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .hero__seguir {
+    margin-top: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tap);
+    padding: 0 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    font: 600 13px/1 var(--font-body);
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      background 0.3s ease,
+      color 0.3s ease,
+      border-color 0.3s ease;
+  }
+  .hero__seguir:hover {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .hero__retrato {
+    position: relative;
+    justify-self: end;
+    /* En escritorio, el retrato entero cabe en la pantalla bajo la cabecera */
+    width: min(100%, calc((100svh - 190px) * 0.8));
+    margin: 0;
+  }
+  .hero__marco {
+    display: block;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #e9e7e3;
+  }
+  .hero__marco :global(.hero__foto) {
+    display: block;
+    width: 100%;
+    height: 112%;
+    object-fit: cover;
+    object-position: 50% 30%;
+  }
+  .hero__hueco {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: var(--muted);
+  }
+  .hero__firma {
+    position: absolute;
+    left: clamp(-56px, -3vw, -20px);
+    bottom: clamp(-34px, -2.4vw, -18px);
+    padding: 10px 18px 6px 14px;
+    border-radius: 3px;
+    background: var(--paper);
+    box-shadow: 0 12px 30px -16px rgba(20, 16, 10, 0.4);
+    color: var(--ink);
+    transform: rotate(-4deg);
+  }
+
+  /* ---------- 2. Manifiesto ---------- */
+  .manifiesto {
+    scroll-margin-top: 80px;
+    background: #efece6;
+    padding: clamp(96px, 13vw, 200px) var(--gutter);
+  }
+  .manifiesto__in {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .manifiesto__frase {
+    margin: 0;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(40px, 6vw, 96px);
+    line-height: 1.06;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- 3. Biografía ---------- */
+  .bio {
+    background: var(--paper);
+    padding: clamp(80px, 10vw, 150px) var(--gutter);
+  }
+  .bio__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+    gap: clamp(32px, 6vw, 96px);
+    align-items: start;
+  }
+  .bio__lado {
+    position: sticky;
+    top: 110px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .bio__firma {
+    color: var(--ink);
+    opacity: 0.85;
+  }
+  .bio__texto :global(.prosa) {
+    max-width: 680px;
+    font-size: clamp(18px, 1.5vw, 21px);
+  }
+
+  /* ---------- 4. En cifras ---------- */
+  .cifras {
+    background: var(--paper);
+    padding: 0 var(--gutter) clamp(80px, 10vw, 140px);
+  }
+  .cifras__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-top: clamp(48px, 5vw, 72px);
+    border-top: 1px solid var(--line);
+  }
+  .cifras__lista {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 32px;
+  }
+  .cifra {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+  .cifra__n {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(64px, 7.5vw, 120px);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  .cifra__texto {
+    max-width: 22ch;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--text-soft);
+  }
+
+  /* ---------- 5. En el taller ---------- */
+  .taller {
+    background: var(--paper);
+    padding: 0 var(--gutter) clamp(80px, 10vw, 140px);
+  }
+  .taller__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .taller__fotos {
+    margin: 0;
+    padding: 0 0 12px;
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .taller__fotos li {
+    flex: 0 0 min(78vw, 420px);
+    scroll-snap-align: start;
+  }
+  .taller__foto {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .taller__foto :global(img) {
     width: 100%;
     height: auto;
     aspect-ratio: 4 / 5;
     object-fit: cover;
-    transform: rotate(2deg);
+    border-radius: 4px;
   }
-  .sobre__hueco {
+  .taller__foto figcaption {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  /* ---------- 6. Tres técnicas ---------- */
+  .tecs {
+    background: #efece6;
+    padding: clamp(80px, 10vw, 140px) var(--gutter);
+  }
+  .tecs__in {
+    max-width: var(--container);
+    margin: 0 auto;
     display: flex;
+    flex-direction: column;
+    gap: clamp(32px, 4vw, 52px);
+  }
+  .tecs__cabeza {
+    display: flex;
+    flex-wrap: wrap;
     align-items: flex-end;
-    padding: 20px;
-    background: #d8d4cc;
+    justify-content: space-between;
+    gap: 16px 32px;
+  }
+  .tecs__titulo {
+    margin: 0;
+    font-size: clamp(52px, 7vw, 112px);
+    line-height: 0.9;
+  }
+  .tecs__lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 28px);
+  }
+  .tec {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .tec__marco {
+    display: block;
+    aspect-ratio: 4 / 5;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--card);
+  }
+  .tec__marco img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.04);
+    transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .tec:hover .tec__marco img,
+  .tec:focus-visible .tec__marco img {
+    transform: scale(1);
+  }
+  .tec__nombre {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 3vw, 44px);
+    line-height: 1;
+  }
+  .tec__lema {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 19px;
     color: var(--text-soft);
-    font-size: 12px;
+  }
+  .tec__n {
+    margin-top: 4px;
+    font: 600 11px/1 var(--font-body);
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    font-weight: 600;
+    color: var(--muted);
   }
-  .sobre__imagenes :global(.sobre__firma) {
-    position: absolute;
-    left: -24px;
-    bottom: 32px;
-    width: 200px;
-    height: auto;
-    transform: rotate(-3deg);
+  .tec:focus-visible {
+    outline: none;
   }
-  .sobre__firma--hueco {
-    height: 72px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .tec:focus-visible .tec__marco {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+
+  /* ---------- 7. Una selección ---------- */
+  .seleccion {
     background: var(--paper);
-    border: 1px dashed #a8a59e;
-    color: var(--muted);
-    font-size: 13px;
+    padding: clamp(80px, 10vw, 140px) var(--gutter);
   }
-  @media (max-width: 520px) {
-    .sobre__imagenes :global(.sobre__firma) {
-      left: -8px;
-      width: 160px;
-    }
-  }
-
-  .trayectoria {
+  .seleccion__in {
     max-width: var(--container);
     margin: 0 auto;
-    padding: 0 var(--gutter) clamp(72px, 9vw, 128px);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-    gap: 32px 64px;
-    align-items: start;
-  }
-  .trayectoria__h2 {
-    font-weight: 700;
-    font-size: var(--fs-h2);
-    line-height: 0.95;
-    letter-spacing: -0.012em;
-  }
-  .trayectoria__lista {
-    margin: 0;
-    border-bottom: 1px solid #e6e4df;
-  }
-  .hito {
-    display: grid;
-    grid-template-columns: 96px minmax(0, 1fr);
-    gap: 16px;
-    padding: 14px 0;
-    border-top: 1px solid #e6e4df;
-  }
-  .hito dt {
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-  .hito dd {
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
   }
 
-  .cta {
-    border-top: 1px solid var(--line);
+  /* ---------- 8. Contacto ---------- */
+  .contacto {
+    background: #efece6;
+    padding: clamp(80px, 10vw, 150px) var(--gutter);
   }
-  .cta__enlace {
-    display: block;
+  .contacto__in {
     max-width: var(--container);
     margin: 0 auto;
-    padding: clamp(64px, 8vw, 112px) var(--gutter);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'eti eti'
+      'titulo datos';
+    align-items: end;
+    gap: 24px clamp(32px, 6vw, 96px);
+  }
+  .contacto .eti {
+    grid-area: eti;
+  }
+  .contacto__titulo {
+    grid-area: titulo;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.2em;
     font-family: var(--font-display);
-    font-weight: 800;
-    font-size: clamp(48px, 9vw, 152px);
-    line-height: 0.9;
+    font-size: clamp(64px, 11vw, 180px);
+    line-height: 0.88;
     letter-spacing: -0.015em;
     color: var(--ink);
     text-decoration: none;
   }
-  .cta__flecha {
+  .contacto__flecha {
     display: inline-block;
-    transition: transform 0.35s ease;
+    font-size: 0.55em;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .cta__enlace:hover .cta__flecha {
-    transform: translateX(18px);
+  .contacto__titulo:hover .contacto__flecha {
+    transform: translateX(14px);
   }
-  .cta__enlace:focus-visible {
-    outline-offset: -8px;
+  .contacto__datos {
+    grid-area: datos;
+    margin: 0;
+    padding: 0 0 0.6em;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-size: 16px;
+  }
+  .contacto__datos li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .contacto__datos a {
+    color: var(--ink);
+    text-underline-offset: 3px;
+  }
+  .contacto__eti {
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ---------- Movimiento ---------- */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      /* Paralaje suave del retrato */
+      .hero__marco :global(.hero__foto) {
+        animation: paralaje linear both;
+        animation-timeline: view();
+        animation-range: cover 0% cover 100%;
+      }
+      /* El manifiesto se ilumina palabra a palabra */
+      .manifiesto__palabra {
+        animation: revelar linear both;
+        animation-timeline: view();
+        animation-range: cover 8% cover 38%;
+      }
+      .tec,
+      .cifra {
+        animation: subir linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 25%;
+      }
+    }
+  }
+  @keyframes paralaje {
+    from {
+      transform: translateY(-6%);
+    }
+    to {
+      transform: translateY(0%);
+    }
+  }
+  @keyframes revelar {
+    from {
+      opacity: 0.14;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes subir {
+    from {
+      opacity: 0;
+      transform: translateY(36px);
+      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+  }
+
+  /* ---------- Móvil ---------- */
+  @media (max-width: 860px) {
+    .hero__in {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .hero__retrato {
+      justify-self: stretch;
+      width: auto;
+      max-width: 520px;
+      margin-bottom: 24px;
+    }
+    .hero__firma {
+      left: auto;
+      right: 12px;
+    }
+    .bio__in {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .bio__lado {
+      position: static;
+    }
+    .tecs__lista {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .tec__marco {
+      aspect-ratio: 16 / 10;
+    }
+    .contacto__in {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        'eti'
+        'titulo'
+        'datos';
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__seguir,
+    .tec__marco img,
+    .contacto__flecha {
+      transition: none;
+    }
   }
 </style>
+
+<script>
+  // Las cifras cuentan desde cero al entrar en pantalla (no con movimiento reducido).
+  const cifras = document.querySelectorAll<HTMLElement>('[data-contar]');
+  if (cifras.length && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const contar = (el: HTMLElement) => {
+      const meta = Number(el.dataset.contar);
+      if (!meta) return;
+      const t0 = performance.now();
+      const dur = 1400;
+      const paso = (t: number) => {
+        const p = Math.min(1, (t - t0) / dur);
+        el.textContent = String(Math.round(meta * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) requestAnimationFrame(paso);
+      };
+      requestAnimationFrame(paso);
+    };
+    const obs = new IntersectionObserver(
+      (entradas) =>
+        entradas.forEach((e) => {
+          if (!e.isIntersecting) return;
+          obs.unobserve(e.target);
+          contar(e.target as HTMLElement);
+        }),
+      { threshold: 0.6 }
+    );
+    cifras.forEach((c) => obs.observe(c));
+  }
+</script>

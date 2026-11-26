@@ -1,7 +1,7 @@
 ---
 /**
  * Bloque «Sobre mí» de las portadas.
- * - galeria (01): retrato a la izquierda; texto, firma y trayectoria a la derecha.
+ * - galeria (01): retrato a la izquierda; texto y firma a la derecha.
  * - luz (02): frase grande y botón; retrato girado con la firma superpuesta.
  * - taller (04–06): como galería, con los colores de la paleta.
  */
@@ -55,26 +55,13 @@ const tieneBio = !!sobreMi.body?.trim();
     }
     {
       variante === 'luz' ? (
-        <a class="boton boton--borde sobre__boton" href="/sobre-mi">Trayectoria completa</a>
+        <a class="boton boton--borde sobre__boton" href="/sobre-mi">Sobre mí</a>
       ) : (
         <>
           {d.firma ? (
             <Image src={d.firma} alt="Firma de Jesús Senovilla" width={400} class="sobre__firma" />
           ) : (
             <div class="sobre__firma sobre__firma--hueco">Firma</div>
-          )}
-          {d.trayectoria.length > 0 && (
-            <div class="sobre__tray">
-              {variante === 'galeria' && <h3 class="etiqueta sobre__tray-titulo">Trayectoria</h3>}
-              <dl>
-                {d.trayectoria.slice(0, 4).map((h) => (
-                  <div class="hito">
-                    <dt>{h.anio}</dt>
-                    <dd>{h.texto}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
           )}
         </>
       )
@@ -185,32 +172,6 @@ const tieneBio = !!sobreMi.body?.trim();
     color: var(--muted);
     font-size: 13px;
     background: var(--bg);
-  }
-  .sobre__tray {
-    width: 100%;
-    margin-top: 8px;
-  }
-  .sobre__tray-titulo {
-    margin-bottom: 8px;
-    font-family: var(--font-body);
-  }
-  .sobre__tray dl {
-    margin: 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .hito {
-    display: grid;
-    grid-template-columns: 96px minmax(0, 1fr);
-    gap: 16px;
-    padding: 14px 0;
-    border-top: 1px solid var(--line);
-  }
-  .hito dt {
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-  .hito dd {
-    margin: 0;
   }
   /* Luz */
   .sobre__collage {
