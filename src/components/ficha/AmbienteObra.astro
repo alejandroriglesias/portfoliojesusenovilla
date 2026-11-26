@@ -79,6 +79,8 @@ const capas = await Promise.all(
       `--marco: ${r(MARCO * reduccion)}`,
       `--x: ${r((e.x / W) * 100)}%`,
       `--base: ${r(100 - (abajo / H) * 100)}%`,
+      // Borde superior de la obra (fracción de la foto): para dejarle aire arriba.
+      `--arte-y: ${r((abajo - altoPx) / H)}`,
       `--recorte: inset(${r(rect.arr)}% ${r(rect.der)}% ${r(rect.aba)}% ${r(rect.izq)}%)`,
       `--s1: ${s1[0]}em ${s1[1]}em ${s1[2]}em rgba(30, 24, 18, ${s1[3]})`,
       `--s2: ${s2[0]}em ${s2[1]}em ${s2[2]}em rgba(30, 24, 18, ${s2[3]})`,
@@ -153,6 +155,8 @@ const inicial = candidatas[semilla % candidatas.length];
     background: #e6e4e0;
     /* Hueco libre arriba (la cabecera superpuesta en móvil) */
     --despeje: 0px;
+    /* Aire mínimo entre el borde de arriba y la obra (y la cabecera, si se ve) */
+    --margen: max(96px, 11cqh);
   }
   .estancia {
     position: absolute;
@@ -163,7 +167,9 @@ const inicial = candidatas[semilla % candidatas.length];
   }
 
   /* La foto cubre el marco (como object-fit: cover, con zoom opcional) y deja
-     el foco de la estancia en el centro del hueco visible. 1em = 1 cm. */
+     el foco de la estancia en el centro del hueco visible, pero sin que la
+     obra quede a menos de --margen del borde de arriba (si no cabe todo, se
+     recorta antes el mueble de abajo que el aire de encima). 1em = 1 cm. */
   .foto {
     --fw: calc(max(100cqw, 100cqh * var(--ar)) * var(--zoom));
     --fh: calc(var(--fw) * var(--ra));
@@ -171,7 +177,11 @@ const inicial = candidatas[semilla % candidatas.length];
     width: var(--fw);
     height: var(--fh);
     left: clamp(calc(100cqw - var(--fw)), calc(50cqw - var(--fx) * var(--fw)), 0px);
-    top: clamp(calc(100cqh - var(--fh)), calc(50cqh + var(--despeje) / 2 - var(--fy) * var(--fh)), var(--despeje));
+    top: clamp(
+      calc(100cqh - var(--fh)),
+      max(calc(50cqh + var(--despeje) / 2 - var(--fy) * var(--fh)), calc(var(--margen) - var(--arte-y) * var(--fh))),
+      var(--despeje)
+    );
     font-size: calc(var(--fw) * var(--em));
   }
   .foto__fondo,
@@ -330,6 +340,7 @@ const inicial = candidatas[semilla % candidatas.length];
       /* La cabecera superpuesta ocupa la parte de arriba: la foto baja para
          que la obra quede debajo. */
       --despeje: 64px;
+      --margen: calc(var(--despeje) + 28px);
     }
     .ambiente__otra {
       right: 14px;

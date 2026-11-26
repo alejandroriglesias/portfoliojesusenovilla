@@ -53,7 +53,8 @@ export const ESTANCIAS: Estancia[] = [
     pxCm: 12.5,
     x: 640,
     base: 1040,
-    max: { w: 88, h: 74 },
+    // Hasta 62 cm de alto: por encima, la obra quedaría pegada al borde de arriba de la foto.
+    max: { w: 88, h: 62 },
     foco: { x: 0.3, y: 0.4 },
     sombra: [
       [0.35, 0.5, 0.7, 0.32],
