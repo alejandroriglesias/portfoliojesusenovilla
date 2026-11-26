@@ -612,6 +612,33 @@ const atajos = [
     outline-color: var(--accent-on-dark);
   }
 
+  /* De noche, la cabecera sólida ya es oscura antes de que el script mida el
+     tono (con la red lenta se veía la píldora blanca con letra blanca). */
+  :global(html[data-tema='oscuro']) .cabecera--solida {
+    --pildora-fondo: rgba(255, 255, 255, 0.08);
+    --indicador-fondo: rgba(255, 255, 255, 0.16);
+    --indicador-sombra: none;
+  }
+  :global(html[data-tema='oscuro']) .cabecera--solida .cabecera__cta,
+  :global(html[data-tema='oscuro']) .cabecera--solida .cabecera__menu {
+    background: var(--blanco);
+    border-color: var(--blanco);
+    color: var(--negro);
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(html:not([data-tema='claro'])) .cabecera--solida {
+      --pildora-fondo: rgba(255, 255, 255, 0.08);
+      --indicador-fondo: rgba(255, 255, 255, 0.16);
+      --indicador-sombra: none;
+    }
+    :global(html:not([data-tema='claro'])) .cabecera--solida .cabecera__cta,
+    :global(html:not([data-tema='claro'])) .cabecera--solida .cabecera__menu {
+      background: var(--blanco);
+      border-color: var(--blanco);
+      color: var(--negro);
+    }
+  }
+
   /* ---------- Superpuesta: cristal claro u oscuro según lo de debajo ---------- */
   .cabecera--superpuesta {
     position: sticky;
