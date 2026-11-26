@@ -274,7 +274,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
     width: 14px;
     height: 2px;
     border-radius: 2px;
-    background: rgba(20, 20, 20, 0.38);
+    background: color-mix(in srgb, var(--ink) 38%, transparent);
     transition:
       width 0.55s var(--ease-out),
       background 0.4s ease;
@@ -291,7 +291,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
   }
   .galeria__puntos button:hover::before {
     width: 22px;
-    background: rgba(20, 20, 20, 0.6);
+    background: color-mix(in srgb, var(--ink) 60%, transparent);
   }
   .galeria__puntos button[aria-current='true']::before {
     width: 30px;

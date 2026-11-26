@@ -162,7 +162,7 @@ const salas = await Promise.all(
     overflow: hidden;
   }
   .sala + .sala {
-    border-top: 1px solid rgba(20, 16, 10, 0.08);
+    border-top: 1px solid var(--line);
   }
   .sala[hidden] {
     display: none;
@@ -262,7 +262,7 @@ const salas = await Promise.all(
     width: 52px;
     height: 52px;
     padding: 0;
-    border: 1px solid rgba(20, 20, 20, 0.22);
+    border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
     border-radius: 50%;
     background: transparent;
     color: var(--ink);
@@ -369,7 +369,7 @@ const salas = await Promise.all(
     inset: 0;
     z-index: -1;
     border-radius: 3px;
-    background: rgba(250, 248, 242, 0.95);
+    background: color-mix(in srgb, var(--paper) 95%, transparent);
     box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.3);
     clip-path: inset(0 100% 0 0 round 3px);
     transition: clip-path 0.38s cubic-bezier(0.5, 0, 0.75, 0);
@@ -456,7 +456,7 @@ const salas = await Promise.all(
     flex-direction: column;
     justify-content: space-between;
     padding: 24px;
-    border: 1px solid rgba(20, 20, 20, 0.18);
+    border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
     color: var(--ink);
     text-decoration: none;
     transition:
@@ -518,7 +518,7 @@ const salas = await Promise.all(
     position: relative;
     flex: 1;
     height: 2px;
-    background: rgba(20, 20, 20, 0.14);
+    background: color-mix(in srgb, var(--ink) 14%, transparent);
     overflow: hidden;
   }
   .progreso__barra::after {

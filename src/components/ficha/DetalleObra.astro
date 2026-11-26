@@ -23,7 +23,7 @@ const { src, mini, ratio, x, y, auto = false, alt } = Astro.props;
 const ZOOM = 2.2;
 ---
 
-<figure class="detalle" data-marco data-detalle data-auto={auto ? '' : undefined} style={`--x: ${x}%; --y: ${y}%; --z: ${ZOOM}; --ar: ${ratio}`}>
+<figure class="detalle tema-claro" data-marco data-detalle data-auto={auto ? '' : undefined} style={`--x: ${x}%; --y: ${y}%; --z: ${ZOOM}; --ar: ${ratio}`}>
   <div class="detalle__lupa">
     <img src={src} alt={`Detalle: ${alt}`} loading="lazy" decoding="async" draggable="false" data-lupa />
   </div>

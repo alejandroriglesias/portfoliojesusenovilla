@@ -62,7 +62,7 @@ const n = (i: number) => String(i + 1).padStart(2, '0');
 
 <style>
   .proceso {
-    background: #edeae3;
+    background: var(--band);
     padding: clamp(72px, 9vw, 128px) 0;
   }
   .proceso__cabeza {
@@ -111,7 +111,7 @@ const n = (i: number) => String(i + 1).padStart(2, '0');
     padding: 0 var(--margen) 24px;
     scroll-padding-inline: var(--margen);
     scrollbar-width: thin;
-    scrollbar-color: #5f5e5a transparent;
+    scrollbar-color: var(--muted) transparent;
   }
   .paso {
     /* contexto para el .sr-only (si no, se escapa del carrusel y desborda la página) */
@@ -127,7 +127,7 @@ const n = (i: number) => String(i + 1).padStart(2, '0');
     height: auto;
     aspect-ratio: 4 / 5;
     object-fit: cover;
-    background: #d9d6cf;
+    background: var(--card);
   }
   .paso__cab {
     display: flex;

@@ -111,7 +111,7 @@ const semilla = [...Astro.url.pathname].reduce((h, ch) => (h * 31 + ch.charCodeA
 const inicial = candidatas[semilla % candidatas.length];
 ---
 
-<figure class:list={['ambiente', `ambiente--${tipo}`]} data-marco data-ambiente style={`--ar-obra: ${r(ratio)}`}>
+<figure class:list={['ambiente', `ambiente--${tipo}`, 'tema-claro']} data-marco data-ambiente style={`--ar-obra: ${r(ratio)}`}>
   {
     capas.map((c) => (
       <div class="estancia" data-estancia={c.id} data-cabe={c.cabe ? '' : undefined} data-canto={c.canto} data-pie={c.pie} hidden={c !== inicial} style={c.estilo}>

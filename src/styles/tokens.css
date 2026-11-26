@@ -18,10 +18,20 @@
   /* Superficies derivadas */
   --bg: var(--paper);
   --text-soft: #3d3c39;
+  --texto-prosa: #2b2a27;
+  --band: #efece6;
+  --card: #e4e0d8;
+  --linea-fuerte: #cfccc5;
   --footer-bg: #111111;
   --footer-text: #c9c6bf;
   --footer-link: #fafaf8;
   --header-bg: rgba(250, 250, 248, 0.9);
+
+  /* Colores fijos: no cambian con el modo noche (texto sobre fotos, piezas
+     que son siempre oscuras o siempre claras). */
+  --blanco: #fafaf8;
+  --negro: #141414;
+  color-scheme: light;
 
   /* Escala */
   --container: 1360px;
@@ -100,4 +110,64 @@
   --header-bg: rgba(245, 244, 240, 0.9);
   --footer-bg: #0a0a0a;
   --container: 1440px;
+}
+
+/* ================= Modo noche =================
+   Lo pide el sistema (salvo que se haya elegido el día con el botón) o se ha
+   elegido con el botón. Va al final y con más especificidad que las paletas,
+   así que las oscurece todas. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    color-scheme: dark;
+    --paper: #131211;
+    --ink: #ebe9e4;
+    --muted: #a3a099;
+    --text-soft: #d2cfc8;
+    --texto-prosa: #dcd9d2;
+    --line: rgba(250, 250, 248, 0.14);
+    --linea-fuerte: rgba(250, 250, 248, 0.26);
+    --accent: #f2714f;
+    --on-accent: #141414;
+    --bg: #131211;
+    --band: #1b1a18;
+    --card: #262421;
+    --header-bg: rgba(19, 18, 17, 0.86);
+    --footer-bg: #0b0b0a;
+  }
+}
+:root[data-tema='oscuro'] {
+  color-scheme: dark;
+  --paper: #131211;
+  --ink: #ebe9e4;
+  --muted: #a3a099;
+  --text-soft: #d2cfc8;
+  --texto-prosa: #dcd9d2;
+  --line: rgba(250, 250, 248, 0.14);
+  --linea-fuerte: rgba(250, 250, 248, 0.26);
+  --accent: #f2714f;
+  --on-accent: #141414;
+  --bg: #131211;
+  --band: #1b1a18;
+  --card: #262421;
+  --header-bg: rgba(19, 18, 17, 0.86);
+  --footer-bg: #0b0b0a;
+}
+
+/* Piezas que se ven igual de día y de noche (el billete de cookies, la
+   vista «en casa», el menú y los bloques que ya son oscuros): recuperan los
+   colores de día para todo lo que llevan dentro. */
+.tema-claro {
+  color-scheme: light;
+  --paper: #fafaf8;
+  --ink: #141414;
+  --muted: #5f5e5a;
+  --text-soft: #3d3c39;
+  --texto-prosa: #2b2a27;
+  --line: rgba(20, 20, 20, 0.14);
+  --linea-fuerte: #cfccc5;
+  --accent: #c8371a;
+  --on-accent: #ffffff;
+  --bg: #fafaf8;
+  --band: #efece6;
+  --card: #e4e0d8;
 }

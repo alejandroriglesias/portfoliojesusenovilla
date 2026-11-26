@@ -84,6 +84,7 @@ const atajos = [
   { t: 'Obra al azar', m: 'Abre una obra cualquiera', d: 'aleatoria sorpresa azar', accion: 'azar' },
   ...(emailValido ? [{ t: 'Escribir un correo', m: ajustes.email, d: 'email correo contacto', u: `mailto:${ajustes.email}` }] : []),
   ...(instagram ? [{ t: 'Instagram', m: 'Obra reciente y proceso', d: 'redes sociales instagram', u: instagram, fuera: true }] : []),
+  { t: 'Modo noche', m: 'Cambiar entre día y noche', d: 'oscuro claro tema noche dia luz', accion: 'tema' },
   { t: 'Ajustes de cookies', m: 'Revisar lo que aceptaste', d: 'cookies privacidad consentimiento', accion: 'cookies' },
 ];
 ---
@@ -107,6 +108,11 @@ const atajos = [
     </nav>
 
     <div class="cabecera__acciones">
+      <button class="cabecera__tema" type="button" data-tema-boton aria-pressed="false" title="Modo noche">
+        <svg class="tema__luna" aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+        <svg class="tema__sol" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"></path></svg>
+        <span class="sr-only">Modo noche</span>
+      </button>
       <button class="cabecera__buscar" type="button" data-abrir-buscador aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K">
         <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
         <span class="cabecera__buscar-texto">Buscar</span>
@@ -127,7 +133,7 @@ const atajos = [
 </header>
 
 <!-- Menú a pantalla completa (móvil) -->
-<dialog id="menu-movil" class="menu" aria-label="Menú" data-menu data-lenis-prevent>
+<dialog id="menu-movil" class="menu tema-claro" aria-label="Menú" data-menu data-lenis-prevent>
   <div class="menu__cabeza">
     <a class="menu__marca" href="/">
       <Firma alto="44px" />
@@ -177,6 +183,11 @@ const atajos = [
       <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"></rect><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"></circle></svg>
       Obra al azar
     </a>
+    <button class="menu__accion" type="button" data-tema-boton aria-pressed="false">
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+      Modo noche
+      <span class="menu__interruptor" aria-hidden="true"></span>
+    </button>
   </div>
 
   <div class="menu__pie menu__item" style={`--i: ${enlacesMenu.length + 1}`}>
@@ -386,6 +397,53 @@ const atajos = [
     background: var(--pildora-fondo);
   }
 
+  /* Modo noche: luna de día, sol de noche */
+  .cabecera__tema {
+    display: inline-grid;
+    place-items: center;
+    width: var(--tap);
+    height: var(--tap);
+    padding: 0;
+    border: 1px solid var(--pildora-borde);
+    border-radius: 50%;
+    background: var(--pildora-fondo);
+    box-shadow: var(--pildora-sombra);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    backdrop-filter: blur(16px) saturate(1.5);
+    color: inherit;
+    cursor: pointer;
+    transition:
+      background 0.45s ease,
+      border-color 0.45s ease,
+      color 0.45s ease;
+  }
+  .cabecera__tema:hover {
+    background: var(--indicador-fondo);
+  }
+  .cabecera__tema svg {
+    transition: transform 0.6s var(--ease-out);
+  }
+  .cabecera__tema:hover svg {
+    transform: rotate(-20deg);
+  }
+  .tema__sol {
+    display: none;
+  }
+  :global(html[data-tema='oscuro']) .tema__sol {
+    display: block;
+  }
+  :global(html[data-tema='oscuro']) .tema__luna {
+    display: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(html:not([data-tema='claro'])) .tema__sol {
+      display: block;
+    }
+    :global(html:not([data-tema='claro'])) .tema__luna {
+      display: none;
+    }
+  }
+
   /* Contacto: píldora con el punto bermellón que late despacio y una flecha
      que aparece al pasar el ratón. */
   .cabecera__cta {
@@ -395,10 +453,10 @@ const atajos = [
     gap: 9px;
     min-height: var(--tap);
     padding: 0 20px 0 16px;
-    border: 1px solid var(--ink);
+    border: 1px solid var(--negro);
     border-radius: var(--radius-pill);
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--negro);
+    color: var(--blanco);
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.01em;
@@ -476,10 +534,10 @@ const atajos = [
     gap: 10px;
     min-height: var(--tap);
     padding: 0 18px 0 16px;
-    border: 1px solid var(--ink);
+    border: 1px solid var(--negro);
     border-radius: var(--radius-pill);
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--negro);
+    color: var(--blanco);
     font: 600 14px/1 var(--font-body);
     cursor: pointer;
     box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.45);
@@ -535,13 +593,13 @@ const atajos = [
     --indicador-sombra: none;
     background: rgba(14, 13, 12, 0.82);
     border-bottom-color: rgba(250, 250, 248, 0.1);
-    color: var(--paper);
+    color: var(--blanco);
   }
   :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__cta,
   :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__menu {
-    background: var(--paper);
-    border-color: var(--paper);
-    color: var(--ink);
+    background: var(--blanco);
+    border-color: var(--blanco);
+    color: var(--negro);
     box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.6);
   }
   :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__cta:hover,
@@ -560,7 +618,8 @@ const atajos = [
     top: 0;
     height: 0;
     z-index: 40;
-    color: var(--ink);
+    /* Texto según lo que hay debajo (tono medido), no según el modo */
+    color: var(--negro);
   }
   .cabecera--superpuesta .cabecera__barra {
     padding-block: 10px;
@@ -586,20 +645,20 @@ const atajos = [
     --pildora-borde: rgba(255, 255, 255, 0.14);
     --indicador-fondo: rgba(255, 255, 255, 0.17);
     --indicador-sombra: none;
-    color: var(--paper);
+    color: var(--blanco);
   }
   :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__acciones {
     --pildora-fondo: rgba(18, 17, 16, 0.42);
     --pildora-borde: rgba(255, 255, 255, 0.14);
     --indicador-fondo: rgba(255, 255, 255, 0.17);
     --indicador-sombra: none;
-    color: var(--paper);
+    color: var(--blanco);
   }
   :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__cta,
   :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__menu {
-    background: var(--paper);
-    border-color: var(--paper);
-    color: var(--ink);
+    background: var(--blanco);
+    border-color: var(--blanco);
+    color: var(--negro);
   }
   :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__cta:hover,
   :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__cta:focus-visible {
@@ -609,11 +668,11 @@ const atajos = [
   }
   :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__nav :focus-visible,
   :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__acciones :focus-visible {
-    outline-color: var(--paper);
+    outline-color: var(--blanco);
   }
   /* Firma sobre zona oscura (se mira aparte: puede caer sobre otra foto) */
   :global(html[data-cabecera-marca='oscuro']) .cabecera--superpuesta .cabecera__marca {
-    color: var(--paper);
+    color: var(--blanco);
   }
 
   /* ---------- Móvil: firma · buscar · menú ---------- */
@@ -629,6 +688,7 @@ const atajos = [
     }
     .cabecera__nav,
     .cabecera__cta,
+    .cabecera__tema,
     .cabecera__buscar-texto,
     .cabecera__atajo {
       display: none;
@@ -823,6 +883,33 @@ const atajos = [
   .menu__accion:hover {
     background: rgba(250, 250, 248, 0.08);
   }
+  /* Interruptor del modo noche */
+  .menu__interruptor {
+    position: relative;
+    width: 30px;
+    height: 18px;
+    margin-left: 2px;
+    border-radius: var(--radius-pill);
+    background: rgba(250, 250, 248, 0.22);
+    transition: background 0.3s ease;
+  }
+  .menu__interruptor::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--paper);
+    transition: transform 0.3s var(--ease-out);
+  }
+  .menu__accion[aria-pressed='true'] .menu__interruptor {
+    background: var(--accent-on-dark);
+  }
+  .menu__accion[aria-pressed='true'] .menu__interruptor::after {
+    transform: translateX(12px);
+  }
   .menu__pie {
     display: flex;
     flex-direction: column;
@@ -935,7 +1022,8 @@ const atajos = [
     outline: none;
   }
   .buscador__campo input::placeholder {
-    color: #8a8882;
+    color: var(--muted);
+    opacity: 0.85;
   }
   .buscador__cerrar {
     display: grid;
@@ -955,7 +1043,7 @@ const atajos = [
     padding: 0 6px;
     border: 1px solid var(--line);
     border-radius: 6px;
-    background: #fff;
+    background: var(--card);
     font: 600 11px/1 var(--font-body);
     color: var(--muted);
   }
@@ -986,7 +1074,7 @@ const atajos = [
     cursor: pointer;
   }
   .buscador__resultados :global(.buscador__op[aria-selected='true']) {
-    background: #efece6;
+    background: var(--band);
   }
   .buscador__resultados :global(.buscador__ico) {
     display: grid;
@@ -995,7 +1083,7 @@ const atajos = [
     height: 44px;
     overflow: hidden;
     border-radius: 7px;
-    background: #ebe8e1;
+    background: var(--card);
     color: var(--ink);
   }
   .buscador__resultados :global(.buscador__ico img) {
@@ -1094,7 +1182,7 @@ const atajos = [
 </style>
 
 <script>
-  import { abrirAjustesCookies } from '../lib/consentimiento';
+  import { abrirAjustesCookies, permite, EVENTO_CAMBIO } from '../lib/consentimiento';
 
   const raiz = document.documentElement;
   const cabecera = document.querySelector<HTMLElement>('[data-cabecera-el]');
@@ -1278,6 +1366,85 @@ const atajos = [
     cabecera.addEventListener('focusin', () => ocultar(false));
   }
 
+  /* ====================== Modo noche ======================
+   * Sin elección, manda el sistema. Con el botón se fija data-tema en <html>.
+   * La elección vale para la visita (almacenamiento de sesión) y, si se
+   * aceptaron las «Preferencias», se recuerda (almacenamiento local). */
+  type Tema = 'claro' | 'oscuro';
+  const sistemaOscuro = matchMedia('(prefers-color-scheme: dark)');
+  const temaActual = (): Tema =>
+    raiz.dataset.tema === 'oscuro' || raiz.dataset.tema === 'claro'
+      ? (raiz.dataset.tema as Tema)
+      : sistemaOscuro.matches
+        ? 'oscuro'
+        : 'claro';
+  const botonesTema = [...document.querySelectorAll<HTMLButtonElement>('[data-tema-boton]')];
+  const metaDia = document.querySelector<HTMLMetaElement>('meta[data-color-dia]');
+  const metaNoche = document.querySelector<HTMLMetaElement>('meta[data-color-noche]');
+  const colorDia = metaDia?.content ?? '#FAFAF8';
+  const colorNoche = metaNoche?.content ?? '#131211';
+  const pintarTema = () => {
+    const oscuro = temaActual() === 'oscuro';
+    botonesTema.forEach((b) => {
+      b.setAttribute('aria-pressed', String(oscuro));
+      if (b.title) b.title = oscuro ? 'Modo día' : 'Modo noche';
+    });
+    // Color de la barra del navegador: el elegido, o el de cada modo del sistema
+    const forzado = raiz.dataset.tema ? (oscuro ? colorNoche : colorDia) : null;
+    if (metaDia) metaDia.content = forzado ?? colorDia;
+    if (metaNoche) metaNoche.content = forzado ?? colorNoche;
+  };
+  const aplicarTema = (t: Tema) => {
+    raiz.dataset.tema = t;
+    try {
+      sessionStorage.setItem('tema', t);
+      if (permite('preferencias')) localStorage.setItem('tema', t);
+    } catch {
+      /* almacenamiento bloqueado: vale para esta página */
+    }
+    pintarTema();
+    actualizar();
+  };
+  type Transicion = { ready: Promise<void>; finished: Promise<void> };
+  const alternarTema = (origen?: Element | null) => {
+    const nuevo: Tema = temaActual() === 'oscuro' ? 'claro' : 'oscuro';
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => Transicion };
+    if (!doc.startViewTransition || reducir.matches) return aplicarTema(nuevo);
+    // Un círculo que crece desde el botón
+    const r = origen?.getBoundingClientRect();
+    const x = r && r.width ? r.left + r.width / 2 : innerWidth / 2;
+    const y = r && r.height ? r.top + r.height / 2 : innerHeight / 2;
+    const radio = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    raiz.classList.add('cambiando-tema');
+    const t = doc.startViewTransition(() => aplicarTema(nuevo));
+    t.ready
+      .then(() =>
+        raiz.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radio}px at ${x}px ${y}px)`] },
+          { duration: 700, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)', pseudoElement: '::view-transition-new(root)' }
+        )
+      )
+      .catch(() => {});
+    t.finished.finally(() => raiz.classList.remove('cambiando-tema'));
+  };
+  botonesTema.forEach((b) => b.addEventListener('click', () => alternarTema(b)));
+  sistemaOscuro.addEventListener('change', () => {
+    if (!raiz.dataset.tema) {
+      pintarTema();
+      actualizar();
+    }
+  });
+  // Si después se aceptan las preferencias, se recuerda la elección de esta visita.
+  document.addEventListener(EVENTO_CAMBIO, (e) => {
+    try {
+      const t = sessionStorage.getItem('tema');
+      if ((e as CustomEvent<{ preferencias: boolean }>).detail?.preferencias && t) localStorage.setItem('tema', t);
+    } catch {
+      /* nada */
+    }
+  });
+  pintarTema();
+
   /* ====================== Menú de móvil ====================== */
   const menu = document.querySelector<HTMLDialogElement>('[data-menu]');
   const botonMenu = document.querySelector<HTMLButtonElement>('[data-abrir-menu]');
@@ -1368,11 +1535,24 @@ const atajos = [
     correo: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>',
     enlace: '<path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/>',
     cookies: '<circle cx="12" cy="12" r="8.5"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="14.5" cy="14" r="1" fill="currentColor"/><circle cx="14" cy="8.5" r="0.8" fill="currentColor"/>',
+    tema: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   };
   const icono = (it: Item) => {
     if (it.i) return `<img src="${escapar(it.i)}" alt="" loading="lazy" decoding="async" />`;
     const clave =
-      it.accion === 'azar' ? 'azar' : it.accion === 'cookies' ? 'cookies' : it.u?.startsWith('mailto:') ? 'correo' : it.fuera ? 'enlace' : it.tipo === 'tecnica' ? 'tecnica' : 'pagina';
+      it.accion === 'azar'
+        ? 'azar'
+        : it.accion === 'cookies'
+          ? 'cookies'
+          : it.accion === 'tema'
+            ? 'tema'
+            : it.u?.startsWith('mailto:')
+              ? 'correo'
+              : it.fuera
+                ? 'enlace'
+                : it.tipo === 'tecnica'
+                  ? 'tecnica'
+                  : 'pagina';
     return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONOS[clave]}</svg>`;
   };
 
@@ -1486,6 +1666,10 @@ const atajos = [
   };
   const ejecutar = (it: Item) => {
     if (it.accion === 'azar') return azar();
+    if (it.accion === 'tema') {
+      buscador?.close();
+      return alternarTema(visible(document.querySelector('.cabecera__tema')) ? document.querySelector('.cabecera__tema') : null);
+    }
     if (it.accion === 'cookies') {
       buscador?.close();
       return abrirAjustesCookies();

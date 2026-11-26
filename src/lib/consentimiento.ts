@@ -2,7 +2,8 @@
  * Consentimiento de cookies y almacenamiento (solo en el navegador).
  *
  * - «Necesarias» siempre activas: transiciones entre páginas y este registro.
- * - «Preferencias» opcional: recordar la vista de la página Obra.
+ * - «Preferencias» opcional: recordar la vista de la página Obra y el modo
+ *   noche (sin permiso, el modo elegido solo dura la visita).
  * - La elección caduca a los 12 meses y se vuelve a preguntar.
  * - Scripts futuros que necesiten permiso (p. ej. estadísticas) se escriben como
  *   <script type="text/plain" data-cookies="preferencias">…</script>
@@ -21,7 +22,7 @@ const CLAVE = 'cookies:consentimiento';
 const VERSION = 1;
 const VIGENCIA_MS = 365 * 24 * 60 * 60 * 1000;
 /** Datos guardados que dependen de «Preferencias»: se borran si se rechaza. */
-const DE_PREFERENCIAS = ['obra:modo', 'obra:vista'];
+const DE_PREFERENCIAS = ['obra:modo', 'obra:vista', 'tema'];
 
 export const EVENTO_CAMBIO = 'cookies:cambio';
 export const EVENTO_ABRIR = 'cookies:abrir';

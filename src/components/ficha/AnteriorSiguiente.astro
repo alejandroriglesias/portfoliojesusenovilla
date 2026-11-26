@@ -27,7 +27,7 @@ const { anterior, siguiente } = Astro.props;
   .pn {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-    border-top: 1px solid #dad7d0;
+    border-top: 1px solid var(--line);
   }
   .pn__enlace {
     --dx: -16px;
@@ -43,7 +43,7 @@ const { anterior, siguiente } = Astro.props;
       color 0.35s ease;
   }
   .pn__enlace--ant {
-    border-right: 1px solid #dad7d0;
+    border-right: 1px solid var(--line);
   }
   .pn__enlace--sig {
     --dx: 16px;
@@ -78,7 +78,7 @@ const { anterior, siguiente } = Astro.props;
   @media (max-width: 860px) {
     .pn__enlace--ant {
       border-right: 0;
-      border-bottom: 1px solid #dad7d0;
+      border-bottom: 1px solid var(--line);
     }
   }
 </style>

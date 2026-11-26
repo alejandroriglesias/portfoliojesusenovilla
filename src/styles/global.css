@@ -65,6 +65,17 @@ h3 {
   outline-offset: 3px;
 }
 
+/* Cambio entre día y noche: el círculo lo anima el script de la cabecera
+   (sin el fundido cruzado por defecto de las transiciones de vista). */
+html.cambiando-tema::view-transition-old(root),
+html.cambiando-tema::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html.cambiando-tema::view-transition-new(root) {
+  z-index: 2;
+}
+
 /* Utilidades */
 .contenedor {
   max-width: var(--container);

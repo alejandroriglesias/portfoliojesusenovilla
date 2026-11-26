@@ -146,7 +146,7 @@ const nn = (n: number) => String(n).padStart(2, '0');
 
   {
     capitulos.map((c) => (
-      <section id={c.id} class:list={['capitulo', `capitulo--${c.tono}`]} aria-labelledby={`cap-${c.id}`}>
+      <section id={c.id} class:list={['capitulo', `capitulo--${c.tono}`, { 'tema-claro': c.tono === 'tinta' }]} aria-labelledby={`cap-${c.id}`}>
         <div class="capitulo__in">
           <header class="capitulo__cabeza">
             <p class="capitulo__n">
@@ -459,7 +459,7 @@ const nn = (n: number) => String(n).padStart(2, '0');
     color: var(--c-texto);
   }
   .capitulo--banda {
-    --c-fondo: #efece6;
+    --c-fondo: var(--band);
   }
   .capitulo--tinta {
     --c-fondo: #141312;

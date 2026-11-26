@@ -234,7 +234,7 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
     gap: 4px;
     padding: 11px 16px 10px 14px;
     border-radius: 3px;
-    background: rgba(250, 248, 242, 0.95);
+    background: color-mix(in srgb, var(--paper) 95%, transparent);
     box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.35);
     pointer-events: none;
     clip-path: inset(0 100% 0 0 round 3px);
@@ -324,8 +324,8 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(to bottom, rgba(245, 243, 238, 0.55), transparent 18%, transparent 78%, rgba(245, 243, 238, 0.7)),
-      radial-gradient(ellipse at center, transparent 55%, rgba(245, 243, 238, 0.25));
+      linear-gradient(to bottom, color-mix(in srgb, var(--bg) 55%, transparent), transparent 18%, transparent 78%, color-mix(in srgb, var(--bg) 70%, transparent)),
+      radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--bg) 25%, transparent));
   }
 
   .deriva__nombre {
@@ -526,7 +526,7 @@ const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.d
       bottom: 0;
       gap: 10px 16px;
       padding: 14px var(--gutter) 14px;
-      background: rgba(245, 243, 238, 0.9);
+      background: color-mix(in srgb, var(--bg) 90%, transparent);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       pointer-events: auto;

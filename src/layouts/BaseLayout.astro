@@ -79,6 +79,14 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Modo noche elegido con el botón: se aplica antes de pintar (sin destello).
+         Sin elección, manda el sistema (prefers-color-scheme, en tokens.css). -->
+    <script is:inline>
+      try {
+        var t = sessionStorage.getItem('tema') || localStorage.getItem('tema');
+        if (t === 'oscuro' || t === 'claro') document.documentElement.dataset.tema = t;
+      } catch (e) {}
+    </script>
     <title>{tituloFinal}</title>
     {descripcion && <meta name="description" content={descripcion} />}
     {canonica && <link rel="canonical" href={canonica} />}
@@ -98,7 +106,8 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
     {descripcion && <meta property="og:description" content={descripcion} />}
     {ogAbsoluta && <meta property="og:image" content={ogAbsoluta} />}
     <meta name="twitter:card" content={ogAbsoluta ? 'summary_large_image' : 'summary'} />
-    <meta name="theme-color" content={paleta === 'oscura' ? '#0B0B0B' : '#FAFAF8'} />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content={paleta === 'oscura' ? '#0B0B0B' : '#FAFAF8'} data-color-dia />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131211" data-color-noche />
     <TransicionObras />
     {bloquesJsonLd.map((b) => <script type="application/ld+json" set:html={JSON.stringify(b)} />)}
   </head>
