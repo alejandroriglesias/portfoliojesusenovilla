@@ -1,25 +1,19 @@
 ---
 /**
- * Vista «en casa»: la obra montada sobre una fotografía real de un salón
- * (aparador de roble acanalado, pared blanca con luz de ventana).
+ * Vista «en casa»: la obra colgada en fotografías reales de estancias
+ * (ver estancias.ts: fotos de Unsplash, calibradas a escala).
  *
- * Foto: Imani Bahati en Unsplash (licencia Unsplash: uso libre, también
- * comercial, sin atribución obligatoria).
- * https://unsplash.com/photos/UrQeWGobTnI
- *
- * Cómo se monta:
- * - Escala: el aparador mide unos 2250 px en la foto original (2400 × 2999) y
- *   unos 180 cm en la realidad → 12,5 px por cm. Dentro de la foto, 1em = 1 cm.
- * - La obra cuelga en la pared libre sobre la lámpara, a la izquierda de las
- *   ramas del jarrón. Si es más grande que ese hueco, se reduce (y deja de
- *   estar a escala).
- * - Realismo: encima de la obra se superpone la propia foto en modo
- *   «multiplicar», así la sombra de la ventana cruza también el cuadro; la
- *   sombra arrojada va hacia la derecha, como la de la lámpara.
+ * - Se monta la obra en todas las estancias; cada visita enseña una al azar
+ *   entre aquellas en las que cabe a escala, y el botón «Otra estancia» pasa
+ *   a la siguiente. Sin JavaScript se ve una fija (según la obra).
+ * - Dentro de cada foto, 1em = 1 cm de la escena.
+ * - Realismo: encima de la obra se superpone la propia foto en «multiplicar»
+ *   (las sombras y la luz de la habitación cruzan también el cuadro) y la
+ *   sombra arrojada sigue la luz de cada estancia.
  * - Papel: marco negro fino, paspartú y reflejo de cristal. Lienzo: canto.
  */
 import { getImage } from 'astro:assets';
-import salon from '../../assets/ambiente/salon.jpg';
+import { ESTANCIAS } from './estancias';
 
 interface Props {
   src: string;
@@ -35,62 +29,117 @@ interface Props {
 
 const { src, srcset, ratio, tipo, ladoLargo, aEscala } = Astro.props;
 
-// ---- Geometría de la foto original (px) ----
-const FOTO = { w: 2400, h: 2999 };
-const PX_CM = 12.5;
-const CENTRO_X = 640; // centro del hueco libre en la pared
-const BASE_Y = 1040; // borde inferior de la obra (por encima de la lámpara)
-const MAX = { w: 88, h: 74 }; // cm que caben en ese hueco
-
 // ---- Medidas de lo que cuelga (cm) ----
 const PASPARTU = tipo === 'papel' ? Math.max(5, Math.min(10, ladoLargo * 0.12)) : 0;
 const MARCO = tipo === 'papel' ? 2.4 : 0;
 const ancho = ratio >= 1 ? ladoLargo : ladoLargo * ratio;
 const alto = ratio >= 1 ? ladoLargo / ratio : ladoLargo;
 const bruto = { w: ancho + 2 * (PASPARTU + MARCO), h: alto + 2 * (PASPARTU + MARCO) };
-// Si no cabe en el hueco de la pared, se reduce todo en proporción.
-const reduccion = Math.min(1, MAX.w / bruto.w, MAX.h / bruto.h);
-const exterior = { w: bruto.w * reduccion, h: bruto.h * reduccion };
-const escala = aEscala && reduccion === 1;
 
-// Rectángulo de la obra en % de la foto (para recortar la capa de luz).
-const rect = {
-  izq: ((CENTRO_X - (exterior.w * PX_CM) / 2) / FOTO.w) * 100,
-  der: 100 - ((CENTRO_X + (exterior.w * PX_CM) / 2) / FOTO.w) * 100,
-  arr: ((BASE_Y - exterior.h * PX_CM) / FOTO.h) * 100,
-  aba: 100 - (BASE_Y / FOTO.h) * 100,
-};
+const r = (x: number) => +x.toFixed(4);
 
-const fondo = await getImage({ src: salon, widths: [800, 1200, 1600, 2400], format: 'webp', quality: 80 });
-const fondoSizes = '(max-width: 900px) 100vw, 56vw';
+const capas = await Promise.all(
+  ESTANCIAS.map(async (e) => {
+    const W = e.foto.width;
+    const H = e.foto.height;
+    // Si no cabe en el hueco de la pared, se reduce todo en proporción.
+    const reduccion = Math.min(1, e.max.w / bruto.w, e.max.h / bruto.h);
+    const exterior = { w: bruto.w * reduccion, h: bruto.h * reduccion };
+    const anchoPx = exterior.w * e.pxCm;
+    const altoPx = exterior.h * e.pxCm;
+    // Borde inferior: centrada a la altura de los ojos, sin bajar de `base`.
+    const abajo = e.centro !== undefined ? Math.min(e.base, e.centro + altoPx / 2) : e.base;
 
-const r = (x: number) => +x.toFixed(3);
-const estilo = [
-  `--obra-w: ${r(exterior.w)}`,
-  `--obra-h: ${r(exterior.h)}`,
-  `--paspartu: ${r(PASPARTU * reduccion)}`,
-  `--marco: ${r(MARCO * reduccion)}`,
-  `--x: ${r((CENTRO_X / FOTO.w) * 100)}%`,
-  `--base: ${r(100 - (BASE_Y / FOTO.h) * 100)}%`,
-  `--recorte: inset(${r(rect.arr)}% ${r(rect.der)}% ${r(rect.aba)}% ${r(rect.izq)}%)`,
-].join('; ');
-const pie = escala ? 'La obra colgada en un salón, a escala' : 'La obra colgada en un salón (recreación orientativa)';
+    // Rectángulo de la obra en % de la foto (para recortar la capa de luz).
+    const rect = {
+      izq: ((e.x - anchoPx / 2) / W) * 100,
+      der: 100 - ((e.x + anchoPx / 2) / W) * 100,
+      arr: ((abajo - altoPx) / H) * 100,
+      aba: 100 - (abajo / H) * 100,
+    };
+
+    const zoom = e.zoom ?? 1;
+    const fondo = await getImage({
+      src: e.foto,
+      widths: [800, 1200, 1600, 2000, 2400].filter((w) => w <= W),
+      format: 'webp',
+      quality: 80,
+    });
+    const [s1, s2] = e.sombra;
+    const estilo = [
+      `--ar: ${r(W / H)}`,
+      `--ra: ${r(H / W)}`,
+      `--em: ${r(e.pxCm / W)}`,
+      `--fx: ${e.foco.x}`,
+      `--fy: ${e.foco.y}`,
+      `--zoom: ${zoom}`,
+      `--obra-w: ${r(exterior.w)}`,
+      `--obra-h: ${r(exterior.h)}`,
+      `--paspartu: ${r(PASPARTU * reduccion)}`,
+      `--marco: ${r(MARCO * reduccion)}`,
+      `--x: ${r((e.x / W) * 100)}%`,
+      `--base: ${r(100 - (abajo / H) * 100)}%`,
+      `--recorte: inset(${r(rect.arr)}% ${r(rect.der)}% ${r(rect.aba)}% ${r(rect.izq)}%)`,
+      `--s1: ${s1[0]}em ${s1[1]}em ${s1[2]}em rgba(30, 24, 18, ${s1[3]})`,
+      `--s2: ${s2[0]}em ${s2[1]}em ${s2[2]}em rgba(30, 24, 18, ${s2[3]})`,
+      `--luz-op: ${e.luz.opacidad}`,
+      `--luz-brillo: ${e.luz.brillo}`,
+      `--luz-contraste: ${e.luz.contraste}`,
+    ].join('; ');
+
+    const cabe = reduccion === 1;
+    return {
+      id: e.id,
+      cabe,
+      canto: e.canto,
+      fondo: { src: fondo.src, srcset: fondo.srcSet.attribute },
+      sizes: `(max-width: 900px) ${Math.round(100 * zoom)}vw, ${Math.round(56 * zoom)}vw`,
+      estilo,
+      pie:
+        aEscala && cabe
+          ? `La obra colgada en ${e.descripcion}, a escala`
+          : `La obra colgada en ${e.descripcion} (recreación orientativa)`,
+    };
+  })
+);
+
+// Sin JavaScript: una estancia fija por obra (de las que cabe a escala).
+const candidatas = capas.some((c) => c.cabe) ? capas.filter((c) => c.cabe) : capas;
+const semilla = [...Astro.url.pathname].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+const inicial = candidatas[semilla % candidatas.length];
 ---
 
-<figure class:list={['ambiente', `ambiente--${tipo}`]} data-marco data-ambiente style={estilo}>
-  <div class="foto" aria-hidden="true">
-    <img class="foto__fondo" src={fondo.src} srcset={fondo.srcSet.attribute} sizes={fondoSizes} alt="" loading="lazy" decoding="async" draggable="false" />
+<figure class:list={['ambiente', `ambiente--${tipo}`]} data-marco data-ambiente style={`--ar-obra: ${r(ratio)}`}>
+  {
+    capas.map((c) => (
+      <div class="estancia" data-estancia={c.id} data-cabe={c.cabe ? '' : undefined} data-canto={c.canto} data-pie={c.pie} hidden={c !== inicial} style={c.estilo}>
+        <div class="foto" aria-hidden="true">
+          <img class="foto__fondo" src={c.fondo.src} srcset={c.fondo.srcset} sizes={c.sizes} alt="" loading="lazy" decoding="async" draggable="false" />
 
-    <div class="cuadro">
-      <div class="cuadro__obra">
-        <img src={src} srcset={srcset} sizes="(max-width: 900px) 50vw, 25vw" alt="" loading="lazy" decoding="async" draggable="false" />
+          <div class="cuadro">
+            <div class="cuadro__obra">
+              <img src={src} srcset={srcset} sizes="(max-width: 900px) 50vw, 25vw" alt="" loading="lazy" decoding="async" draggable="false" />
+            </div>
+          </div>
+
+          <!-- La luz de la habitación sobre la obra: la misma foto, en «multiplicar» y recortada a la obra -->
+          <img class="foto__luz" src={c.fondo.src} srcset={c.fondo.srcset} sizes={c.sizes} alt="" loading="lazy" decoding="async" draggable="false" />
+        </div>
       </div>
-    </div>
-
-    <!-- La luz de la habitación sobre la obra: la misma foto, en «multiplicar» y recortada a la obra -->
-    <img class="foto__luz" src={fondo.src} srcset={fondo.srcSet.attribute} sizes={fondoSizes} alt="" loading="lazy" decoding="async" draggable="false" />
-  </div>
-  <figcaption class="sr-only">{pie}</figcaption>
+    ))
+  }
+  {
+    candidatas.length > 1 && (
+      <button class="ambiente__otra" type="button" data-otra hidden>
+        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 11a8 8 0 0 0-14.9-4M4 4v4h4" />
+          <path d="M4 13a8 8 0 0 0 14.9 4M20 20v-4h-4" />
+        </svg>
+        Otra estancia
+      </button>
+    )
+  }
+  <figcaption class="sr-only" data-pie-activo aria-live="polite">{inicial.pie}</figcaption>
 </figure>
 
 <style>
@@ -102,19 +151,28 @@ const pie = escala ? 'La obra colgada en un salón, a escala' : 'La obra colgada
     overflow: hidden;
     container-type: size;
     background: #e6e4e0;
+    /* Hueco libre arriba (la cabecera superpuesta en móvil) */
+    --despeje: 0px;
+  }
+  .estancia {
+    position: absolute;
+    inset: 0;
+  }
+  .estancia[hidden] {
+    display: none;
   }
 
-  /* La foto cubre el marco (como object-fit: cover), centrada cerca de la obra.
-     Dentro, 1em = 1 cm de la escena. */
+  /* La foto cubre el marco (como object-fit: cover, con zoom opcional) y deja
+     el foco de la estancia en el centro del hueco visible. 1em = 1 cm. */
   .foto {
-    --fw: max(100cqw, calc(100cqh * 0.8003));
-    --fh: calc(var(--fw) * 1.24958);
+    --fw: calc(max(100cqw, 100cqh * var(--ar)) * var(--zoom));
+    --fh: calc(var(--fw) * var(--ra));
     position: absolute;
     width: var(--fw);
     height: var(--fh);
-    left: clamp(calc(100cqw - var(--fw)), calc(50cqw - 0.3 * var(--fw)), 0px);
-    top: clamp(calc(100cqh - var(--fh)), calc(50cqh - 0.4 * var(--fh)), 0px);
-    font-size: calc(var(--fw) * 0.0052083);
+    left: clamp(calc(100cqw - var(--fw)), calc(50cqw - var(--fx) * var(--fw)), 0px);
+    top: clamp(calc(100cqh - var(--fh)), calc(50cqh + var(--despeje) / 2 - var(--fy) * var(--fh)), var(--despeje));
+    font-size: calc(var(--fw) * var(--em));
   }
   .foto__fondo,
   .foto__luz {
@@ -125,12 +183,12 @@ const pie = escala ? 'La obra colgada en un salón, a escala' : 'La obra colgada
     display: block;
     user-select: none;
   }
-  /* La luz real (sombra de la ventana) sobre el cuadro */
+  /* La luz real de la estancia sobre el cuadro */
   .foto__luz {
     clip-path: var(--recorte);
     mix-blend-mode: multiply;
-    filter: brightness(1.12) contrast(1.08);
-    opacity: 0.75;
+    filter: brightness(var(--luz-brillo)) contrast(var(--luz-contraste));
+    opacity: var(--luz-op);
     pointer-events: none;
   }
 
@@ -142,10 +200,7 @@ const pie = escala ? 'La obra colgada en un salón, a escala' : 'La obra colgada
     width: calc(var(--obra-w) * 1em);
     height: calc(var(--obra-h) * 1em);
     transform: translateX(-50%);
-    /* Sombra hacia la derecha y abajo, como la de la lámpara */
-    box-shadow:
-      0.35em 0.5em 0.7em rgba(30, 24, 18, 0.32),
-      1.6em 2.4em 4.5em rgba(30, 24, 18, 0.2);
+    box-shadow: var(--s1), var(--s2);
   }
   .cuadro__obra {
     position: relative;
@@ -185,35 +240,172 @@ const pie = escala ? 'La obra colgada en un salón, a escala' : 'La obra colgada
     pointer-events: none;
   }
 
-  /* Lienzo: canto del bastidor */
+  /* Lienzo: canto del bastidor, del lado que ve la cámara */
   .ambiente--lienzo .cuadro__obra {
     box-shadow:
       inset -0.35em 0 0.45em rgba(0, 0, 0, 0.2),
       inset 0 -0.3em 0.45em rgba(0, 0, 0, 0.12);
   }
-  .ambiente--lienzo .cuadro::before {
+  .ambiente--lienzo [data-canto='izq'] .cuadro__obra {
+    box-shadow:
+      inset 0.35em 0 0.45em rgba(0, 0, 0, 0.2),
+      inset 0 -0.3em 0.45em rgba(0, 0, 0, 0.12);
+  }
+  .ambiente--lienzo [data-canto='der'] .cuadro::before,
+  .ambiente--lienzo [data-canto='izq'] .cuadro::before {
     content: '';
     position: absolute;
     top: 0.5em;
-    right: -1.1em;
     width: 1.1em;
     height: calc(100% - 0.5em);
+  }
+  .ambiente--lienzo [data-canto='der'] .cuadro::before {
+    right: -1.1em;
     background: linear-gradient(90deg, rgba(40, 32, 24, 0.5), rgba(40, 32, 24, 0.18));
     transform: skewY(-35deg);
     transform-origin: left top;
+  }
+  .ambiente--lienzo [data-canto='izq'] .cuadro::before {
+    left: -1.1em;
+    background: linear-gradient(270deg, rgba(40, 32, 24, 0.5), rgba(40, 32, 24, 0.18));
+    transform: skewY(35deg);
+    transform-origin: right top;
+  }
+
+  /* ---------- Otra estancia ---------- */
+  .ambiente__otra {
+    position: absolute;
+    z-index: 2;
+    right: 20px;
+    bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--tap);
+    padding: 0 18px 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-pill);
+    background: rgba(250, 250, 248, 0.72);
+    -webkit-backdrop-filter: blur(10px) saturate(1.4);
+    backdrop-filter: blur(10px) saturate(1.4);
+    box-shadow: 0 8px 24px -12px rgba(20, 16, 10, 0.45);
+    font: 600 13px/1 var(--font-body);
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      background 0.3s ease,
+      transform 0.3s var(--ease-out);
+  }
+  .ambiente__otra[hidden] {
+    display: none;
+  }
+  .ambiente__otra:hover {
+    background: rgba(250, 250, 248, 0.92);
+  }
+  .ambiente__otra svg {
+    transition: transform 0.6s var(--ease-out);
+  }
+  .ambiente__otra:hover svg {
+    transform: rotate(180deg);
+  }
+  .ambiente__otra:active {
+    transform: scale(0.97);
+  }
+  .ambiente__otra:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
   }
 
   @media (max-width: 900px) {
     .ambiente {
       flex: 0 0 100%;
-      height: min(86svh, 125vw);
-      min-height: 420px;
+      /* Al menos tan alta como la foto principal del carrusel (misma fórmula
+         que .marco en GaleriaObra: 84 px arriba + 56 px abajo), para que no
+         quede hueco debajo. Altura explícita: con «auto» las unidades cqh
+         valen 0 y la foto se descoloca. */
+      height: max(420px, min(86svh, 125vw), min(86svh, calc(100vw / var(--ar-obra) + 140px)));
+      min-height: 0;
       scroll-snap-align: start;
+      /* La cabecera superpuesta ocupa la parte de arriba: la foto baja para
+         que la obra quede debajo. */
+      --despeje: 64px;
     }
-    /* La cabecera ocupa ~110 px arriba: la foto baja para que la obra quede
-       debajo (se recorta el sofá de abajo). */
-    .foto {
-      top: 104px;
+    .ambiente__otra {
+      right: 14px;
+      bottom: 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ambiente__otra,
+    .ambiente__otra svg {
+      transition: none;
     }
   }
 </style>
+
+<script>
+  // Cada visita, una estancia al azar (de las que la obra cabe a escala);
+  // «Otra estancia» pasa a la siguiente con un fundido.
+  const reducir = matchMedia('(prefers-reduced-motion: reduce)');
+
+  document.querySelectorAll<HTMLElement>('[data-ambiente]').forEach((fig) => {
+    const capas = [...fig.querySelectorAll<HTMLElement>('[data-estancia]')];
+    const boton = fig.querySelector<HTMLButtonElement>('[data-otra]');
+    const pie = fig.querySelector<HTMLElement>('[data-pie-activo]');
+    const caben = capas.filter((c) => c.hasAttribute('data-cabe'));
+    const orden = (caben.length ? caben : capas).slice();
+    if (orden.length < 2) return;
+
+    // Orden aleatorio (Fisher–Yates): la primera es la de esta visita.
+    for (let i = orden.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [orden[i], orden[j]] = [orden[j], orden[i]];
+    }
+    let actual = capas.find((c) => !c.hidden)!;
+    let i = 0;
+
+    // Deja visible solo la estancia actual.
+    const recoger = () =>
+      capas.forEach((c) => {
+        c.hidden = c !== actual;
+        c.style.zIndex = '';
+        c.style.opacity = '';
+      });
+
+    const mostrar = async (nueva: HTMLElement, fundido: boolean) => {
+      if (nueva === actual) return;
+      actual = nueva;
+      if (pie) pie.textContent = nueva.dataset.pie ?? '';
+      if (!fundido || reducir.matches) {
+        recoger();
+        return;
+      }
+      // Encima de la anterior y transparente hasta que su foto esté lista.
+      nueva.style.zIndex = '1';
+      nueva.style.opacity = '0';
+      nueva.hidden = false;
+      const fondo = nueva.querySelector<HTMLImageElement>('.foto__fondo');
+      if (fondo) {
+        fondo.loading = 'eager';
+        await fondo.decode().catch(() => {});
+      }
+      if (actual !== nueva) return; // otro clic mientras cargaba
+      nueva.style.opacity = '';
+      await nueva
+        .animate([{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' })
+        .finished.catch(() => {});
+      if (actual === nueva) recoger();
+    };
+
+    mostrar(orden[0], false);
+    if (boton) {
+      boton.hidden = false;
+      boton.addEventListener('click', () => {
+        i = (i + 1) % orden.length;
+        mostrar(orden[i], true);
+      });
+    }
+  });
+</script>
