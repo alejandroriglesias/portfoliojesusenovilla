@@ -1,44 +1,100 @@
 ---
 /**
  * Cabecera común.
- * - variante "solida": fija arriba con fondo (portadas 01, 04–06, páginas interiores).
- * - variante "superpuesta": flota sobre el contenido (portada y ficha de obra).
+ * - Escritorio: firma · píldora de cristal con los enlaces (un resaltado se
+ *   desliza al enlace activo o al que está bajo el ratón) · Buscar (Ctrl/⌘ K)
+ *   · Contacto.
+ * - Móvil: firma · Buscar · «Menú», que abre un menú a pantalla completa con
+ *   miniaturas, accesos rápidos, redes y enlaces legales.
+ * - Se esconde al bajar y reaparece al subir (no con movimiento reducido, ni
+ *   con el foco o el ratón dentro).
+ * - Buscador: diálogo tipo paleta de órdenes con obras (también por lo que se
+ *   ve en la imagen: «puente», «nieve»…), técnicas, páginas y atajos.
  *
- * Tono adaptativo: un script mira qué hay debajo de la marca, de los enlaces y
- * del botón (fondo de color o la luminosidad real de la foto) y pone en <html>
- * data-cabecera (enlaces), data-cabecera-marca (firma) y data-cabecera-boton:
- * «claro» u «oscuro».
- * Sobre zonas claras, texto negro; sobre oscuras, blanco; con fundido suave.
+ * Variantes: «solida» (fija arriba con fondo) y «superpuesta» (flota sobre el
+ * contenido: portada y ficha de obra).
+ *
+ * Tono adaptativo: un script mira qué hay debajo de la firma, de la píldora y
+ * de los botones (fondo de color o la luminosidad real de la foto) y pone en
+ * <html> data-cabecera (enlaces), data-cabecera-marca (firma) y
+ * data-cabecera-boton (botones): «claro» u «oscuro».
  */
+import { getImage } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import { rutaLimpia } from '../lib/rutas';
+import { getObras, getTecnicas, getSobreMi } from '../lib/contenido';
+import { getAjustes, esMarcador } from '../lib/ajustes';
+import Firma from './marca/Firma.astro';
+import Redes from './Redes.astro';
+
 interface Props {
   variante?: 'solida' | 'superpuesta';
 }
 
-import { rutaLimpia } from '../lib/rutas';
-import Firma from './marca/Firma.astro';
-
 const { variante = 'solida' } = Astro.props;
 const ruta = rutaLimpia(Astro.url.pathname);
+const activo = (href: string) => ruta === href || ruta.startsWith(href + '/');
 
 const enlaces = [
   { href: '/obra', texto: 'Obra' },
-  { href: '/obra#tecnicas', texto: 'Técnicas' },
+  { href: '/tecnicas', texto: 'Técnicas' },
   { href: '/sobre-mi', texto: 'Sobre mí' },
 ];
 
-const activo = (href: string) => {
-  if (href === '/obra#tecnicas') return ruta.startsWith('/tecnicas');
-  return !href.includes('#') && (ruta === href || ruta.startsWith(href + '/'));
-};
+// ---- Datos del menú de móvil ----
+const ajustes = await getAjustes();
+const emailValido = !!ajustes.email && !esMarcador(ajustes.email) && ajustes.email.includes('@');
+const instagram = ajustes.instagram && !esMarcador(ajustes.instagram) ? ajustes.instagram : undefined;
+const obras = await getObras();
+const principales = await getTecnicas('principal');
+const sobreMi = await getSobreMi();
+// Para «Obra», una destacada en color (el grabado ya sale en «Técnicas»).
+const destacada =
+  obras.find((o) => o.data.destacada && o.data.tecnica.discriminant !== 'grabado') ??
+  obras.find((o) => o.data.destacada) ??
+  obras[0];
+const grabado = obras.find((o) => o.data.tecnica.discriminant === 'grabado');
+const mini = async (im?: ImageMetadata | null) =>
+  im ? (await getImage({ src: im, width: Math.min(im.width, 200), format: 'webp', quality: 65 })).src : undefined;
+
+const enlacesMenu = [
+  { href: '/obra', texto: 'Obra', meta: `${obras.length} obras`, img: await mini(destacada?.data.imagen) },
+  {
+    href: '/tecnicas',
+    texto: 'Técnicas',
+    meta: principales.map((t) => t.data.nombre).join(' · '),
+    img: await mini(grabado?.data.imagenPlancha ?? grabado?.data.imagen),
+  },
+  { href: '/sobre-mi', texto: 'Sobre mí', meta: 'Pintor y grabador', img: await mini(sobreMi.data.retrato) },
+  { href: '/contacto', texto: 'Contacto', meta: emailValido ? ajustes.email : 'Escríbeme', img: undefined },
+];
+const legales = (await getCollection('legal')).sort((a, b) => a.data.orden - b.data.orden);
+
+// ---- Páginas y atajos del buscador (las obras y técnicas llegan de /buscar.json) ----
+const paginas = [
+  { t: 'Toda la obra', u: '/obra', m: 'Óleo, acuarela y grabado', d: 'obra catalogo galeria cuadros pinturas grabados' },
+  { t: 'Técnicas', u: '/tecnicas', m: 'Óleo · Acuarela · Grabado', d: 'tecnicas como pinta proceso materiales' },
+  { t: 'Sobre mí', u: '/sobre-mi', m: 'Pintor y grabador', d: 'biografia artista quien jesus senovilla' },
+  { t: 'Contacto', u: '/contacto', m: 'Consultas, precios y encargos', d: 'correo email escribir comprar precio encargo' },
+  ...legales.map((l) => ({ t: l.data.titulo, u: `/${l.id}`, m: 'Información legal', d: 'legal pago transferencia bizum envio privacidad cookies' })),
+];
+const atajos = [
+  { t: 'Obra al azar', m: 'Abre una obra cualquiera', d: 'aleatoria sorpresa azar', accion: 'azar' },
+  ...(emailValido ? [{ t: 'Escribir un correo', m: ajustes.email, d: 'email correo contacto', u: `mailto:${ajustes.email}` }] : []),
+  ...(instagram ? [{ t: 'Instagram', m: 'Obra reciente y proceso', d: 'redes sociales instagram', u: instagram, fuera: true }] : []),
+  { t: 'Ajustes de cookies', m: 'Revisar lo que aceptaste', d: 'cookies privacidad consentimiento', accion: 'cookies' },
+];
 ---
 
-<header class:list={['cabecera', `cabecera--${variante}`]}>
+<header class:list={['cabecera', `cabecera--${variante}`]} data-cabecera-el>
   <div class="cabecera__barra">
     <a class="cabecera__marca" href="/">
       <Firma alto="var(--alto-firma)" />
       <span class="sr-only">Jesús Senovilla — Inicio</span>
     </a>
-    <nav aria-label="Principal" class="cabecera__nav">
+
+    <nav aria-label="Principal" class="cabecera__nav" data-nav>
+      <span class="cabecera__indicador" aria-hidden="true" data-indicador></span>
       {
         enlaces.map((e) => (
           <a class="cabecera__enlace" href={e.href} aria-current={activo(e.href) ? 'page' : undefined}>
@@ -47,98 +103,319 @@ const activo = (href: string) => {
         ))
       }
     </nav>
-    <a
-      class="cabecera__cta"
-      href="/contacto"
-      aria-current={activo('/contacto') ? 'page' : undefined}
-    >
-      <span class="cabecera__cta-punto" aria-hidden="true"></span>
-      Contacto
-      <svg class="cabecera__cta-flecha" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9" /></svg>
-    </a>
+
+    <div class="cabecera__acciones">
+      <button class="cabecera__buscar" type="button" data-abrir-buscador aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K">
+        <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+        <span class="cabecera__buscar-texto">Buscar</span>
+        <kbd class="cabecera__atajo" data-atajo>Ctrl K</kbd>
+        <span class="sr-only cabecera__buscar-sr">Buscar en la web</span>
+      </button>
+      <a class="cabecera__cta" href="/contacto" aria-current={activo('/contacto') ? 'page' : undefined}>
+        <span class="cabecera__cta-punto" aria-hidden="true"></span>
+        Contacto
+        <svg class="cabecera__cta-flecha" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"></path></svg>
+      </a>
+      <button class="cabecera__menu" type="button" data-abrir-menu aria-haspopup="dialog" aria-controls="menu-movil">
+        <span class="cabecera__menu-icono" aria-hidden="true"><i></i><i></i></span>
+        Menú
+      </button>
+    </div>
   </div>
 </header>
+
+<!-- Menú a pantalla completa (móvil) -->
+<dialog id="menu-movil" class="menu" aria-label="Menú" data-menu data-lenis-prevent>
+  <div class="menu__cabeza">
+    <a class="menu__marca" href="/">
+      <Firma alto="44px" />
+      <span class="sr-only">Jesús Senovilla — Inicio</span>
+    </a>
+    <button class="menu__cerrar" type="button" data-cerrar-menu>
+      Cerrar
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+  </div>
+
+  <nav aria-label="Menú principal" class="menu__nav">
+    <ol class="menu__lista" role="list">
+      {
+        enlacesMenu.map((e, i) => (
+          <li class="menu__item" style={`--i: ${i}`}>
+            <a class="menu__enlace" href={e.href} aria-current={activo(e.href) ? 'page' : undefined}>
+              <span class="menu__num" aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span class="menu__texto">
+                <span class="menu__nombre">{e.texto}</span>
+                <span class="menu__meta">{e.meta}</span>
+              </span>
+              {e.img ? (
+                <span class="menu__mini" aria-hidden="true">
+                  <img src={e.img} alt="" loading="lazy" decoding="async" />
+                </span>
+              ) : (
+                <span class="menu__flecha" aria-hidden="true">
+                  ↗
+                </span>
+              )}
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+
+  <div class="menu__acciones menu__item" style={`--i: ${enlacesMenu.length}`}>
+    <button class="menu__accion" type="button" data-abrir-buscador>
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+      Buscar
+    </button>
+    <a class="menu__accion" href="/obra" data-azar>
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"></rect><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"></circle></svg>
+      Obra al azar
+    </a>
+  </div>
+
+  <div class="menu__pie menu__item" style={`--i: ${enlacesMenu.length + 1}`}>
+    <Redes tono="oscuro" />
+    {
+      legales.length > 0 && (
+        <nav aria-label="Información legal" class="menu__legal">
+          {legales.map((l) => (
+            <a href={`/${l.id}`}>{l.data.titulo}</a>
+          ))}
+        </nav>
+      )
+    }
+  </div>
+</dialog>
+
+<!-- Buscador (Ctrl/⌘ K o «/») -->
+<dialog class="buscador" aria-label="Buscar en la web" data-buscador data-lenis-prevent>
+  <div class="buscador__campo">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+    <input
+      type="text"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls="buscador-resultados"
+      aria-autocomplete="list"
+      aria-label="Busca obras, técnicas o páginas"
+      placeholder="Busca obras, técnicas, años… (p. ej. «puente»)"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      enterkeyhint="go"
+      data-buscador-campo
+    />
+    <button class="buscador__cerrar" type="button" data-cerrar-buscador>
+      <span class="buscador__esc">Esc</span>
+      <span class="sr-only">Cerrar el buscador</span>
+    </button>
+  </div>
+  <div class="buscador__resultados" id="buscador-resultados" role="listbox" aria-label="Resultados" data-resultados></div>
+  <p class="sr-only" aria-live="polite" data-estado></p>
+  <div class="buscador__pie" aria-hidden="true">
+    <span><kbd>↑</kbd><kbd>↓</kbd> moverse</span>
+    <span><kbd>↵</kbd> abrir</span>
+    <span><kbd>esc</kbd> cerrar</span>
+  </div>
+  <script is:inline type="application/json" data-buscador-datos set:html={JSON.stringify({ paginas, atajos }).replace(/</g, '\\u003c')} />
+</dialog>
 
 <style>
   .cabecera {
     /* Alto de la firma manuscrita (el ancho sale de su proporción, ≈ 1.5). */
-    --alto-firma: 72px;
+    --alto-firma: 64px;
+    /* Píldoras (navegación y buscar) y el resaltado que se desliza */
+    --pildora-fondo: rgba(20, 20, 20, 0.05);
+    --pildora-borde: transparent;
+    --pildora-sombra: none;
+    --indicador-fondo: #ffffff;
+    --indicador-sombra: 0 1px 2px rgba(20, 16, 10, 0.1), 0 6px 14px -6px rgba(20, 16, 10, 0.28);
+    transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .cabecera--superpuesta {
-    --alto-firma: 68px;
+    --alto-firma: 62px;
   }
-  /* Marca a la izquierda, enlaces centrados y botón a la derecha */
+
+  /* Marca a la izquierda, enlaces centrados y acciones a la derecha */
   .cabecera__barra {
     max-width: var(--container);
     margin: 0 auto;
     padding: 8px var(--gutter);
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    grid-template-areas: 'marca nav cta';
+    grid-template-areas: 'marca nav acciones';
     align-items: center;
-    gap: 8px 32px;
+    gap: 8px 24px;
   }
   .cabecera__marca {
     grid-area: marca;
     justify-self: start;
+    display: flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: inherit;
+    text-decoration: none;
   }
+
+  /* ---------- Píldora de navegación ---------- */
   .cabecera__nav {
     grid-area: nav;
     justify-self: center;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border: 1px solid var(--pildora-borde);
+    border-radius: var(--radius-pill);
+    background: var(--pildora-fondo);
+    box-shadow: var(--pildora-sombra);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    backdrop-filter: blur(16px) saturate(1.5);
+    transition:
+      background 0.45s ease,
+      border-color 0.45s ease,
+      box-shadow 0.45s ease,
+      color 0.45s ease;
   }
-  .cabecera__cta {
-    grid-area: cta;
-    justify-self: end;
+  .cabecera__enlace {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 18px;
+    border-radius: var(--radius-pill);
+    font-size: 14.5px;
+    font-weight: 550;
+    letter-spacing: 0.005em;
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  /* El enlace activo lleva un punto bermellón */
+  .cabecera__enlace[aria-current='page']::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .cabecera__indicador {
+    position: absolute;
+    z-index: 0;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: var(--ind-w, 0px);
+    border-radius: var(--radius-pill);
+    background: var(--indicador-fondo);
+    box-shadow: var(--indicador-sombra);
+    opacity: 0;
+    transform: translateX(var(--ind-x, 0px));
+    transition:
+      transform 0.5s cubic-bezier(0.3, 0.9, 0.3, 1),
+      width 0.5s cubic-bezier(0.3, 0.9, 0.3, 1),
+      opacity 0.3s ease,
+      background 0.45s ease;
+  }
+  .cabecera__nav.con-indicador .cabecera__indicador {
+    opacity: 1;
+  }
+  .cabecera__nav.sin-transicion .cabecera__indicador {
+    transition: none;
+  }
+  /* Sin JavaScript: el activo con su fondo */
+  .cabecera__nav:not(.con-js) .cabecera__enlace[aria-current='page'] {
+    background: var(--indicador-fondo);
+    box-shadow: var(--indicador-sombra);
   }
 
-  .cabecera__marca {
+  /* ---------- Acciones: buscar, contacto, menú ---------- */
+  .cabecera__acciones {
+    grid-area: acciones;
+    justify-self: end;
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: var(--tap);
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 22px;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    color: inherit;
   }
-
-  .cabecera__nav {
-    display: flex;
-    flex-wrap: wrap;
+  .cabecera__buscar {
+    display: inline-flex;
     align-items: center;
-    gap: 4px 36px;
+    gap: 9px;
+    min-height: var(--tap);
+    padding: 0 7px 0 15px;
+    border: 1px solid var(--pildora-borde);
+    border-radius: var(--radius-pill);
+    background: var(--pildora-fondo);
+    box-shadow: var(--pildora-sombra);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    backdrop-filter: blur(16px) saturate(1.5);
+    font: 550 14px/1 var(--font-body);
+    color: inherit;
+    cursor: pointer;
+    transition:
+      background 0.45s ease,
+      border-color 0.45s ease,
+      color 0.45s ease;
   }
-
-  .cabecera__enlace {
-    position: relative;
-    padding: 12px 2px;
-    font-size: 15px;
-    font-weight: 500;
-    text-decoration: none;
+  .cabecera__buscar:hover {
+    background: var(--indicador-fondo);
+  }
+  .cabecera__atajo {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 9px;
+    border-radius: var(--radius-pill);
+    background: var(--indicador-fondo);
+    box-shadow: var(--indicador-sombra);
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.04em;
     color: inherit;
   }
+  .cabecera__buscar:hover .cabecera__atajo {
+    box-shadow: none;
+    background: var(--pildora-fondo);
+  }
 
-  /* Botón de contacto: píldora con el punto bermellón que late despacio y una
-     flecha que aparece al pasar el ratón. */
+  /* Contacto: píldora con el punto bermellón que late despacio y una flecha
+     que aparece al pasar el ratón. */
   .cabecera__cta {
     position: relative;
     display: inline-flex;
     align-items: center;
     gap: 9px;
     min-height: var(--tap);
+    padding: 0 20px 0 16px;
+    border: 1px solid var(--ink);
     border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--paper);
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.01em;
     text-decoration: none;
+    box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.45);
     transition:
       background 0.35s ease,
       color 0.35s ease,
       border-color 0.35s ease,
       transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
       box-shadow 0.35s ease;
+  }
+  .cabecera__cta:hover,
+  .cabecera__cta:focus-visible {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px -10px rgba(200, 55, 26, 0.6);
   }
   .cabecera__cta-punto {
     position: relative;
@@ -147,6 +424,10 @@ const activo = (href: string) => {
     border-radius: 50%;
     background: var(--accent);
     flex: 0 0 auto;
+  }
+  .cabecera__cta:hover .cabecera__cta-punto,
+  .cabecera__cta:focus-visible .cabecera__cta-punto {
+    background: var(--on-accent);
   }
   .cabecera__cta-punto::after {
     content: '';
@@ -185,14 +466,43 @@ const activo = (href: string) => {
     opacity: 1;
     transform: none;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .cabecera__cta-punto::after {
-      animation: none;
-    }
-    .cabecera__cta,
-    .cabecera__cta-flecha {
-      transition: none;
-    }
+
+  /* Menú (solo móvil) */
+  .cabecera__menu {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tap);
+    padding: 0 18px 0 16px;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--paper);
+    font: 600 14px/1 var(--font-body);
+    cursor: pointer;
+    box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.45);
+    transition:
+      background 0.35s ease,
+      color 0.35s ease,
+      border-color 0.35s ease;
+  }
+  .cabecera__menu-icono {
+    display: grid;
+    gap: 4px;
+    width: 16px;
+  }
+  .cabecera__menu-icono i {
+    display: block;
+    height: 1.6px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .cabecera__menu-icono i:last-child {
+    width: 70%;
+  }
+  .cabecera__menu:hover .cabecera__menu-icono i:last-child {
+    transform: translateX(30%);
   }
 
   /* ---------- Sólida ---------- */
@@ -206,18 +516,27 @@ const activo = (href: string) => {
     border-bottom: 1px solid var(--line);
     color: var(--ink);
     transition:
+      transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
       background 0.45s ease,
       color 0.45s ease,
       border-color 0.45s ease;
   }
+  /* Se esconde al bajar */
+  .cabecera--solida.is-oculta {
+    transform: translateY(-101%);
+  }
 
-  /* ---------- Sobre zonas oscuras (data-cabecera en <html>, ver script) ---------- */
+  /* Sobre zonas oscuras (data-cabecera en <html>, ver script) */
   :global(html[data-cabecera='oscuro']) .cabecera--solida {
+    --pildora-fondo: rgba(255, 255, 255, 0.08);
+    --indicador-fondo: rgba(255, 255, 255, 0.16);
+    --indicador-sombra: none;
     background: rgba(14, 13, 12, 0.82);
     border-bottom-color: rgba(250, 250, 248, 0.1);
     color: var(--paper);
   }
-  :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__cta {
+  :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__cta,
+  :global(html[data-cabecera='oscuro']) .cabecera--solida .cabecera__menu {
     background: var(--paper);
     border-color: var(--paper);
     color: var(--ink);
@@ -232,46 +551,8 @@ const activo = (href: string) => {
   :global(html[data-cabecera='oscuro']) .cabecera--solida :focus-visible {
     outline-color: var(--accent-on-dark);
   }
-  @media (prefers-reduced-motion: reduce) {
-    .cabecera--solida {
-      transition: none;
-    }
-  }
-  .cabecera--solida .cabecera__enlace::after {
-    content: '';
-    position: absolute;
-    left: 2px;
-    right: 2px;
-    bottom: 6px;
-    height: 2px;
-    background: var(--accent);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.35s ease;
-  }
-  .cabecera--solida .cabecera__enlace:hover::after,
-  .cabecera--solida .cabecera__enlace[aria-current='page']::after {
-    transform: scaleX(1);
-  }
-  .cabecera--solida .cabecera__cta {
-    padding: 12px 22px 12px 18px;
-    background: var(--ink);
-    color: var(--bg);
-    box-shadow: 0 6px 18px -8px rgba(20, 16, 10, 0.45);
-  }
-  .cabecera--solida .cabecera__cta:hover,
-  .cabecera--solida .cabecera__cta:focus-visible {
-    background: var(--accent);
-    color: var(--on-accent);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 26px -10px rgba(200, 55, 26, 0.6);
-  }
-  .cabecera--solida .cabecera__cta:hover .cabecera__cta-punto,
-  .cabecera--solida .cabecera__cta:focus-visible .cabecera__cta-punto {
-    background: var(--on-accent);
-  }
 
-  /* ---------- Superpuesta: texto negro o blanco según lo que haya debajo ---------- */
+  /* ---------- Superpuesta: cristal claro u oscuro según lo de debajo ---------- */
   .cabecera--superpuesta {
     position: sticky;
     top: 0;
@@ -281,54 +562,39 @@ const activo = (href: string) => {
   }
   .cabecera--superpuesta .cabecera__barra {
     padding-block: 10px;
+    transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  .cabecera--superpuesta .cabecera__marca,
-  .cabecera--superpuesta .cabecera__enlace {
-    transition:
-      color 0.45s ease,
-      text-shadow 0.45s ease;
+  .cabecera--superpuesta.is-oculta .cabecera__barra {
+    transform: translateY(calc(-100% - 12px));
+  }
+  .cabecera--superpuesta .cabecera__nav,
+  .cabecera--superpuesta .cabecera__acciones {
+    --pildora-fondo: rgba(250, 250, 248, 0.64);
+    --pildora-borde: rgba(255, 255, 255, 0.6);
+    --pildora-sombra: 0 10px 30px -16px rgba(20, 16, 10, 0.42);
   }
   .cabecera--superpuesta .cabecera__marca {
-    font-size: 20px;
+    transition: color 0.45s ease;
   }
-  .cabecera--superpuesta .cabecera__enlace {
-    text-shadow: 0 0 14px rgba(250, 250, 248, 0.55);
+  .cabecera--superpuesta .cabecera__acciones {
+    transition: color 0.45s ease;
   }
-  .cabecera--superpuesta .cabecera__enlace:hover,
-  .cabecera--superpuesta .cabecera__enlace[aria-current='page'] {
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 7px;
-  }
-  .cabecera--superpuesta .cabecera__cta {
-    padding: 10px 20px 10px 16px;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: var(--paper);
-    box-shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.5);
-  }
-  .cabecera--superpuesta .cabecera__cta:hover,
-  .cabecera--superpuesta .cabecera__cta:focus-visible {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--on-accent);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 26px -10px rgba(200, 55, 26, 0.6);
-  }
-  .cabecera--superpuesta .cabecera__cta:hover .cabecera__cta-punto,
-  .cabecera--superpuesta .cabecera__cta:focus-visible .cabecera__cta-punto {
-    background: var(--on-accent);
-  }
-
-  /* Navegación sobre zona oscura */
   :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__nav {
+    --pildora-fondo: rgba(18, 17, 16, 0.42);
+    --pildora-borde: rgba(255, 255, 255, 0.14);
+    --indicador-fondo: rgba(255, 255, 255, 0.17);
+    --indicador-sombra: none;
     color: var(--paper);
   }
-  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__enlace {
-    text-shadow: 0 0 14px rgba(0, 0, 0, 0.45);
+  :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__acciones {
+    --pildora-fondo: rgba(18, 17, 16, 0.42);
+    --pildora-borde: rgba(255, 255, 255, 0.14);
+    --indicador-fondo: rgba(255, 255, 255, 0.17);
+    --indicador-sombra: none;
+    color: var(--paper);
   }
-  :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__cta {
+  :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__cta,
+  :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__menu {
     background: var(--paper);
     border-color: var(--paper);
     color: var(--ink);
@@ -339,7 +605,8 @@ const activo = (href: string) => {
     border-color: var(--accent);
     color: var(--on-accent);
   }
-  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta :focus-visible {
+  :global(html[data-cabecera='oscuro']) .cabecera--superpuesta .cabecera__nav :focus-visible,
+  :global(html[data-cabecera-boton='oscuro']) .cabecera--superpuesta .cabecera__acciones :focus-visible {
     outline-color: var(--paper);
   }
   /* Firma sobre zona oscura (se mira aparte: puede caer sobre otra foto) */
@@ -347,65 +614,498 @@ const activo = (href: string) => {
     color: var(--paper);
   }
 
-  /* Móvil: marca arriba y navegación en una sola fila (desplazable si no cabe). */
-  @media (max-width: 600px) {
-    .cabecera__barra {
-      padding-block: 4px;
-      row-gap: 0;
-      grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-areas:
-        'marca marca'
-        'nav cta';
-      column-gap: 12px;
-    }
-    .cabecera__nav {
-      justify-self: start;
-    }
-    .cabecera--superpuesta .cabecera__barra {
-      padding-block: 6px;
-    }
+  /* ---------- Móvil: firma · buscar · menú ---------- */
+  @media (max-width: 760px) {
     .cabecera {
-      --alto-firma: 52px;
+      --alto-firma: 46px;
     }
-    .cabecera__nav {
-      flex-wrap: nowrap;
-      gap: 0 clamp(8px, 3vw - 1px, 14px);
-      width: 100%;
-      overflow-x: auto;
-      scrollbar-width: none;
-      /* deja sitio al anillo de foco */
-      padding: 3px;
-      margin: -3px;
+    .cabecera__barra,
+    .cabecera--superpuesta .cabecera__barra {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: 'marca acciones';
+      padding-block: 8px;
     }
-    .cabecera__nav::-webkit-scrollbar {
+    .cabecera__nav,
+    .cabecera__cta,
+    .cabecera__buscar-texto,
+    .cabecera__atajo {
       display: none;
     }
-    .cabecera__enlace {
-      font-size: 14px;
-      white-space: nowrap;
+    .cabecera__acciones {
+      gap: 8px;
     }
+    .cabecera__buscar {
+      justify-content: center;
+      width: var(--tap);
+      padding: 0;
+    }
+    .cabecera__menu {
+      display: inline-flex;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cabecera,
+    .cabecera--solida,
+    .cabecera__barra,
+    .cabecera__indicador,
     .cabecera__cta,
-    .cabecera--solida .cabecera__cta,
-    .cabecera--superpuesta .cabecera__cta {
-      padding: 8px 14px;
-      font-size: 13px;
-      white-space: nowrap;
+    .cabecera__cta-flecha,
+    .cabecera__menu-icono i {
+      transition: none !important;
+    }
+    .cabecera__cta-punto::after {
+      animation: none;
+    }
+  }
+
+  /* Con un diálogo abierto, la página no se desplaza */
+  :global(html:has(dialog[open])) {
+    overflow: hidden;
+  }
+
+  /* ================= Menú a pantalla completa ================= */
+  .menu {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #121110;
+    color: var(--paper);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .menu[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  .menu::backdrop {
+    background: transparent;
+  }
+  .menu__cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px var(--gutter);
+    min-height: 62px;
+  }
+  .menu__marca {
+    display: flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: var(--paper);
+  }
+  .menu__cerrar {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--tap);
+    padding: 0 16px 0 18px;
+    border: 1px solid rgba(250, 250, 248, 0.28);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--paper);
+    font: 600 14px/1 var(--font-body);
+    cursor: pointer;
+  }
+  .menu__cerrar:hover {
+    background: rgba(250, 250, 248, 0.08);
+  }
+  .menu__nav {
+    flex: 1;
+    padding: 8px var(--gutter) 0;
+  }
+  .menu__lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .menu__enlace {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(250, 250, 248, 0.12);
+    color: inherit;
+    text-decoration: none;
+  }
+  .menu__num {
+    align-self: start;
+    padding-top: 10px;
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.12em;
+    color: var(--accent-on-dark);
+  }
+  .menu__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .menu__nombre {
+    font-family: var(--font-display);
+    font-size: clamp(44px, 12.5vw, 64px);
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .menu__enlace[aria-current='page'] .menu__nombre {
+    font-style: italic;
+  }
+  .menu__enlace[aria-current='page'] .menu__nombre::after {
+    content: '.';
+    color: var(--accent-on-dark);
+  }
+  .menu__enlace:hover .menu__nombre,
+  .menu__enlace:focus-visible .menu__nombre {
+    transform: translateX(8px);
+  }
+  .menu__meta {
+    overflow: hidden;
+    font-size: 13px;
+    color: rgba(250, 250, 248, 0.62);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .menu__mini {
+    display: block;
+    width: 56px;
+    height: 70px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #2a2826;
+  }
+  .menu__mini img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .menu__flecha {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border: 1px solid rgba(250, 250, 248, 0.28);
+    border-radius: 50%;
+    font-size: 22px;
+    color: var(--accent-on-dark);
+  }
+  .menu__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 22px var(--gutter);
+  }
+  .menu__accion {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: var(--tap);
+    padding: 0 18px 0 15px;
+    border: 1px solid rgba(250, 250, 248, 0.28);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--paper);
+    font: 600 14px/1 var(--font-body);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .menu__accion:hover {
+    background: rgba(250, 250, 248, 0.08);
+  }
+  .menu__pie {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px var(--gutter) calc(22px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(250, 250, 248, 0.12);
+  }
+  .menu__legal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+  }
+  .menu__legal a {
+    padding: 6px 0;
+    font: 600 11px/1.4 var(--font-body);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(250, 250, 248, 0.62);
+    text-decoration: none;
+  }
+  .menu__legal a:hover {
+    color: var(--paper);
+  }
+  .menu :focus-visible {
+    outline: 2px solid var(--accent-on-dark);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .menu[open] {
+      animation: menu-entra 0.55s cubic-bezier(0.7, 0, 0.2, 1) both;
+    }
+    .menu[open] .menu__item {
+      animation: menu-item 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      animation-delay: calc(160ms + var(--i) * 70ms);
+    }
+    .menu.is-cerrando {
+      animation: menu-sale 0.35s cubic-bezier(0.7, 0, 0.84, 0) both;
+    }
+  }
+  @keyframes menu-entra {
+    from {
+      clip-path: inset(0 0 100% 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes menu-sale {
+    from {
+      clip-path: inset(0 0 0 0);
+    }
+    to {
+      clip-path: inset(0 0 100% 0);
+    }
+  }
+  @keyframes menu-item {
+    from {
+      opacity: 0;
+      transform: translateY(26px);
+    }
+  }
+
+  /* ================= Buscador ================= */
+  .buscador {
+    width: min(660px, calc(100% - 32px));
+    max-width: none;
+    height: min(580px, calc(100dvh - 18vh - 24px));
+    max-height: none;
+    margin: 12vh auto auto;
+    padding: 0;
+    border: 0;
+    border-radius: 18px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow:
+      0 0 0 1px rgba(20, 20, 20, 0.06),
+      0 40px 90px -24px rgba(10, 8, 6, 0.55);
+    overflow: hidden;
+  }
+  .buscador[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  .buscador::backdrop {
+    background: rgba(14, 13, 12, 0.4);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .buscador__campo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px 0 20px;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    transition: border-color 0.3s ease;
+  }
+  .buscador__campo:focus-within {
+    border-bottom-color: var(--accent);
+  }
+  .buscador__campo input {
+    flex: 1;
+    min-width: 0;
+    min-height: 62px;
+    border: 0;
+    background: transparent;
+    font: 400 18px/1.2 var(--font-body);
+    color: var(--ink);
+    outline: none;
+  }
+  .buscador__campo input::placeholder {
+    color: #8a8882;
+  }
+  .buscador__cerrar {
+    display: grid;
+    place-items: center;
+    min-width: var(--tap);
+    min-height: var(--tap);
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .buscador__esc,
+  .buscador__pie kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    font: 600 11px/1 var(--font-body);
+    color: var(--muted);
+  }
+  .buscador__resultados {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px 8px 10px;
+    scroll-padding: 8px;
+  }
+  .buscador__resultados :global(.buscador__grupo) {
+    margin: 0;
+    padding: 14px 12px 6px;
+    font: 600 11px/1 var(--font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .buscador__resultados :global(.buscador__op) {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 7px 10px;
+    border-radius: 11px;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .buscador__resultados :global(.buscador__op[aria-selected='true']) {
+    background: #efece6;
+  }
+  .buscador__resultados :global(.buscador__ico) {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    overflow: hidden;
+    border-radius: 7px;
+    background: #ebe8e1;
+    color: var(--ink);
+  }
+  .buscador__resultados :global(.buscador__ico img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .buscador__resultados :global(.buscador__texto) {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .buscador__resultados :global(.buscador__t) {
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .buscador__resultados :global(.buscador__m),
+  .buscador__resultados :global(.buscador__d) {
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .buscador__resultados :global(.buscador__d) {
+    font-style: italic;
+  }
+  .buscador__resultados :global(mark) {
+    background: none;
+    color: var(--accent);
+    font-weight: inherit;
+  }
+  .buscador__resultados :global(.buscador__ir) {
+    font-size: 15px;
+    color: var(--muted);
+    opacity: 0;
+  }
+  .buscador__resultados :global(.buscador__op[aria-selected='true'] .buscador__ir) {
+    opacity: 1;
+  }
+  .buscador__resultados :global(.buscador__vacio) {
+    margin: 0;
+    padding: 36px 16px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .buscador__pie {
+    display: flex;
+    gap: 18px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .buscador__pie span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .buscador[open] {
+      animation: buscador-entra 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+    .buscador[open]::backdrop {
+      animation: velo-entra 0.32s ease both;
+    }
+  }
+  @keyframes buscador-entra {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+    }
+  }
+  @keyframes velo-entra {
+    from {
+      opacity: 0;
+    }
+  }
+  @media (max-width: 760px) {
+    .buscador {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      border-radius: 0;
+    }
+    .buscador__pie {
+      display: none;
     }
   }
 </style>
 
 <script>
-  /**
-   * Tono de lo que queda bajo la cabecera: «claro» u «oscuro», por separado
-   * bajo la navegación (data-cabecera) y bajo la firma (data-cabecera-marca).
-   * Se salta la propia cabecera y mira lo que hay debajo: si es una foto, su
-   * luminosidad real en ese punto (con una miniatura en un canvas); si no, el
-   * primer fondo opaco subiendo por el árbol.
-   */
-  const raiz = document.documentElement;
-  const cabecera = document.querySelector<HTMLElement>('.cabecera');
-  const superpuesta = !!cabecera?.classList.contains('cabecera--superpuesta');
+  import { abrirAjustesCookies } from '../lib/consentimiento';
 
+  const raiz = document.documentElement;
+  const cabecera = document.querySelector<HTMLElement>('[data-cabecera-el]');
+  const superpuesta = !!cabecera?.classList.contains('cabecera--superpuesta');
+  const reducir = matchMedia('(prefers-reduced-motion: reduce)');
+  const hayDialogo = () => !!document.querySelector('dialog[open]');
+
+  /* ====================== Tono adaptativo ======================
+   * «claro» u «oscuro» bajo la navegación (data-cabecera), bajo la firma
+   * (data-cabecera-marca) y bajo los botones (data-cabecera-boton). Se salta
+   * la propia cabecera y mira lo que hay debajo: si es una foto, su
+   * luminosidad real en ese punto (miniatura en un canvas); si no, el primer
+   * fondo opaco subiendo por el árbol. */
   const luminancia = (color: string) => {
     const m = color.match(/rgba?\(([^)]+)\)/);
     if (!m) return null;
@@ -413,8 +1113,6 @@ const activo = (href: string) => {
     if (parseFloat(a) < 0.5) return null;
     return (0.2126 * +r + 0.7152 * +g + 0.0722 * +b) / 255;
   };
-
-  // Miniatura de cada foto (24 × 24) para leer su luminosidad sin coste.
   const miniaturas = new WeakMap<HTMLImageElement, Uint8ClampedArray | null>();
   const N = 24;
   const lumFoto = (img: HTMLImageElement, x: number, y: number) => {
@@ -434,12 +1132,11 @@ const activo = (href: string) => {
       miniaturas.set(img, datos);
     }
     if (!datos) return null;
-    // Punto de la pantalla → punto de la imagen (teniendo en cuenta object-fit: cover).
+    // Punto de la pantalla → punto de la imagen (con object-fit: cover).
     const r = img.getBoundingClientRect();
-    const estilo = getComputedStyle(img);
     let u = (x - r.left) / r.width;
     let v = (y - r.top) / r.height;
-    if (estilo.objectFit === 'cover') {
+    if (getComputedStyle(img).objectFit === 'cover') {
       const s = Math.max(r.width / img.naturalWidth, r.height / img.naturalHeight);
       const dw = img.naturalWidth * s;
       const dh = img.naturalHeight * s;
@@ -460,7 +1157,6 @@ const activo = (href: string) => {
       }
     return suma / n;
   };
-
   const tonoEn = (x: number, y: number) => {
     for (const el of document.elementsFromPoint(x, y)) {
       if (el.closest('.cabecera, aviso-cookies')) continue;
@@ -477,28 +1173,33 @@ const activo = (href: string) => {
     }
     return 'claro';
   };
-
+  const visible = (el?: Element | null) => {
+    const r = el?.getBoundingClientRect();
+    return r && r.width > 0 && r.height > 0 ? r : null;
+  };
   const medir = () => {
-    if (!cabecera) return;
-    const nav = cabecera.querySelector('.cabecera__nav');
-    const marca = cabecera.querySelector('.cabecera__marca');
-    const rn = nav?.getBoundingClientRect();
-    const rm = marca?.getBoundingClientRect();
-    if (rn) {
-      const t = tonoEn(rn.left + rn.width * 0.45, rn.top + rn.height / 2);
+    if (!cabecera || cabecera.classList.contains('is-oculta') || hayDialogo()) return;
+    const nav = visible(cabecera.querySelector('.cabecera__nav'));
+    const marca = visible(cabecera.querySelector('.cabecera__marca'));
+    const acciones = visible(cabecera.querySelector('.cabecera__acciones'));
+    if (nav) {
+      const t = tonoEn(nav.left + nav.width * 0.5, nav.top + nav.height / 2);
       if (raiz.dataset.cabecera !== t) raiz.dataset.cabecera = t;
     }
-    if (rm) {
-      const t = tonoEn(rm.left + rm.width / 2, rm.top + rm.height / 2);
+    if (marca) {
+      const t = tonoEn(marca.left + marca.width / 2, marca.top + marca.height / 2);
       if (raiz.dataset.cabeceraMarca !== t) raiz.dataset.cabeceraMarca = t;
+      // En móvil no hay píldora: la navegación toma el tono de los botones.
+      if (!nav && acciones) {
+        const tb = tonoEn(acciones.left + acciones.width / 2, acciones.top + acciones.height / 2);
+        if (raiz.dataset.cabecera !== tb) raiz.dataset.cabecera = tb;
+      }
     }
-    const rc = cabecera.querySelector('.cabecera__cta')?.getBoundingClientRect();
-    if (rc) {
-      const t = tonoEn(rc.left + rc.width / 2, rc.top + rc.height / 2);
+    if (acciones) {
+      const t = tonoEn(acciones.left + acciones.width * 0.6, acciones.top + acciones.height / 2);
       if (raiz.dataset.cabeceraBoton !== t) raiz.dataset.cabeceraBoton = t;
     }
   };
-
   let pendiente = false;
   const actualizar = () => {
     if (pendiente) return;
@@ -512,7 +1213,351 @@ const activo = (href: string) => {
   addEventListener('resize', actualizar);
   addEventListener('load', actualizar);
   document.addEventListener('load', actualizar, true); // cada foto que termina de cargar
-  // Sobre fondos que se mueven solos (el muro de la portada, carruseles) se repasa a menudo.
+  // Sobre fondos que se mueven solos (portada, carruseles) se repasa a menudo.
   if (superpuesta) setInterval(() => !document.hidden && actualizar(), 400);
   actualizar();
+
+  /* ====================== Resaltado que se desliza ====================== */
+  const nav = cabecera?.querySelector<HTMLElement>('[data-nav]');
+  const indicador = nav?.querySelector<HTMLElement>('[data-indicador]');
+  if (nav && indicador) {
+    nav.classList.add('con-js');
+    const enlacesNav = [...nav.querySelectorAll<HTMLAnchorElement>('.cabecera__enlace')];
+    const activoNav = enlacesNav.find((a) => a.getAttribute('aria-current') === 'page');
+    const ir = (a?: HTMLElement, animar = true) => {
+      if (!a) {
+        nav.classList.remove('con-indicador');
+        return;
+      }
+      if (!animar) nav.classList.add('sin-transicion');
+      nav.style.setProperty('--ind-x', `${a.offsetLeft}px`);
+      nav.style.setProperty('--ind-w', `${a.offsetWidth}px`);
+      nav.classList.add('con-indicador');
+      if (!animar) requestAnimationFrame(() => requestAnimationFrame(() => nav.classList.remove('sin-transicion')));
+    };
+    const colocar = () => ir(activoNav, false);
+    colocar();
+    document.fonts?.ready.then(colocar);
+    addEventListener('resize', colocar);
+    enlacesNav.forEach((a) => {
+      a.addEventListener('pointerenter', () => ir(a));
+      a.addEventListener('focus', () => ir(a));
+    });
+    nav.addEventListener('pointerleave', () => ir(activoNav));
+    nav.addEventListener('focusout', (e) => {
+      if (!nav.contains(e.relatedTarget as Node)) ir(activoNav);
+    });
+  }
+
+  /* ====================== Se esconde al bajar ====================== */
+  if (cabecera) {
+    let ultimaY = scrollY;
+    let encima = false;
+    cabecera.addEventListener('pointerenter', () => (encima = true));
+    cabecera.addEventListener('pointerleave', () => (encima = false));
+    const ocultar = (si: boolean) => {
+      if (cabecera.classList.contains('is-oculta') === si) return;
+      cabecera.classList.toggle('is-oculta', si);
+      if (!si) actualizar();
+    };
+    addEventListener(
+      'scroll',
+      () => {
+        const y = scrollY;
+        const dy = y - ultimaY;
+        if (Math.abs(dy) < 6) return;
+        ultimaY = y;
+        const fijo = reducir.matches || encima || cabecera.contains(document.activeElement) || hayDialogo();
+        if (y < 140 || dy < 0 || fijo) ocultar(false);
+        else ocultar(true);
+      },
+      { passive: true }
+    );
+    cabecera.addEventListener('focusin', () => ocultar(false));
+  }
+
+  /* ====================== Menú de móvil ====================== */
+  const menu = document.querySelector<HTMLDialogElement>('[data-menu]');
+  const botonMenu = document.querySelector<HTMLButtonElement>('[data-abrir-menu]');
+  const cerrarMenu = () => {
+    if (!menu?.open) return;
+    if (reducir.matches) return menu.close();
+    menu.classList.add('is-cerrando');
+    menu.addEventListener(
+      'animationend',
+      () => {
+        menu.classList.remove('is-cerrando');
+        menu.close();
+      },
+      { once: true }
+    );
+  };
+  if (menu && botonMenu) {
+    botonMenu.addEventListener('click', () => {
+      menu.showModal();
+      botonMenu.setAttribute('aria-expanded', 'true');
+    });
+    menu.addEventListener('close', () => botonMenu.setAttribute('aria-expanded', 'false'));
+    menu.querySelector('[data-cerrar-menu]')?.addEventListener('click', cerrarMenu);
+    // Esc: con la animación de salida
+    menu.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      cerrarMenu();
+    });
+    // Al pasar a escritorio, fuera el menú
+    matchMedia('(min-width: 761px)').addEventListener('change', (e) => e.matches && menu.open && menu.close());
+  }
+
+  /* ====================== Buscador ====================== */
+  type Item = { t: string; u?: string; m?: string; d?: string; i?: string; x?: 1; accion?: string; fuera?: boolean; tipo?: string };
+  const buscador = document.querySelector<HTMLDialogElement>('[data-buscador]');
+  const campo = buscador?.querySelector<HTMLInputElement>('[data-buscador-campo]');
+  const lista = buscador?.querySelector<HTMLElement>('[data-resultados]');
+  const estado = buscador?.querySelector<HTMLElement>('[data-estado]');
+  const datosFijos = JSON.parse(buscador?.querySelector('[data-buscador-datos]')?.textContent || '{}') as {
+    paginas: Item[];
+    atajos: Item[];
+  };
+
+  let indice: { obras: Item[]; tecnicas: Item[] } | null = null;
+  let cargando: Promise<void> | null = null;
+  const cargar = () =>
+    (cargando ??= fetch('/buscar.json')
+      .then((r) => r.json())
+      .then((j) => {
+        indice = j;
+      })
+      .catch(() => {
+        cargando = null;
+      }));
+
+  // Normaliza sin acentos y en minúsculas, carácter a carácter (así los
+  // índices coinciden con el texto original para resaltar).
+  const norm1 = (c: string) => c.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().charAt(0) || c;
+  const norm = (s: string) => [...s].map(norm1).join('');
+  const escapar = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  const resaltar = (texto: string, palabras: string[]) => {
+    if (!palabras.length) return escapar(texto);
+    const n = norm(texto);
+    const marcas = new Array(texto.length).fill(false);
+    for (const p of palabras) {
+      let k = n.indexOf(p);
+      while (k !== -1) {
+        for (let j = k; j < k + p.length; j++) marcas[j] = true;
+        k = n.indexOf(p, k + p.length);
+      }
+    }
+    let html = '';
+    let dentro = false;
+    [...texto].forEach((c, j) => {
+      if (marcas[j] && !dentro) html += '<mark>';
+      if (!marcas[j] && dentro) html += '</mark>';
+      dentro = marcas[j];
+      html += escapar(c);
+    });
+    return dentro ? html + '</mark>' : html;
+  };
+
+  const ICONOS: Record<string, string> = {
+    pagina: '<path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4"/>',
+    tecnica: '<path d="M4 20c4-1 6-4 7-7l6-6a2.1 2.1 0 0 0-3-3l-6 6c-3 1-6 3-7 7"/><path d="M13 7l4 4"/>',
+    azar: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+    correo: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>',
+    enlace: '<path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/>',
+    cookies: '<circle cx="12" cy="12" r="8.5"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="14.5" cy="14" r="1" fill="currentColor"/><circle cx="14" cy="8.5" r="0.8" fill="currentColor"/>',
+  };
+  const icono = (it: Item) => {
+    if (it.i) return `<img src="${escapar(it.i)}" alt="" loading="lazy" decoding="async" />`;
+    const clave =
+      it.accion === 'azar' ? 'azar' : it.accion === 'cookies' ? 'cookies' : it.u?.startsWith('mailto:') ? 'correo' : it.fuera ? 'enlace' : it.tipo === 'tecnica' ? 'tecnica' : 'pagina';
+    return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONOS[clave]}</svg>`;
+  };
+
+  let opciones: { el: HTMLElement; item: Item }[] = [];
+  let activa = -1;
+
+  const marcar = (i: number, desplazar = true) => {
+    if (!opciones.length || !campo) return;
+    activa = (i + opciones.length) % opciones.length;
+    opciones.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === activa)));
+    const el = opciones[activa].el;
+    campo.setAttribute('aria-activedescendant', el.id);
+    if (desplazar) el.scrollIntoView({ block: 'nearest' });
+  };
+
+  const puntuar = (it: Item, palabras: string[]) => {
+    const t = norm(it.t);
+    const resto = norm(`${it.m ?? ''} ${it.d ?? ''}`);
+    let puntos = 0;
+    for (const p of palabras) {
+      if (t.startsWith(p)) puntos += 6;
+      else if (t.split(/\s+/).some((w) => w.startsWith(p))) puntos += 4;
+      else if (t.includes(p)) puntos += 3;
+      else if (resto.includes(p)) puntos += 1;
+      else return 0;
+    }
+    return puntos;
+  };
+
+  const pintar = () => {
+    if (!lista || !campo) return;
+    const q = norm(campo.value.trim());
+    const palabras = q.split(/\s+/).filter(Boolean);
+    const grupos: { titulo: string; items: Item[] }[] = [];
+    const tecnicas = (indice?.tecnicas ?? []).map((t) => ({ ...t, tipo: 'tecnica' }));
+    const obras = indice?.obras ?? [];
+
+    if (!palabras.length) {
+      grupos.push({ titulo: 'Ir a', items: datosFijos.paginas.slice(0, 4) });
+      grupos.push({ titulo: 'Atajos', items: datosFijos.atajos });
+      const destacadas = obras.filter((o) => o.x).slice(0, 6);
+      if (destacadas.length) grupos.push({ titulo: 'Obras destacadas', items: destacadas });
+    } else {
+      const filtrar = (items: Item[], max: number) =>
+        items
+          .map((it, k) => ({ it, k, p: puntuar(it, palabras) }))
+          .filter((r) => r.p > 0)
+          .sort((a, b) => b.p - a.p || a.k - b.k)
+          .slice(0, max)
+          .map((r) => r.it);
+      const gObras = filtrar(obras, 40);
+      const gTec = filtrar(tecnicas, 8);
+      const gPag = filtrar([...datosFijos.paginas, ...datosFijos.atajos], 6);
+      if (gObras.length) grupos.push({ titulo: `Obras · ${gObras.length}`, items: gObras });
+      if (gTec.length) grupos.push({ titulo: 'Técnicas', items: gTec });
+      if (gPag.length) grupos.push({ titulo: 'Páginas y atajos', items: gPag });
+    }
+
+    let html = '';
+    let n = 0;
+    const items: Item[] = [];
+    grupos.forEach((g, gi) => {
+      html += `<div role="group" aria-labelledby="buscador-g${gi}"><p class="buscador__grupo" id="buscador-g${gi}">${escapar(g.titulo)}</p>`;
+      g.items.forEach((it) => {
+        const id = `buscador-op${n++}`;
+        items.push(it);
+        // La descripción de la imagen solo se enseña si es lo que coincide.
+        const enDesc = palabras.length && it.d && !palabras.every((p) => norm(`${it.t} ${it.m ?? ''}`).includes(p));
+        const fuera = it.fuera ? ' target="_blank" rel="noopener"' : '';
+        const etiqueta = it.u ? `a href="${escapar(it.u)}"${fuera}` : 'div';
+        html += `<${etiqueta} class="buscador__op" role="option" id="${id}" aria-selected="false" tabindex="-1">
+          <span class="buscador__ico" aria-hidden="true">${icono(it)}</span>
+          <span class="buscador__texto">
+            <span class="buscador__t">${resaltar(it.t, palabras)}</span>
+            ${it.m ? `<span class="buscador__m">${resaltar(it.m, palabras)}</span>` : ''}
+            ${enDesc ? `<span class="buscador__d">${resaltar(it.d!, palabras)}</span>` : ''}
+          </span>
+          <span class="buscador__ir" aria-hidden="true">↵</span>
+        </${it.u ? 'a' : 'div'}>`;
+      });
+      html += '</div>';
+    });
+    if (!n) {
+      html = indice || !palabras.length
+        ? `<p class="buscador__vacio">Nada para «${escapar(campo.value.trim())}». Prueba con una técnica, un año o lo que aparece en la obra.</p>`
+        : '<p class="buscador__vacio">Cargando…</p>';
+    }
+    lista.innerHTML = html;
+    opciones = [...lista.querySelectorAll<HTMLElement>('.buscador__op')].map((el, k) => ({ el, item: items[k] }));
+    opciones.forEach((o, k) => {
+      o.el.addEventListener('pointermove', () => activa !== k && marcar(k, false));
+      o.el.addEventListener('click', (e) => {
+        if (!o.item.u) {
+          e.preventDefault();
+          ejecutar(o.item);
+        } else if (!o.item.fuera && !o.item.u.startsWith('mailto:')) {
+          buscador?.close();
+        }
+      });
+    });
+    activa = -1;
+    campo.removeAttribute('aria-activedescendant');
+    if (opciones.length) marcar(0, false);
+    if (estado) estado.textContent = palabras.length ? (n ? `${n} resultados` : 'Sin resultados') : '';
+  };
+
+  const azar = async () => {
+    await cargar();
+    const obras = indice?.obras ?? [];
+    if (obras.length) location.href = obras[Math.floor(Math.random() * obras.length)].u!;
+  };
+  const ejecutar = (it: Item) => {
+    if (it.accion === 'azar') return azar();
+    if (it.accion === 'cookies') {
+      buscador?.close();
+      return abrirAjustesCookies();
+    }
+    if (!it.u) return;
+    if (it.fuera) window.open(it.u, '_blank', 'noopener');
+    else {
+      buscador?.close();
+      location.href = it.u;
+    }
+  };
+
+  const abrirBuscador = () => {
+    if (!buscador || !campo) return;
+    if (menu?.open) menu.close();
+    if (!buscador.open) buscador.showModal();
+    campo.select();
+    pintar();
+    if (!indice) cargar()?.then(pintar);
+  };
+
+  if (buscador && campo) {
+    // Atajo: Ctrl/⌘ K en Windows/Linux/Mac
+    const mac = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
+    document.querySelectorAll<HTMLElement>('[data-atajo]').forEach((k) => (k.textContent = mac ? '⌘ K' : 'Ctrl K'));
+
+    document.querySelectorAll<HTMLElement>('[data-abrir-buscador]').forEach((b) => {
+      b.addEventListener('click', abrirBuscador);
+      b.addEventListener('pointerenter', () => cargar(), { once: true });
+    });
+    buscador.querySelector('[data-cerrar-buscador]')?.addEventListener('click', () => buscador.close());
+    // Clic fuera del panel: cerrar
+    buscador.addEventListener('click', (e) => e.target === buscador && buscador.close());
+
+    campo.addEventListener('input', pintar);
+    campo.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        marcar(activa + 1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        marcar(activa - 1);
+      } else if (e.key === 'Home' && opciones.length && !campo.value) {
+        e.preventDefault();
+        marcar(0);
+      } else if (e.key === 'End' && opciones.length && !campo.value) {
+        e.preventDefault();
+        marcar(opciones.length - 1);
+      } else if (e.key === 'Enter') {
+        const o = opciones[activa];
+        if (!o) return;
+        e.preventDefault();
+        if (o.item.u && (e.ctrlKey || e.metaKey)) window.open(o.item.u, '_blank', 'noopener');
+        else ejecutar(o.item);
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const escribiendo = (e.target as HTMLElement)?.closest?.('input, textarea, select, [contenteditable="true"]');
+      if ((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey) && !e.altKey) {
+        e.preventDefault();
+        buscador.open ? buscador.close() : abrirBuscador();
+      } else if (e.key === '/' && !escribiendo && !hayDialogo()) {
+        e.preventDefault();
+        abrirBuscador();
+      }
+    });
+  }
+
+  // «Obra al azar» del menú de móvil
+  document.querySelectorAll<HTMLAnchorElement>('[data-azar]').forEach((a) =>
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      azar();
+    })
+  );
 </script>
