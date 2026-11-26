@@ -162,7 +162,7 @@ const salas = await Promise.all(
     /* Margen izquierdo alineado con el contenedor de la web */
     --margen: max(var(--gutter), calc((100vw - var(--container)) / 2 + var(--gutter)));
     padding: clamp(64px, 8vw, 120px) 0 clamp(56px, 7vw, 96px);
-    background: var(--band);
+    background: var(--textura), var(--band);
     overflow: hidden;
   }
   .sala + .sala {

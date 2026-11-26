@@ -329,11 +329,11 @@ const jsonLd = Astro.site
   .obra {
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(min(100%, 380px), 1fr);
-    background: var(--paper);
+    background: var(--textura), var(--paper);
   }
   .panel {
     position: relative;
-    background: var(--paper);
+    background: var(--textura), var(--paper);
   }
   .panel__in {
     position: sticky;
@@ -465,7 +465,7 @@ const jsonLd = Astro.site
     flex-direction: column;
     gap: 22px;
     padding: clamp(22px, 3cqi, 32px);
-    background: var(--band);
+    background: var(--textura), var(--band);
     border-radius: 14px;
     animation: aparecer 0.8s ease 0.6s both;
   }
@@ -564,7 +564,7 @@ const jsonLd = Astro.site
     background: var(--accent);
   }
   .cartela__consulta:hover .punto--acento {
-    background: var(--paper);
+    background: var(--textura), var(--paper);
   }
   .flecha {
     display: inline-block;
