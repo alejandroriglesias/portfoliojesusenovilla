@@ -3,8 +3,8 @@
  * «Cómo comprar»: sin tienda ni pasarela, trato directo con el artista.
  * A la izquierda, una nota en primera persona con el botón para escribir, el
  * correo a la vista y la firma. A la derecha, las dudas que tendría quien
- * compra, con sus palabras: cómo se compra, cómo y cuándo se paga
- * (transferencia o Bizum), cómo llega, qué pasa si no convence y la factura.
+ * compra, con sus palabras: cómo se compra, más fotos, verla en el taller,
+ * cómo y cuándo se paga (transferencia o Bizum), cómo llega y la devolución.
  * Todo sale de las condiciones de venta; nada de iconos ni pasos numerados.
  * No se muestra en obras vendidas o que no están a la venta.
  */
@@ -18,8 +18,10 @@ interface Props {
   email?: string;
   /** Condiciones de envío de Ajustes (si no son un marcador). */
   envio?: string;
+  /** Ciudad del taller (si no es un marcador). */
+  taller?: string;
 }
-const { titulo, hrefConsulta, email, envio } = Astro.props;
+const { titulo, hrefConsulta, email, envio, taller } = Astro.props;
 ---
 
 <section id="comprar" class="comprar" aria-labelledby="comprar-titulo">
@@ -55,6 +57,19 @@ const { titulo, hrefConsulta, email, envio } = Astro.props;
           </dd>
         </div>
         <div class="duda">
+          <dt>¿Puedo ver más fotos?</dt>
+          <dd>
+            Claro. Pídemelas al escribirme y te mando las que necesites: detalles de cerca, con otra luz o junto a algo que
+            dé idea del tamaño.
+          </dd>
+        </div>
+        <div class="duda">
+          <dt>¿Puedo verla en persona?</dt>
+          <dd>
+            Sí. Quedamos en mi taller{taller && <> en {taller}</>}, la ves con calma y, si te la llevas, te ahorras el envío.
+          </dd>
+        </div>
+        <div class="duda">
           <dt>¿Cómo y cuándo se paga?</dt>
           <dd>
             Por <strong>transferencia bancaria</strong> o por <strong>Bizum</strong>, una vez que estés de acuerdo con lo
@@ -74,10 +89,6 @@ const { titulo, hrefConsulta, email, envio } = Astro.props;
             Tienes 14 días desde que la recibes para devolverla, sin dar explicaciones, y te devuelvo lo que pagaste. Solo
             corre de tu cuenta el envío de vuelta. No se aplica a los encargos hechos a medida.
           </dd>
-        </div>
-        <div class="duda">
-          <dt>¿Me haces factura?</dt>
-          <dd>Sí, si la necesitas. Pídemela al escribirme.</dd>
         </div>
       </dl>
       <a class="dudas__enlace" href="/condiciones-de-venta">Condiciones de venta completas <span aria-hidden="true">→</span></a>

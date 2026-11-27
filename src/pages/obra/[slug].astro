@@ -302,7 +302,7 @@ const jsonLd = Astro.site
     </section>
   </div>
 
-  {seVende && <ComoComprar titulo={d.titulo} hrefConsulta={hrefConsulta} email={emailValido ? ajustes.email : undefined} envio={envio} />}
+  {seVende && <ComoComprar titulo={d.titulo} hrefConsulta={hrefConsulta} email={emailValido ? ajustes.email : undefined} envio={envio} taller={ajustes.taller && !esMarcador(ajustes.taller) ? ajustes.taller : undefined} />}
 
   <TiraProceso pasos={d.proceso} titulo={d.titulo} numero="" />
 

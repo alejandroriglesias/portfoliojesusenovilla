@@ -411,7 +411,7 @@ export default config({
         facebook: fields.url({ label: 'Facebook (URL)', description: 'Opcional. Si se rellena, aparece su icono en la portada y en el pie.' }),
         tiktok: fields.url({ label: 'TikTok (URL)', description: 'Opcional.' }),
         youtube: fields.url({ label: 'YouTube (URL)', description: 'Opcional.' }),
-        taller: fields.text({ label: 'Taller (ciudad)', description: 'Se muestra en Contacto.' }),
+        taller: fields.text({ label: 'Taller (ciudad)', description: 'Se muestra en Contacto y en «¿Puedo verla en persona?» de cada ficha.' }),
         encargos: fields.text({ label: 'Encargos', description: 'P. ej. «Sí, consultar plazos». Se muestra en Contacto.' }),
         portadaActiva: fields.select({
           label: 'Portada activa',
