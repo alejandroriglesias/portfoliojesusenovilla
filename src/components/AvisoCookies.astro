@@ -1,8 +1,8 @@
 ---
 /**
- * Aviso de cookies con forma de entrada de museo: talón con número de
- * admisión, borde troquelado y, al elegir, un sello «Admitido» que cae sobre
- * la entrada antes de que se rasgue por el troquel y se vaya.
+ * Aviso de cookies: una nota pequeña clavada con una chincheta en la esquina,
+ * con una galleta mordida dibujada a mano (las «cookies» de verdad). Entra y
+ * sale con un fundido corto; no tapa nada ni pide atención.
  *
  * Funcional: guarda la elección (lib/consentimiento), borra lo que dependa de
  * «Preferencias» si se rechaza y activa scripts en espera si se acepta.
@@ -12,54 +12,49 @@
 ---
 
 <aviso-cookies class="cookies tema-claro" hidden>
-  <section class="billete" role="dialog" aria-modal="false" aria-labelledby="cookies-titulo" aria-describedby="cookies-texto">
-    <div class="billete__talon" aria-hidden="true">
-      <span class="billete__admision">Admisión</span>
-      <span class="billete__num">Nº <span data-num>0001</span></span>
+  <section class="nota" role="dialog" aria-modal="false" aria-labelledby="cookies-titulo" aria-describedby="cookies-texto">
+    <span class="nota__chincheta" aria-hidden="true"></span>
+    <div class="nota__cabeza">
+      <svg class="nota__galleta" aria-hidden="true" viewBox="0 0 48 48" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M24 5.5c2.2 0 4.3.4 6.2 1.1a5 5 0 0 0 5.6 6.4 5 5 0 0 0 5.9 6.1A18.5 18.5 0 1 1 24 5.5z" />
+        <circle cx="17" cy="19" r="1.6" fill="currentColor" stroke="none" />
+        <circle cx="26" cy="27" r="1.8" fill="currentColor" stroke="none" />
+        <circle cx="16" cy="31" r="1.4" fill="currentColor" stroke="none" />
+        <circle cx="31" cy="35" r="1.3" fill="currentColor" stroke="none" />
+        <circle cx="24" cy="15" r="1.1" fill="currentColor" stroke="none" />
+      </svg>
+      <h2 id="cookies-titulo" class="nota__titulo">Aquí no hay galletas de seguimiento.</h2>
+    </div>
+    <p id="cookies-texto" class="nota__texto">
+      Ni estadísticas ni publicidad. Si quieres, recuerdo la vista de <em>Obra</em> y el modo noche.{' '}
+      <a href="/cookies">Más información</a>
+    </p>
+
+    <div class="nota__ajustes" id="cookies-ajustes" data-ajustes hidden>
+      <div class="opcion">
+        <span class="opcion__texto">
+          <span class="opcion__nombre">Necesarias</span>
+          <span class="opcion__nota">Transiciones entre páginas y tu elección. Siempre activas.</span>
+        </span>
+        <button class="interruptor" type="button" role="switch" aria-checked="true" aria-label="Necesarias" disabled></button>
+      </div>
+      <div class="opcion">
+        <span class="opcion__texto">
+          <span class="opcion__nombre">Preferencias</span>
+          <span class="opcion__nota">Recordar si ves Obra como «Sala» o «Índice» y el modo noche.</span>
+        </span>
+        <button class="interruptor" type="button" role="switch" aria-checked="false" aria-label="Preferencias" data-cat="preferencias"></button>
+      </div>
     </div>
 
-    <div class="billete__cuerpo">
-      <p class="billete__eti">
-        <span class="punto" aria-hidden="true"></span>Entrada · Jesús Senovilla
-      </p>
-      <h2 id="cookies-titulo" class="billete__titulo">Sin cookies de seguimiento.</h2>
-      <p id="cookies-texto" class="billete__texto">
-        Aquí no hay estadísticas ni publicidad. Solo, si me dejas, recuerdo qué vista prefieres en <em>Obra</em> y si
-        eliges el modo noche.{' '}
-        <a href="/cookies">Más información</a>
-      </p>
-
-      <div class="billete__ajustes" id="cookies-ajustes" data-ajustes hidden>
-        <div class="opcion">
-          <span class="opcion__texto">
-            <span class="opcion__nombre">Necesarias</span>
-            <span class="opcion__nota">Transiciones entre páginas y tu elección. Siempre activas.</span>
-          </span>
-          <button class="interruptor" type="button" role="switch" aria-checked="true" aria-label="Necesarias" disabled></button>
-        </div>
-        <div class="opcion">
-          <span class="opcion__texto">
-            <span class="opcion__nombre">Preferencias</span>
-            <span class="opcion__nota">Recordar si ves Obra como «Sala» o «Índice» y el modo noche.</span>
-          </span>
-          <button class="interruptor" type="button" role="switch" aria-checked="false" aria-label="Preferencias" data-cat="preferencias"></button>
-        </div>
-      </div>
-
-      <div class="billete__botones">
-        <button type="button" class="b b--lleno" data-accion="aceptar">Aceptar</button>
-        <button type="button" class="b b--borde" data-accion="rechazar">Solo necesarias</button>
-        <button type="button" class="b b--lleno" data-accion="guardar" hidden>Guardar selección</button>
-      </div>
-      <button type="button" class="billete__config" data-accion="configurar" aria-expanded="false" aria-controls="cookies-ajustes">
-        Configurar <span aria-hidden="true">+</span>
-      </button>
+    <div class="nota__botones">
+      <button type="button" class="b b--lleno" data-accion="aceptar">Aceptar</button>
+      <button type="button" class="b b--borde" data-accion="rechazar">Solo necesarias</button>
+      <button type="button" class="b b--lleno" data-accion="guardar" hidden>Guardar selección</button>
     </div>
-
-    <span class="billete__sello" aria-hidden="true">
-      <span>Admitido</span>
-      <small data-fecha></small>
-    </span>
+    <button type="button" class="nota__config" data-accion="configurar" aria-expanded="false" aria-controls="cookies-ajustes">
+      Configurar <span aria-hidden="true">+</span>
+    </button>
   </section>
   <p class="sr-only" aria-live="polite" data-anuncio></p>
 </aviso-cookies>
@@ -67,121 +62,102 @@
 <style>
   .cookies {
     position: fixed;
-    left: clamp(12px, 2.4vw, 32px);
-    bottom: clamp(12px, 2.4vw, 32px);
+    left: clamp(12px, 2.4vw, 28px);
+    bottom: clamp(12px, 2.4vw, 28px);
     z-index: 90;
     display: block;
-    width: min(440px, calc(100vw - 24px));
-    filter: drop-shadow(0 2px 3px rgba(20, 16, 10, 0.12)) drop-shadow(0 22px 40px rgba(20, 16, 10, 0.24));
+    width: min(360px, calc(100vw - 24px));
   }
   .cookies[hidden] {
     display: none;
   }
 
-  /* ---------- La entrada ---------- */
-  .billete {
-    --talon: 64px;
-    --muesca: 9px;
+  /* ---------- La nota ---------- */
+  .nota {
     position: relative;
-    display: grid;
-    grid-template-columns: var(--talon) minmax(0, 1fr);
-    background:
-      radial-gradient(120% 80% at 100% 0%, rgba(200, 55, 26, 0.05), transparent 60%),
-      #fbf8f2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px 20px 12px;
+    border-radius: 10px;
+    background: #fbf8f2;
     color: var(--ink);
-    border-radius: 14px;
-    /* Muescas del troquel arriba y abajo, a la altura del talón */
-    -webkit-mask:
-      radial-gradient(circle var(--muesca) at var(--talon) 0, transparent 98%, #000) top / 100% 51% no-repeat,
-      radial-gradient(circle var(--muesca) at var(--talon) 100%, transparent 98%, #000) bottom / 100% 51% no-repeat;
-    mask:
-      radial-gradient(circle var(--muesca) at var(--talon) 0, transparent 98%, #000) top / 100% 51% no-repeat,
-      radial-gradient(circle var(--muesca) at var(--talon) 100%, transparent 98%, #000) bottom / 100% 51% no-repeat;
-    animation: entrar 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    box-shadow:
+      0 1px 2px rgba(20, 16, 10, 0.1),
+      0 14px 34px -16px rgba(20, 16, 10, 0.35);
+    transform: rotate(-0.8deg);
+    transition: transform 0.4s var(--ease-out);
+    animation: aparecer 0.5s var(--ease-out) backwards;
   }
-  @keyframes entrar {
+  .nota:hover,
+  .nota:focus-within {
+    transform: none;
+  }
+  @keyframes aparecer {
     from {
       opacity: 0;
-      transform: translateY(40px) rotate(-3deg);
+      transform: translateY(14px) rotate(-0.8deg);
     }
   }
-
-  .billete__talon {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 0;
-    background: var(--ink);
-    color: var(--paper);
-    border-radius: 14px 0 0 14px;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    font: 600 11px/1 var(--font-body);
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
+  .nota.is-saliendo {
+    animation: irse 0.35s ease-in forwards;
   }
-  .billete__num {
-    color: var(--accent-on-dark);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.12em;
+  @keyframes irse {
+    to {
+      opacity: 0;
+      transform: translateY(12px) rotate(-0.8deg);
+    }
   }
-  /* Troquel: línea de puntos entre talón y cuerpo */
-  .billete__cuerpo {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 22px 22px 18px 24px;
-    background-image: radial-gradient(circle, rgba(20, 20, 20, 0.35) 1.2px, transparent 1.6px);
-    background-size: 2px 9px;
-    background-repeat: repeat-y;
-    background-position: 0 0;
-  }
-  .billete__eti {
-    margin: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font: 600 10.5px/1 var(--font-body);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .punto {
-    width: 7px;
-    height: 7px;
+  /* Chincheta */
+  .nota__chincheta {
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
     border-radius: 50%;
-    background: var(--accent);
+    background: radial-gradient(circle at 35% 35%, #e8664a, var(--accent) 60%, #8f2410);
+    box-shadow: 0 2px 3px rgba(20, 16, 10, 0.3);
   }
-  .billete__titulo {
+
+  .nota__cabeza {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .nota__galleta {
+    flex: 0 0 auto;
+    color: #8a6a43;
+    transform: rotate(-8deg);
+  }
+  .nota__titulo {
     margin: 0;
     font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 25px;
-    line-height: 1;
-    letter-spacing: -0.012em;
+    font-weight: 400;
+    font-size: 21px;
+    line-height: 1.08;
   }
-  .billete__texto {
+  .nota__texto {
     margin: 0;
-    font-size: 14px;
-    line-height: 1.55;
+    font-size: 13.5px;
+    line-height: 1.5;
     color: var(--text-soft);
   }
-  .billete__texto a {
+  .nota__texto a {
     color: var(--ink);
     font-weight: 600;
     text-underline-offset: 3px;
+    white-space: nowrap;
   }
 
   /* ---------- Ajustes ---------- */
-  .billete__ajustes {
+  .nota__ajustes {
     display: flex;
     flex-direction: column;
     border-top: 1px solid var(--line);
   }
-  .billete__ajustes[hidden] {
+  .nota__ajustes[hidden] {
     display: none;
   }
   .opcion {
@@ -189,7 +165,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 12px 0;
+    padding: 10px 0;
     border-bottom: 1px solid var(--line);
   }
   .opcion__texto {
@@ -198,7 +174,8 @@
     gap: 2px;
   }
   .opcion__nombre {
-    font: 700 14px/1.2 var(--font-display);
+    font-weight: 700;
+    font-size: 13.5px;
   }
   .opcion__nota {
     font-size: 12.5px;
@@ -208,8 +185,8 @@
   .interruptor {
     position: relative;
     flex: 0 0 auto;
-    width: 46px;
-    height: 26px;
+    width: 42px;
+    height: 24px;
     padding: 0;
     border: 0;
     border-radius: 999px;
@@ -222,18 +199,18 @@
     position: absolute;
     top: 3px;
     left: 3px;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform 0.3s var(--ease-out);
   }
   .interruptor[aria-checked='true'] {
     background: var(--ink);
   }
   .interruptor[aria-checked='true']::after {
-    transform: translateX(20px);
+    transform: translateX(18px);
   }
   .interruptor:disabled {
     cursor: not-allowed;
@@ -241,28 +218,24 @@
   }
 
   /* ---------- Botones: aceptar y rechazar con el mismo peso ---------- */
-  .billete__botones {
+  .nota__botones {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 2px;
   }
   .b {
-    min-height: var(--tap);
-    padding: 0 14px;
+    min-height: 40px;
+    padding: 0 12px;
     border-radius: var(--radius-pill);
-    font: 600 14px/1 var(--font-body);
+    font: 600 13.5px/1 var(--font-body);
     cursor: pointer;
     transition:
       background 0.25s ease,
-      color 0.25s ease,
-      transform 0.25s ease;
+      color 0.25s ease;
   }
   .b[hidden] {
     display: none;
-  }
-  .b:hover {
-    transform: translateY(-1px);
   }
   .b--lleno {
     border: 1px solid var(--ink);
@@ -285,7 +258,7 @@
   [data-guardando] .b[data-accion='guardar'] {
     grid-column: 1 / -1;
   }
-  .billete__config {
+  .nota__config {
     align-self: center;
     display: inline-flex;
     align-items: center;
@@ -295,115 +268,48 @@
     border: 0;
     background: none;
     color: var(--muted);
-    font: 600 12px/1 var(--font-body);
+    font: 600 11.5px/1 var(--font-body);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     cursor: pointer;
   }
-  .billete__config span {
+  .nota__config span {
     display: inline-block;
-    font-size: 15px;
-    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    font-size: 14px;
+    transition: transform 0.3s var(--ease-out);
   }
-  .billete__config[aria-expanded='true'] span {
+  .nota__config[aria-expanded='true'] span {
     transform: rotate(45deg);
   }
-  .billete__config:hover {
+  .nota__config:hover {
     color: var(--ink);
-  }
-
-  /* ---------- Sello «Admitido» ---------- */
-  .billete__sello {
-    position: absolute;
-    right: 22px;
-    top: 26px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    padding: 8px 14px 7px;
-    border: 3px double var(--accent);
-    border-radius: 8px;
-    color: var(--accent);
-    font: 800 20px/1 var(--font-display);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transform: rotate(-12deg) scale(1.8);
-    opacity: 0;
-    pointer-events: none;
-    mix-blend-mode: multiply;
-  }
-  .billete__sello small {
-    font: 600 9px/1 var(--font-body);
-    letter-spacing: 0.2em;
-  }
-  .billete.is-sellada .billete__sello {
-    animation: sellar 0.38s cubic-bezier(0.3, 1.4, 0.5, 1) forwards;
-  }
-  @keyframes sellar {
-    to {
-      opacity: 0.92;
-      transform: rotate(-12deg) scale(1);
-    }
-  }
-  /* Rasgado: el talón se queda un instante y cae; el cuerpo sale hacia abajo */
-  .billete.is-rasgada {
-    animation: none;
-  }
-  .billete.is-rasgada .billete__cuerpo,
-  .billete.is-rasgada .billete__sello {
-    animation: irse 0.7s cubic-bezier(0.5, 0, 0.75, 0) forwards;
-  }
-  .billete.is-rasgada .billete__talon {
-    animation: caer 0.8s cubic-bezier(0.5, 0, 0.75, 0) 0.12s forwards;
-  }
-  @keyframes irse {
-    to {
-      opacity: 0;
-      transform: translate(30px, 120px) rotate(6deg);
-    }
-  }
-  @keyframes caer {
-    to {
-      opacity: 0;
-      transform: rotate(180deg) translate(10px, -140px) rotate(-14deg);
-    }
   }
 
   @media (max-width: 520px) {
     .cookies {
-      left: 8px;
-      right: 8px;
-      bottom: 8px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
       width: auto;
     }
-    .billete {
-      --talon: 48px;
+    .nota {
+      transform: none;
+      padding: 18px 16px 10px;
     }
-    .billete__cuerpo {
-      padding: 18px 16px 14px 18px;
-    }
-    .billete__titulo {
-      font-size: 22px;
+    .nota__titulo {
+      font-size: 19px;
     }
     .b {
       padding: 0 8px;
-      font-size: 13px;
       white-space: nowrap;
-    }
-    .billete__sello {
-      right: 12px;
-      top: 14px;
-      font-size: 16px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .billete,
-    .billete.is-sellada .billete__sello,
-    .billete.is-rasgada .billete__cuerpo,
-    .billete.is-rasgada .billete__talon {
+    .nota,
+    .nota.is-saliendo {
       animation: none;
+      transition: none;
     }
     .interruptor,
     .interruptor::after,
@@ -417,7 +323,7 @@
   import { EVENTO_ABRIR, activarScripts, guardarConsentimiento, leerConsentimiento } from '../lib/consentimiento';
 
   class AvisoCookies extends HTMLElement {
-    private billete!: HTMLElement;
+    private nota!: HTMLElement;
     private ajustes!: HTMLElement;
     private config!: HTMLButtonElement;
     private pref!: HTMLButtonElement;
@@ -425,16 +331,10 @@
     private foco: Element | null = null;
 
     connectedCallback() {
-      this.billete = this.querySelector('.billete')!;
+      this.nota = this.querySelector('.nota')!;
       this.ajustes = this.querySelector('[data-ajustes]')!;
       this.config = this.querySelector('[data-accion="configurar"]')!;
       this.pref = this.querySelector('[data-cat="preferencias"]')!;
-
-      // Número de admisión y fecha del sello (decorativos).
-      const num = this.querySelector('[data-num]');
-      if (num) num.textContent = String(Math.floor(1000 + Math.random() * 8999));
-      const fecha = this.querySelector('[data-fecha]');
-      if (fecha) fecha.textContent = new Date().toLocaleDateString('es-ES');
 
       this.querySelector('[data-accion="aceptar"]')?.addEventListener('click', () => this.elegir(true));
       this.querySelector('[data-accion="rechazar"]')?.addEventListener('click', () => this.elegir(false));
@@ -449,7 +349,7 @@
 
       const c = leerConsentimiento();
       if (c) activarScripts(c);
-      else setTimeout(() => this.abrir(false), 900);
+      else setTimeout(() => this.abrir(false), 1200);
     }
 
     private desplegar(si: boolean) {
@@ -465,14 +365,10 @@
 
     private abrir(conAjustes: boolean) {
       this.foco = conAjustes ? document.activeElement : null;
-      this.billete.classList.remove('is-sellada', 'is-rasgada');
+      this.nota.classList.remove('is-saliendo');
       this.pref.setAttribute('aria-checked', String(leerConsentimiento()?.preferencias === true));
       this.desplegar(conAjustes);
       this.hidden = false;
-      // Reiniciar la animación de entrada.
-      this.billete.style.animation = 'none';
-      void this.billete.offsetWidth;
-      this.billete.style.animation = '';
       if (conAjustes) this.querySelector<HTMLElement>('[data-cat="preferencias"]')?.focus();
     }
 
@@ -485,10 +381,8 @@
         if (this.foco instanceof HTMLElement) this.foco.focus();
       };
       if (this.reducir.matches) return cerrar();
-      // Sello, pausa y rasgado por el troquel.
-      this.billete.classList.add('is-sellada');
-      setTimeout(() => this.billete.classList.add('is-rasgada'), 650);
-      setTimeout(cerrar, 650 + 900);
+      this.nota.classList.add('is-saliendo');
+      setTimeout(cerrar, 350);
     }
   }
 

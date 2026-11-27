@@ -4,6 +4,8 @@
  * (scripts/vectorizar-firma.mjs). Toma el color del texto (currentColor),
  * así sirve en la cabecera clara, en la oscura y en la superpuesta (difference).
  * Es decorativa: el texto accesible lo pone quien la usa.
+ * Con «animada», se escribe sola: primero el nombre, de izquierda a derecha,
+ * y al final la rúbrica de abajo (una máscara que avanza sobre el trazo).
  */
 import trazado from './firma-trazado.json';
 
@@ -11,13 +13,15 @@ interface Props {
   class?: string;
   /** Alto en CSS (p. ej. «48px» o «3rem»). El ancho sale de la proporción. */
   alto?: string;
+  /** Que se vaya escribiendo, como si firmara en ese momento. */
+  animada?: boolean;
 }
 
-const { class: clase, alto = '48px' } = Astro.props;
+const { class: clase, alto = '48px', animada = false } = Astro.props;
 ---
 
 <svg
-  class:list={['firma', clase]}
+  class:list={['firma', { 'firma--animada': animada }, clase]}
   viewBox={trazado.viewBox}
   style={`height: ${alto}; width: calc(${alto} * ${trazado.proporcion})`}
   aria-hidden="true"
@@ -32,5 +36,32 @@ const { class: clase, alto = '48px' } = Astro.props;
     display: block;
     flex-shrink: 0;
     overflow: visible;
+  }
+
+  /* Firma que se escribe: dos máscaras que avanzan de izquierda a derecha,
+     una para el nombre (arriba) y otra, al final y más deprisa, para la
+     rúbrica y el rasgo bajo la J (abajo). */
+  @media (prefers-reduced-motion: no-preference) {
+    .firma--animada {
+      -webkit-mask-image: linear-gradient(90deg, #000 36%, transparent 42%), linear-gradient(90deg, #000 36%, transparent 42%);
+      mask-image: linear-gradient(90deg, #000 36%, transparent 42%), linear-gradient(90deg, #000 36%, transparent 42%);
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-size: 260% 57%, 260% 43%;
+      mask-size: 260% 57%, 260% 43%;
+      -webkit-mask-position: 100% 0, 100% 100%;
+      mask-position: 100% 0, 100% 100%;
+      animation: firmar 2.8s cubic-bezier(0.45, 0.05, 0.4, 1) 0.7s forwards;
+    }
+  }
+  @keyframes firmar {
+    72% {
+      -webkit-mask-position: 0% 0, 100% 100%;
+      mask-position: 0% 0, 100% 100%;
+    }
+    100% {
+      -webkit-mask-position: 0% 0, 0% 100%;
+      mask-position: 0% 0, 0% 100%;
+    }
   }
 </style>
