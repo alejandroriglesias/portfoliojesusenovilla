@@ -1,12 +1,12 @@
 ---
 /**
  * Aviso de cookies: una nota pequeña clavada con una chincheta en la esquina,
- * con una galleta mordida dibujada a mano (las «cookies» de verdad). Entra y
- * sale con un fundido corto; no tapa nada ni pide atención.
+ * con una galleta mordida dibujada a mano. Texto legal estándar. Entra y sale
+ * con un fundido corto; no tapa nada ni pide atención.
  *
  * Funcional: guarda la elección (lib/consentimiento), borra lo que dependa de
  * «Preferencias» si se rechaza y activa scripts en espera si se acepta.
- * «Aceptar» y «Solo necesarias» tienen el mismo peso. Se vuelve a abrir desde
+ * «Aceptar» y «Rechazar» tienen el mismo peso. Se vuelve a abrir desde
  * «Configurar cookies» en el pie.
  */
 ---
@@ -23,25 +23,26 @@
         <circle cx="31" cy="35" r="1.3" fill="currentColor" stroke="none" />
         <circle cx="24" cy="15" r="1.1" fill="currentColor" stroke="none" />
       </svg>
-      <h2 id="cookies-titulo" class="nota__titulo">Aquí no hay galletas de seguimiento.</h2>
+      <h2 id="cookies-titulo" class="nota__titulo">Uso de cookies</h2>
     </div>
     <p id="cookies-texto" class="nota__texto">
-      Ni estadísticas ni publicidad. Si quieres, recuerdo la vista de <em>Obra</em> y el modo noche.{' '}
-      <a href="/cookies">Más información</a>
+      Esta web utiliza cookies propias técnicas, necesarias para su funcionamiento, y, con tu consentimiento,
+      cookies de preferencias. Puedes aceptarlas, rechazarlas o configurarlas.{' '}
+      <a href="/cookies">Política de cookies</a>
     </p>
 
     <div class="nota__ajustes" id="cookies-ajustes" data-ajustes hidden>
       <div class="opcion">
         <span class="opcion__texto">
           <span class="opcion__nombre">Necesarias</span>
-          <span class="opcion__nota">Transiciones entre páginas y tu elección. Siempre activas.</span>
+          <span class="opcion__nota">Imprescindibles para que la web funcione. Siempre activas.</span>
         </span>
         <button class="interruptor" type="button" role="switch" aria-checked="true" aria-label="Necesarias" disabled></button>
       </div>
       <div class="opcion">
         <span class="opcion__texto">
           <span class="opcion__nombre">Preferencias</span>
-          <span class="opcion__nota">Recordar si ves Obra como «Sala» o «Índice» y el modo noche.</span>
+          <span class="opcion__nota">Recuerdan tus elecciones para próximas visitas.</span>
         </span>
         <button class="interruptor" type="button" role="switch" aria-checked="false" aria-label="Preferencias" data-cat="preferencias"></button>
       </div>
@@ -49,7 +50,7 @@
 
     <div class="nota__botones">
       <button type="button" class="b b--lleno" data-accion="aceptar">Aceptar</button>
-      <button type="button" class="b b--borde" data-accion="rechazar">Solo necesarias</button>
+      <button type="button" class="b b--borde" data-accion="rechazar">Rechazar</button>
       <button type="button" class="b b--lleno" data-accion="guardar" hidden>Guardar selección</button>
     </div>
     <button type="button" class="nota__config" data-accion="configurar" aria-expanded="false" aria-controls="cookies-ajustes">
