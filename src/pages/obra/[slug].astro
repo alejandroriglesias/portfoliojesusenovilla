@@ -407,9 +407,12 @@ const jsonLd = Astro.site
     letter-spacing: -0.012em;
     overflow-wrap: anywhere;
   }
+  /* Cada palabra, entera en su línea: nunca se parte por dentro (Firefox
+     partía las palabras al calcular el ancho de un flex con wrap). */
   .palabra {
-    display: inline-flex;
-    flex-wrap: wrap;
+    display: inline-block;
+    flex: none;
+    white-space: nowrap;
     overflow: hidden;
     padding-bottom: 0.08em;
     margin-bottom: -0.08em;
