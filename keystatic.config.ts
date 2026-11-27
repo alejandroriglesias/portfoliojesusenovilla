@@ -435,7 +435,7 @@ export default config({
         }),
         condicionesEnvio: fields.text({
           label: 'Condiciones de envío',
-          description: 'Se muestra en el bloque «¿Te interesa esta obra?» de cada ficha.',
+          description: 'Se muestra en «Cómo comprar esta obra» (¿Cómo llega a casa?) y en el desplegable «Envío» de cada ficha.',
         }),
         edicionRevista: fields.text({
           label: 'Edición (portada Revista)',

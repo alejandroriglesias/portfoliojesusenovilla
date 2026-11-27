@@ -1,98 +1,86 @@
 ---
 /**
- * «Cómo comprar»: sin pasarela de pago. Cuatro pasos (consulta, confirmación,
- * pago por transferencia o Bizum, envío) y las dos formas de pago.
- * Mismo lenguaje que el panel de la ficha: fondo claro, tarjetas suaves con
- * el color de pared, rayas finas y el punto bermellón. La raya que une los
- * pasos se dibuja al hacer scroll.
+ * «Cómo comprar»: sin tienda ni pasarela, trato directo con el artista.
+ * A la izquierda, una nota en primera persona con el botón para escribir, el
+ * correo a la vista y la firma. A la derecha, las dudas que tendría quien
+ * compra, con sus palabras: cómo se compra, cómo y cuándo se paga
+ * (transferencia o Bizum), cómo llega, qué pasa si no convence y la factura.
+ * Todo sale de las condiciones de venta; nada de iconos ni pasos numerados.
  * No se muestra en obras vendidas o que no están a la venta.
  */
+import Firma from '../marca/Firma.astro';
+
 interface Props {
   titulo: string;
   /** mailto: con el asunto ya puesto, o /contacto. */
   hrefConsulta: string;
+  /** Correo del artista, si es válido. */
+  email?: string;
   /** Condiciones de envío de Ajustes (si no son un marcador). */
   envio?: string;
 }
-const { titulo, hrefConsulta, envio } = Astro.props;
-
-const pasos = [
-  {
-    titulo: 'Consulta',
-    texto: `Escríbeme indicando la obra («${titulo}») y dónde quieres recibirla.`,
-  },
-  {
-    titulo: 'Confirmación',
-    texto: 'Te confirmo la disponibilidad, el precio final con el envío y te paso los datos para el pago. La obra queda reservada para ti.',
-  },
-  {
-    titulo: 'Pago',
-    texto: 'Por transferencia bancaria o Bizum. Sin pasarela ni intermediarios: nunca te pediré los datos de tu tarjeta.',
-  },
-  {
-    titulo: 'Envío',
-    texto: envio ?? 'Con el pago recibido, la obra se embala con cuidado y sale hacia ti. Te aviso con el seguimiento.',
-  },
-];
+const { titulo, hrefConsulta, email, envio } = Astro.props;
 ---
 
 <section id="comprar" class="comprar" aria-labelledby="comprar-titulo">
   <div class="comprar__in">
-    <header class="comprar__cabeza">
-      <div class="comprar__titulos">
-        <p class="comprar__eti"><span class="punto" aria-hidden="true"></span>Sin pasarela de pago</p>
-        <h2 id="comprar-titulo" class="comprar__titulo">Cómo comprar</h2>
-        <p class="comprar__intro">Trato directo con el artista, de principio a fin. Pagas solo cuando todo está confirmado por escrito.</p>
-      </div>
-
-      <ul class="metodos" role="list" aria-label="Formas de pago">
-        <li class="metodo">
-          <span class="metodo__icono" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M12 3l9 5H3z" /></svg>
-          </span>
-          <span class="metodo__texto">
-            <span class="metodo__nombre">Transferencia</span>
-            <span class="metodo__nota">Bancaria, en euros</span>
-          </span>
-        </li>
-        <li class="metodo">
-          <span class="metodo__icono" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3" /><path d="M10.5 18.5h3M12.8 7.5l-2.6 4h3.6l-2.6 4" /></svg>
-          </span>
-          <span class="metodo__texto">
-            <span class="metodo__nombre">Bizum</span>
-            <span class="metodo__nota">Al instante, desde tu móvil</span>
-          </span>
-        </li>
-      </ul>
-    </header>
-
-    <ol class="pasos" role="list">
-      {
-        pasos.map((p, i) => (
-          <li class="paso" style={`--i: ${i}`}>
-            <span class="paso__n" aria-hidden="true">
-              {String(i + 1).padStart(2, '0')}
-            </span>
-            <h3 class="paso__titulo">{p.titulo}</h3>
-            <p class="paso__texto">{p.texto}</p>
-          </li>
-        ))
-      }
-    </ol>
-
-    <div class="comprar__pie">
-      <div class="comprar__acciones">
-        <a class="comprar__boton" href={hrefConsulta}>
-          <span class="punto" aria-hidden="true"></span>
-          Consultar esta obra <span class="flecha" aria-hidden="true">→</span>
-        </a>
-        <a class="comprar__enlace" href="/condiciones-de-venta">Condiciones de venta</a>
-      </div>
-      <p class="comprar__aviso">
-        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" /><path d="M9 12l2 2 4-4" /></svg>
-        Los datos de pago te llegarán siempre desde el correo del artista. Si alguien te pide pagar por otra vía, no lo hagas y escríbeme.
+    <div class="nota">
+      <h2 id="comprar-titulo" class="nota__titulo">Cómo comprar esta obra</h2>
+      <p class="nota__texto">
+        No tengo tienda online: mis obras las vendo yo, directamente. Escríbeme, te respondo en persona y lo dejamos
+        todo claro antes de que pagues nada.
       </p>
+      <div class="nota__acciones">
+        <a class="nota__boton" href={hrefConsulta}>
+          Escribirme sobre esta obra <span class="flecha" aria-hidden="true">→</span>
+        </a>
+        {
+          email && (
+            <p class="nota__correo">
+              o directamente a <a href={hrefConsulta}>{email}</a>
+            </p>
+          )
+        }
+      </div>
+      <Firma alto="48px" class="nota__firma" />
+    </div>
+
+    <div class="dudas">
+      <dl class="dudas__lista">
+        <div class="duda">
+          <dt>¿Cómo se compra?</dt>
+          <dd>
+            Me escribes diciendo que te interesa «{titulo}» y dónde quieres recibirla. Te contesto con la disponibilidad,
+            el precio final con el envío y el plazo de entrega, y la obra queda reservada para ti.
+          </dd>
+        </div>
+        <div class="duda">
+          <dt>¿Cómo y cuándo se paga?</dt>
+          <dd>
+            Por <strong>transferencia bancaria</strong> o por <strong>Bizum</strong>, una vez que estés de acuerdo con lo
+            que te he confirmado por escrito.{' '}
+            {email ? <>Los datos para el pago te los mando yo desde {email}.</> : <>Los datos para el pago te los mando yo, por escrito.</>}
+          </dd>
+        </div>
+        <div class="duda">
+          <dt>¿Cómo llega a casa?</dt>
+          <dd>
+            {envio ?? 'Cuando recibo el pago, embalo la obra con cuidado y la envío. Te paso el número de seguimiento para que sepas en todo momento dónde está.'}
+          </dd>
+        </div>
+        <div class="duda">
+          <dt>¿Y si al tenerla delante no me convence?</dt>
+          <dd>
+            Tienes 14 días desde que la recibes para devolverla, sin dar explicaciones, y te devuelvo lo que pagaste. Solo
+            corre de tu cuenta el envío de vuelta. No se aplica a los encargos hechos a medida.
+          </dd>
+        </div>
+        <div class="duda">
+          <dt>¿Me haces factura?</dt>
+          <dd>Sí, si la necesitas. Pídemela al escribirme.</dd>
+        </div>
+      </dl>
+      <a class="dudas__enlace" href="/condiciones-de-venta">Condiciones de venta completas <span aria-hidden="true">→</span></a>
     </div>
   </div>
 </section>
@@ -101,221 +89,54 @@ const pasos = [
   .comprar {
     background: var(--textura), var(--paper);
     border-top: 1px solid var(--line);
-    padding: clamp(64px, 7vw, 104px) var(--gutter) clamp(56px, 6vw, 88px);
+    padding: clamp(64px, 7vw, 112px) var(--gutter);
   }
   .comprar__in {
     max-width: var(--container);
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: clamp(40px, 5vw, 64px);
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 48px clamp(40px, 7vw, 120px);
+    align-items: start;
   }
 
-  /* ---------- Cabecera: título y formas de pago ---------- */
-  .comprar__cabeza {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
-    align-items: end;
-    gap: 28px clamp(32px, 5vw, 80px);
-  }
-  .comprar__titulos {
+  /* ---------- La nota del artista ---------- */
+  .nota {
+    position: sticky;
+    top: 112px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    align-items: flex-start;
+    gap: 22px;
   }
-  .comprar__eti {
-    margin: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    font: 600 11px/1 var(--font-body);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .punto {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex: 0 0 auto;
-  }
-  .comprar__titulo {
+  .nota__titulo {
     margin: 0;
     font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(34px, 3.6vw, 56px);
+    font-weight: 400;
+    font-size: clamp(36px, 3.8vw, 58px);
     line-height: 1;
     letter-spacing: -0.012em;
   }
-  .comprar__intro {
+  .nota__texto {
     margin: 0;
-    max-width: 34em;
-    font-size: 16px;
+    max-width: 30em;
+    font-size: 17px;
     line-height: 1.6;
     color: var(--text-soft);
   }
-
-  .metodos {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .metodo {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 18px;
-    border-radius: 14px;
-    background: var(--textura), var(--band);
-  }
-  .metodo__icono {
-    display: grid;
-    place-items: center;
-    flex: 0 0 auto;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--textura), var(--paper);
-    color: var(--ink);
-  }
-  .metodo__texto {
+  .nota__acciones {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    min-width: 0;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 4px;
   }
-  .metodo__nombre {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 16px;
-  }
-  .metodo__nota {
-    font-size: 13px;
-    color: var(--muted);
-  }
-
-  /* ---------- Pasos: en fila, unidos por una raya fina ---------- */
-  .pasos {
-    position: relative;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 28px clamp(20px, 3vw, 44px);
-  }
-  .pasos::before,
-  .pasos::after {
-    content: '';
-    position: absolute;
-    left: 18px;
-    right: 18px;
-    top: 18px;
-    height: 1px;
-    background: var(--line);
-  }
-  .pasos::after {
-    background: var(--ink);
-    transform-origin: left;
-  }
-  .paso {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .paso__n {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    margin-bottom: 8px;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    background: var(--textura), var(--paper);
-    font: 600 12px/1 var(--font-body);
-    letter-spacing: 0.06em;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink);
-    transition:
-      border-color 0.4s ease,
-      background 0.4s ease,
-      color 0.4s ease;
-  }
-  .paso:hover .paso__n {
-    border-color: var(--ink);
-    background: var(--ink);
-    color: var(--paper);
-  }
-  .paso__titulo {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 19px;
-    letter-spacing: -0.015em;
-  }
-  .paso__texto {
-    margin: 0;
-    font-size: 15px;
-    line-height: 1.6;
-    color: var(--text-soft);
-  }
-
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .pasos::after {
-        animation: dibujar linear both;
-        animation-timeline: view();
-        animation-range: entry 30% cover 55%;
-      }
-      .paso {
-        animation: paso-entra linear both;
-        animation-timeline: view();
-        animation-range: entry 5% cover 30%;
-      }
-    }
-  }
-  @keyframes dibujar {
-    from {
-      transform: scaleX(0);
-    }
-  }
-  @keyframes paso-entra {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
-    }
-  }
-
-  /* ---------- Pie: acciones y aviso ---------- */
-  .comprar__pie {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px 40px;
-    padding-top: 28px;
-    border-top: 1px solid var(--line);
-  }
-  .comprar__acciones {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px 24px;
-  }
-  .comprar__boton {
+  .nota__boton {
     display: inline-flex;
     align-items: center;
     gap: 10px;
     min-height: var(--tap);
-    padding: 0 22px 0 18px;
+    padding: 0 24px;
     border-radius: var(--radius-pill);
     background: var(--ink);
     color: var(--paper);
@@ -324,20 +145,70 @@ const pasos = [
     text-decoration: none;
     transition: background 0.3s ease;
   }
-  .comprar__boton:hover {
+  .nota__boton:hover {
     background: var(--accent);
-  }
-  .comprar__boton:hover .punto {
-    background: var(--textura), var(--paper);
   }
   .flecha {
     display: inline-block;
     transition: transform 0.35s ease;
   }
-  .comprar__boton:hover .flecha {
+  .nota__boton:hover .flecha {
     transform: translateX(4px);
   }
-  .comprar__enlace {
+  .nota__correo {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .nota__correo a {
+    color: var(--ink);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .nota :global(.nota__firma) {
+    margin-top: 10px;
+    color: var(--ink);
+    opacity: 0.85;
+  }
+
+  /* ---------- Las dudas, con rayas finas ---------- */
+  .dudas {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+  }
+  .dudas__lista {
+    margin: 0;
+    width: 100%;
+    border-bottom: 1px solid var(--line);
+  }
+  .duda {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 10px clamp(24px, 3vw, 48px);
+    padding: 26px 0;
+    border-top: 1px solid var(--line);
+  }
+  .duda dt {
+    font-family: var(--font-display);
+    font-size: 22px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .duda dd {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text-soft);
+  }
+  .duda strong {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .dudas__enlace {
     font: 600 13px/1.4 var(--font-body);
     letter-spacing: 0.02em;
     color: var(--ink);
@@ -345,58 +216,35 @@ const pasos = [
     background: linear-gradient(currentColor, currentColor) no-repeat left bottom / 100% 1px;
     transition: background-size 0.5s var(--ease-out);
   }
-  .comprar__enlace:hover {
+  .dudas__enlace:hover {
     background-position: right bottom;
     background-size: 0 1px;
   }
-  .comprar__aviso {
-    margin: 0;
-    max-width: 44em;
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--muted);
-  }
-  .comprar__aviso svg {
-    flex: 0 0 auto;
-    margin-top: 2px;
-    color: var(--accent);
-  }
 
-  @media (max-width: 980px) {
-    .comprar__cabeza {
+  @media (max-width: 1100px) {
+    .duda {
       grid-template-columns: minmax(0, 1fr);
-    }
-    .pasos {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .pasos::before,
-    .pasos::after {
-      display: none;
     }
   }
-  @media (max-width: 560px) {
-    .metodos,
-    .pasos {
+  @media (max-width: 860px) {
+    .comprar__in {
       grid-template-columns: minmax(0, 1fr);
     }
-    .paso {
-      display: grid;
-      grid-template-columns: 36px minmax(0, 1fr);
-      column-gap: 16px;
+    .nota {
+      position: static;
     }
-    .paso__n {
-      grid-row: span 2;
-      margin-bottom: 0;
+    .duda {
+      padding: 22px 0;
+    }
+    .duda dt {
+      font-size: 21px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .paso__n,
     .flecha,
-    .comprar__boton {
+    .nota__boton,
+    .dudas__enlace {
       transition: none;
     }
   }
