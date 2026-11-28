@@ -32,6 +32,34 @@ export function aRuta(/** @type {string} */ url) {
   return r;
 }
 
+/**
+ * En Cloudflare el repositorio se clona «superficial» (solo el último commit):
+ * sin historial no se ven los cambios de dirección. Se completa el historial
+ * sin descargar archivos (solo commits y nombres), que es rápido.
+ */
+function completarHistorial(/** @type {string} */ raiz, /** @type {{ info: (m: string) => void, warn: (m: string) => void } | undefined} */ logger) {
+  const git = (/** @type {string[]} */ args, ms = 120000) =>
+    execFileSync('git', args, { cwd: raiz, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: ms }).trim();
+  try {
+    if (git(['rev-parse', '--is-shallow-repository']) !== 'true') return;
+  } catch {
+    return;
+  }
+  for (const args of [
+    ['fetch', '--quiet', '--unshallow', '--filter=blob:none', 'origin'],
+    ['fetch', '--quiet', '--unshallow', 'origin'],
+  ]) {
+    try {
+      git(args);
+      logger?.info(`Historial de git completado (${args.slice(2, -1).join(' ')})`);
+      return;
+    } catch {
+      // Se prueba la siguiente forma.
+    }
+  }
+  logger?.warn('Clon de git superficial y sin acceso al historial: anota las direcciones antiguas en la obra o en Redirecciones.');
+}
+
 /** Cambios de nombre de archivos de obra en git: [[antiguo, nuevo], …] en orden cronológico. */
 function renombradosEnGit(/** @type {string} */ raiz) {
   try {
@@ -39,7 +67,9 @@ function renombradosEnGit(/** @type {string} */ raiz) {
     // Cada guardado empieza con «␀@@COMMIT␀»; luego «R094␀viejo␀nuevo␀», «D␀ruta␀», «A␀ruta␀»…
     const salida = execFileSync(
       'git',
-      ['-c', 'core.quotePath=false', 'log', '--reverse', '-M', '--name-status', '-z', '--format=%x00@@COMMIT', '--', 'src/content/obras'],
+      // --no-renames: sin comparar contenidos (no hace falta descargar archivos);
+      // un cambio de nombre aparece como borrado + alta en el mismo guardado.
+      ['-c', 'core.quotePath=false', 'log', '--reverse', '--no-renames', '--name-status', '-z', '--format=%x00@@COMMIT', '--', 'src/content/obras'],
       { cwd: raiz, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }
     );
     const nombre = (/** @type {string} */ r) => r.split('/').pop() ?? '';
@@ -98,6 +128,7 @@ export function construirRedirecciones({ raiz, obrasActuales, logger }) {
       }
     }
   }
+  completarHistorial(raiz, logger);
   const git = renombradosEnGit(raiz);
   // Sigue las cadenas (a → b → c): cada nombre antiguo acaba en el actual.
   /** @type {Map<string, string>} */

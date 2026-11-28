@@ -99,6 +99,30 @@
     {
       "desde": "/blog/*",
       "hacia": "/"
+    },
+    {
+      "desde": "/obra/chillida",
+      "hacia": "/obra/interpretación-de-obra-de-e-chillida"
+    },
+    {
+      "desde": "/obra/casa-diego-velazquez",
+      "hacia": "/obra/casa-de-los-velazquez"
+    },
+    {
+      "desde": "/obra/copia-espinar-pablo-ruben",
+      "hacia": "/obra/el-espinar-pablo-ruben"
+    },
+    {
+      "desde": "/obra/espadanal",
+      "hacia": "/obra/laguna-del-espadañal"
+    },
+    {
+      "desde": "/obra/copia-ian-stewart",
+      "hacia": "/obra/chicos-en-el-muelle"
+    },
+    {
+      "desde": "/obra/dos-niños-y-una-bicicleta-suecia-interpretación",
+      "hacia": "/obra/chicos-en-el-muelle"
     }
   ]
 }
