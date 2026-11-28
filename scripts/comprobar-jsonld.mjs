@@ -95,7 +95,7 @@ for (const archivo of archivos) {
   if (!obra) fallo(donde, 'falta el VisualArtwork');
   else {
     for (const p of ['name', 'url', 'image', 'creator', 'artform', 'artMedium']) if (!(p in obra)) fallo(donde, `VisualArtwork sin ${p}`);
-    if (!String(obra.url).endsWith(donde)) fallo(donde, `url del VisualArtwork no coincide: ${obra.url}`);
+    if (!decodeURI(String(obra.url)).endsWith(donde)) fallo(donde, `url del VisualArtwork no coincide: ${obra.url}`);
     for (const lado of ['height', 'width']) {
       const m = obra[lado];
       if (m && !(m['@type'] === 'Distance' && /^\d+(,\d+)? cm$/.test(m.name))) fallo(donde, `${lado} no es Distance «N cm»: ${JSON.stringify(m)}`);

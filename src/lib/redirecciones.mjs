@@ -12,17 +12,14 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
+import { slug } from 'github-slugger';
 
-/** «Ajos I» o «Ajos-1.mdoc» → «ajos-i» / «ajos-1» (como los id de Astro). */
-export const aSlug = (/** @type {string} */ t) =>
-  t
-    .replace(/\.mdoc$/, '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+/**
+ * Nombre de archivo → id de la obra, igual que lo calcula Astro (github-slugger):
+ * «Ajos-1.mdoc» → «ajos-1», «casa-de los-velazquez» → «casa-de-los-velazquez»,
+ * «laguna-del-espadañal» → «laguna-del-espadañal» (conserva tildes y eñes).
+ */
+export const aSlug = (/** @type {string} */ t) => slug(t.trim().replace(/\.mdoc$/, ''));
 
 /** «https://jesusenovilla.com/oleos/repollo/» → «/oleos/repollo». */
 export function aRuta(/** @type {string} */ url) {
@@ -38,16 +35,36 @@ export function aRuta(/** @type {string} */ url) {
 /** Cambios de nombre de archivos de obra en git: [[antiguo, nuevo], …] en orden cronológico. */
 function renombradosEnGit(/** @type {string} */ raiz) {
   try {
-    const salida = execFileSync('git', ['log', '--reverse', '--diff-filter=R', '-M', '--name-status', '--format=', '--', 'src/content/obras'], {
-      cwd: raiz,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    return salida
-      .split('\n')
-      .map((l) => l.split('\t'))
-      .filter((c) => c[0]?.startsWith('R') && c[1] && c[2])
-      .map((c) => [aSlug(c[1].split('/').pop() ?? ''), aSlug(c[2].split('/').pop() ?? '')]);
+    // -z: nombres tal cual (con tildes, espacios o comillas), separados por NUL.
+    // Cada guardado empieza con «␀@@COMMIT␀»; luego «R094␀viejo␀nuevo␀», «D␀ruta␀», «A␀ruta␀»…
+    const salida = execFileSync(
+      'git',
+      ['-c', 'core.quotePath=false', 'log', '--reverse', '-M', '--name-status', '-z', '--format=%x00@@COMMIT', '--', 'src/content/obras'],
+      { cwd: raiz, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }
+    );
+    const nombre = (/** @type {string} */ r) => r.split('/').pop() ?? '';
+    const esObra = (/** @type {string} */ r) => r.endsWith('.mdoc');
+    /** @type {[string, string][]} */
+    const pares = [];
+    for (const bloque of salida.split('\0@@COMMIT')) {
+      const t = bloque.split('\0').map((x) => x.replace(/^\n+/, '')).filter(Boolean);
+      /** @type {string[]} */ const borradas = [];
+      /** @type {string[]} */ const nuevas = [];
+      for (let i = 0; i < t.length; i++) {
+        if (/^R\d*$/.test(t[i]) && t[i + 2]) {
+          if (esObra(t[i + 1])) pares.push([aSlug(nombre(t[i + 1])), aSlug(nombre(t[i + 2]))]);
+          i += 2;
+        } else if (/^[ACDMTU]$/.test(t[i]) && t[i + 1]) {
+          if (t[i] === 'D' && esObra(t[i + 1])) borradas.push(t[i + 1]);
+          if (t[i] === 'A' && esObra(t[i + 1])) nuevas.push(t[i + 1]);
+          i += 1;
+        }
+      }
+      // Keystatic guarda una obra por commit: si en el mismo guardado desaparece una
+      // obra y aparece otra, es un cambio de dirección aunque git no lo vea como renombrado.
+      if (borradas.length === 1 && nuevas.length === 1) pares.push([aSlug(nombre(borradas[0])), aSlug(nombre(nuevas[0]))]);
+    }
+    return pares;
   } catch {
     return [];
   }

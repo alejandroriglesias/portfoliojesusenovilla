@@ -35,7 +35,9 @@ export default function redireccionesCloudflare() {
           existsSync(carpetaObras) ? (await readdir(carpetaObras)).filter((f) => f.endsWith('.html')).map((f) => f.slice(0, -5)) : []
         );
         const reglas = construirRedirecciones({ raiz, obrasActuales, logger });
-        const lineas = reglas.map(({ desde, hacia }) => `${desde} ${hacia} 301`);
+        // Las direcciones con tildes o eñes van codificadas (%C3%B3…), como las pide el navegador.
+        const cod = (/** @type {string} */ u) => (/[^\x21-\x7e]/.test(u) ? encodeURI(u) : u);
+        const lineas = reglas.map(({ desde, hacia }) => `${cod(desde)} ${cod(hacia)} 301`);
         const contenido = `# Generado en cada compilación (src/lib/redirecciones.mjs)\n${lineas.join('\n')}\n`;
         await writeFile(join(destino, '_redirects'), contenido);
         logger.info(`_redirects: ${lineas.length} redirecciones 301`);

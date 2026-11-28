@@ -102,6 +102,13 @@ export default config({
             label: 'Dirección web',
             description:
               'Se genera a partir del título. Si la cambias, la dirección anterior sigue funcionando y lleva a la nueva (también puedes anotarla abajo, en «Direcciones antiguas»).',
+            validation: {
+              pattern: {
+                regex: /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/,
+                message:
+                  'Solo letras sin tildes, números y guiones, sin espacios ni comillas (p. ej. «chicos-en-el-muelle»). Pulsa «Regenerate» para crearla a partir del título.',
+              },
+            },
           },
         }),
         serie: fields.relationship({
