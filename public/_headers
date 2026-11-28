@@ -1,5 +1,11 @@
 # Cabeceras de seguridad para toda la web (Cloudflare).
 # La caché de un año para /_astro/* la añade el adaptador de Astro al compilar.
+
+# La dirección *.workers.dev es una copia de pruebas del dominio definitivo:
+# que no la indexe ningún buscador (evita contenido duplicado).
+https://:worker.:cuenta.workers.dev/*
+  X-Robots-Tag: noindex
+
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

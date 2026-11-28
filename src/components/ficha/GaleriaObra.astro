@@ -21,6 +21,8 @@ import DetalleObra from './DetalleObra.astro';
 interface Vista {
   imagen: ImageMetadata;
   etiqueta: string;
+  /** Texto alternativo propio (si no, el de la obra más la etiqueta). */
+  alt?: string;
 }
 interface Props {
   vistas: Vista[];
@@ -50,15 +52,29 @@ const datos = await Promise.all(
       quality: 82,
     });
     const grande = await getImage({ src: v.imagen, width: Math.min(w, 3000), format: 'webp', quality: 86 });
+    // La principal (la que se ve al entrar) va además en AVIF, más ligera, y en
+    // JPG para navegadores antiguos; el navegador elige con <picture>.
+    // AVIF tarda unas 5 veces más que WebP en generarse: solo tres anchos
+    // (móvil, tableta y escritorio), para que la compilación no se dispare.
+    const anchosAvif = [...new Set([480, 960, 1440].map((a) => Math.min(a, w)))];
+    const [avif, jpg] =
+      i === 0
+        ? await Promise.all([
+            getImage({ src: v.imagen, widths: anchosAvif, format: 'avif', quality: 60 }),
+            getImage({ src: v.imagen, width: Math.min(w, 1280), format: 'jpg', quality: 80 }),
+          ])
+        : [undefined, undefined];
     return {
       etiqueta: v.etiqueta,
       src: img.src,
       srcset: img.srcSet.attribute,
+      avif: avif?.srcSet.attribute,
+      jpg: jpg ? { src: jpg.src } : undefined,
       ancho: w,
       alto: v.imagen.height,
       ratio: +(w / v.imagen.height).toFixed(4),
       grande: grande.src,
-      alt: i === 0 ? alt : `${alt}. ${v.etiqueta}`,
+      alt: i === 0 ? alt : (v.alt ?? `${alt}. ${v.etiqueta}`),
     };
   })
 );
@@ -84,6 +100,24 @@ const nn = (i: number) => String(i).padStart(2, '0');
       datos.map((v, i) => (
         <>
         <figure class="marco" data-marco style={`--ar: ${v.ratio}`}>
+          {v.avif && v.jpg ? (
+          <picture>
+            <source type="image/avif" srcset={v.avif} sizes="(max-width: 900px) 100vw, 56vw" />
+            <source type="image/webp" srcset={v.srcset} sizes="(max-width: 900px) 100vw, 56vw" />
+            <img
+              src={v.jpg.src}
+              width={v.ancho}
+              height={v.alto}
+              alt={v.alt}
+              loading="eager"
+              fetchpriority="high"
+              decoding="sync"
+              data-grande={v.grande}
+              data-ver={i}
+              style={color ? `background-color: ${color}` : undefined}
+            />
+          </picture>
+          ) : (
           <img
             src={v.src}
             srcset={v.srcset}
@@ -98,6 +132,7 @@ const nn = (i: number) => String(i).padStart(2, '0');
             data-ver={i}
             style={color ? `background-color: ${color}` : undefined}
           />
+          )}
           {i > 0 && <figcaption class="marco__pie">{v.etiqueta}</figcaption>}
           <button class="marco__ver" type="button" data-ver={i}>
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
@@ -190,6 +225,10 @@ const nn = (i: number) => String(i).padStart(2, '0');
   }
   .marco + .marco {
     background: var(--card);
+  }
+  /* <picture> no ocupa caja: la imagen se coloca como si fuera hija directa. */
+  .marco picture {
+    display: contents;
   }
   .marco img {
     display: block;

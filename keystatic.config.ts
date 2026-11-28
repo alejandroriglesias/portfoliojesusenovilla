@@ -79,8 +79,9 @@ export default config({
   ui: {
     brand: { name: 'Jesús Senovilla' },
     navigation: {
-      Contenido: ['obras', 'tecnicas'],
-      Páginas: ['sobreMi', 'legal', 'ajustes'],
+      Contenido: ['obras', 'series', 'tecnicas'],
+      Páginas: ['sobreMi', 'preguntas', 'legal'],
+      Configuración: ['ajustes', 'redirecciones'],
     },
   },
 
@@ -99,8 +100,14 @@ export default config({
           name: { label: 'Título', validation: { isRequired: true } },
           slug: {
             label: 'Dirección web',
-            description: 'Se genera a partir del título. Cambiarla rompe los enlaces antiguos.',
+            description:
+              'Se genera a partir del título. Si la cambias, la dirección anterior sigue funcionando y lleva a la nueva (también puedes anotarla abajo, en «Direcciones antiguas»).',
           },
+        }),
+        serie: fields.relationship({
+          label: 'Serie',
+          description: 'Opcional. La serie a la que pertenece la obra (se crean en «Series»).',
+          collection: 'series',
         }),
         tecnica: fields.conditional(
           fields.select({
@@ -142,8 +149,69 @@ export default config({
             pattern: { regex: /^(\d{4})?$/, message: 'Escribe el año con cuatro cifras, p. ej. 2019' },
           },
         }),
-        medidas: fields.text({ label: 'Medidas', description: '«alto × ancho cm», p. ej. «40 × 30 cm».' }),
-        soporte: fields.text({ label: 'Soporte', description: 'Lienzo, tabla, papel…' }),
+        medidasImagen: fields.object(
+          {
+            alto: fields.number({ label: 'Alto (cm)', validation: { min: 0 } }),
+            ancho: fields.number({ label: 'Ancho (cm)', validation: { min: 0 } }),
+          },
+          {
+            label: 'Medidas de la imagen',
+            description: 'En centímetros. En grabado, la huella de la plancha; en óleo y acuarela, la obra pintada.',
+            layout: [6, 6],
+          }
+        ),
+        medidasPapel: fields.object(
+          {
+            alto: fields.number({ label: 'Alto (cm)', validation: { min: 0 } }),
+            ancho: fields.number({ label: 'Ancho (cm)', validation: { min: 0 } }),
+          },
+          {
+            label: 'Medidas del papel',
+            description: 'En centímetros. Opcional: la hoja completa, si es distinta de la imagen.',
+            layout: [6, 6],
+          }
+        ),
+        medidas: fields.text({
+          label: 'Medidas (texto libre)',
+          description: 'Solo si no rellenas las medidas en números de arriba. «alto × ancho cm», p. ej. «40 × 30 cm».',
+        }),
+        papel: fields.object(
+          {
+            marca: fields.text({ label: 'Marca', description: 'P. ej. «Arches».' }),
+            gramaje: fields.integer({ label: 'Gramaje (g/m²)', validation: { min: 0 } }),
+            composicion: fields.text({ label: 'Composición', description: 'P. ej. «100 % algodón».' }),
+            grano: fields.select({
+              label: 'Grano',
+              options: [
+                { label: 'Sin indicar', value: 'sin-indicar' },
+                { label: 'Fino / satinado', value: 'fino' },
+                { label: 'Medio / grano fino', value: 'medio' },
+                { label: 'Grueso / rugoso', value: 'grueso' },
+              ],
+              defaultValue: 'sin-indicar',
+            }),
+          },
+          { label: 'Papel', description: 'Opcional. Cada dato que rellenes se muestra en la ficha.', layout: [6, 6, 6, 6] }
+        ),
+        soporte: fields.text({
+          label: 'Soporte (texto libre)',
+          description: 'Lienzo, tabla, papel… En obras sobre papel, mejor rellena el bloque «Papel».',
+        }),
+        enmarcado: fields.conditional(fields.checkbox({ label: 'Se entrega enmarcada', defaultValue: false }), {
+          true: fields.object(
+            {
+              alto: fields.number({ label: 'Alto del marco (cm)', validation: { min: 0 } }),
+              ancho: fields.number({ label: 'Ancho del marco (cm)', validation: { min: 0 } }),
+              paspartu: fields.checkbox({ label: 'Con paspartú', defaultValue: false }),
+            },
+            { layout: [4, 4, 4] }
+          ),
+          false: fields.empty(),
+        }),
+        certificado: fields.checkbox({
+          label: 'Incluye certificado de autenticidad',
+          defaultValue: false,
+        }),
         estado: fields.select({
           label: 'Estado',
           description: 'Se muestra con un punto de color en la ficha.',
@@ -172,12 +240,30 @@ export default config({
         vistas: fields.array(
           fields.object({
             imagen: imagenObra('Imagen', undefined, true),
-            etiqueta: fields.text({ label: 'Etiqueta', description: 'Detalle, plancha, reverso…' }),
+            tipo: fields.select({
+              label: 'Tipo',
+              options: [
+                { label: 'Detalle', value: 'detalle' },
+                { label: 'Ambiente / en la pared', value: 'ambiente' },
+                { label: 'Reverso', value: 'reverso' },
+                { label: 'Otra', value: 'otra' },
+              ],
+              defaultValue: 'otra',
+            }),
+            etiqueta: fields.text({
+              label: 'Etiqueta',
+              description: 'Opcional: el pie que se ve en la ficha (p. ej. «Prueba de estado»). Si se deja vacío, se usa el tipo.',
+            }),
+            alt: fields.text({
+              label: 'Descripción de la imagen (texto alternativo)',
+              description: 'Qué se ve en esta foto. Si se deja vacío, se construye con el título y el tipo.',
+              multiline: true,
+            }),
           }),
           {
-            label: 'Otras vistas',
-            description: 'Miniaturas de la ficha.',
-            itemLabel: (p) => p.fields.etiqueta.value || 'Vista',
+            label: 'Imágenes extra',
+            description: 'Detalles, la obra en la pared, el reverso… Se ven en la ficha, debajo de la principal.',
+            itemLabel: (p) => p.fields.etiqueta.value || p.fields.tipo.value || 'Imagen',
           }
         ),
         proceso: fields.array(
@@ -233,6 +319,27 @@ export default config({
             layout: [6, 6],
           }
         ),
+        seo: fields.object(
+          {
+            titulo: fields.text({
+              label: 'Título para buscadores',
+              description: 'Opcional. Si se deja vacío: «Título — Técnica original de Jesús Senovilla (año)».',
+            }),
+            descripcion: fields.text({
+              label: 'Descripción para buscadores',
+              description:
+                'Opcional, unos 150 caracteres. Si se deja vacía, se escribe sola con la técnica, el año, las medidas, el papel y el principio de la descripción.',
+              multiline: true,
+            }),
+          },
+          { label: 'Buscadores (SEO)' }
+        ),
+        direccionesAntiguas: fields.array(fields.text({ label: 'Dirección antigua' }), {
+          label: 'Direcciones antiguas',
+          description:
+            'Si cambias la dirección web, puedes anotar aquí la anterior (p. ej. «ajos-1»): seguirá funcionando y llevará a la nueva. Los cambios hechos desde el panel se detectan solos.',
+          itemLabel: (p) => p.value || 'Dirección',
+        }),
         destacada: fields.checkbox({
           label: 'Obra destacada',
           description: 'Aparece en la portada.',
@@ -253,6 +360,30 @@ export default config({
           description: 'Solo para ti; no se muestran en la web.',
           multiline: true,
         }),
+      },
+    }),
+
+    // ======================= SERIES =======================
+    series: collection({
+      label: 'Series',
+      slugField: 'titulo',
+      path: 'src/content/series/*',
+      format: { contentField: 'texto' },
+      entryLayout: 'form',
+      columns: ['titulo'],
+      previewUrl: '/serie/{slug}',
+      schema: {
+        titulo: fields.slug({
+          name: { label: 'Nombre de la serie', validation: { isRequired: true } },
+          slug: { label: 'Dirección web', description: 'Se genera a partir del nombre: /serie/…' },
+        }),
+        entradilla: fields.text({
+          label: 'Entradilla',
+          description: 'Opcional: una o dos frases que presenten la serie.',
+          multiline: true,
+        }),
+        orden: fields.integer({ label: 'Orden', description: 'Las series con número menor aparecen antes.', defaultValue: 100 }),
+        texto: textoEnriquecido('Texto', 'series', 'Opcional: la historia de la serie. Si está vacío, solo se ven sus obras.'),
       },
     }),
 
@@ -281,7 +412,11 @@ export default config({
           ],
           defaultValue: 'principal',
         }),
-        resumen: fields.text({ label: 'Resumen', multiline: true }),
+        resumen: fields.text({
+          label: 'Texto introductorio',
+          description: 'Se muestra arriba en la página de la técnica, junto al título, y lo leen los buscadores.',
+          multiline: true,
+        }),
         titular: fields.text({
           label: 'Titular',
           description: 'Frase grande del bloque «Sobre la técnica», p. ej. «De la oscuridad hacia la luz.». La última palabra va en color.',
@@ -393,7 +528,102 @@ export default config({
             itemLabel: (p) => p.fields.pie.value || 'Foto',
           }
         ),
+        lugar: fields.text({
+          label: 'Dónde vive y trabaja',
+          description: 'Opcional. P. ej. «Cuéllar (Segovia)». Se muestra en «Trayectoria».',
+        }),
+        formacion: fields.array(
+          fields.object({
+            anio: fields.text({ label: 'Año o periodo', description: 'P. ej. «2015» o «2012–2016».' }),
+            titulo: fields.text({ label: 'Estudios o curso' }),
+            centro: fields.text({ label: 'Centro o maestro' }),
+          }),
+          { label: 'Formación', description: 'Opcional.', itemLabel: (p) => p.fields.titulo.value || 'Formación' }
+        ),
+        exposiciones: fields.array(
+          fields.object({
+            anio: fields.text({ label: 'Año' }),
+            titulo: fields.text({ label: 'Título de la exposición' }),
+            lugar: fields.text({ label: 'Lugar', description: 'Sala o galería y ciudad.' }),
+            tipo: fields.select({
+              label: 'Tipo',
+              options: [
+                { label: 'Individual', value: 'individual' },
+                { label: 'Colectiva', value: 'colectiva' },
+              ],
+              defaultValue: 'individual',
+            }),
+          }),
+          {
+            label: 'Exposiciones',
+            description: 'Opcional. Se ordenan solas por año, de la más reciente a la más antigua.',
+            itemLabel: (p) => [p.fields.anio.value, p.fields.titulo.value].filter(Boolean).join(' · ') || 'Exposición',
+          }
+        ),
+        premios: fields.array(
+          fields.object({
+            anio: fields.text({ label: 'Año' }),
+            nombre: fields.text({ label: 'Premio o reconocimiento' }),
+          }),
+          {
+            label: 'Premios',
+            description: 'Opcional.',
+            itemLabel: (p) => [p.fields.anio.value, p.fields.nombre.value].filter(Boolean).join(' · ') || 'Premio',
+          }
+        ),
         bio: textoEnriquecido('Biografía', 'sobre-mi'),
+      },
+    }),
+
+    // ======================= PREGUNTAS FRECUENTES =======================
+    preguntas: singleton({
+      label: 'Preguntas frecuentes',
+      path: 'src/content/preguntas/',
+      format: { data: 'json' },
+      previewUrl: '/preguntas-frecuentes',
+      schema: {
+        intro: fields.text({ label: 'Introducción', multiline: true }),
+        preguntas: fields.array(
+          fields.object({
+            pregunta: fields.text({ label: 'Pregunta', validation: { isRequired: true } }),
+            respuesta: fields.text({
+              label: 'Respuesta',
+              description:
+                'Deja una línea en blanco para separar párrafos. Si la respuesta está vacía o entre [corchetes], la pregunta no se muestra.',
+              multiline: true,
+            }),
+          }),
+          { label: 'Preguntas', itemLabel: (p) => p.fields.pregunta.value || 'Pregunta' }
+        ),
+      },
+    }),
+
+    // ======================= REDIRECCIONES =======================
+    redirecciones: singleton({
+      label: 'Redirecciones',
+      path: 'src/content/redirecciones/',
+      format: { data: 'json' },
+      schema: {
+        reglas: fields.array(
+          fields.object({
+            desde: fields.text({
+              label: 'Dirección antigua',
+              description:
+                'De la web anterior, con o sin dominio: «/oleos/repollo» o «https://jesusenovilla.com/oleos/repollo/». Admite «*» al final.',
+              validation: { isRequired: true },
+            }),
+            hacia: fields.text({
+              label: 'Dirección nueva',
+              description: 'En esta web, p. ej. «/obra/repollo».',
+              validation: { isRequired: true },
+            }),
+          }),
+          {
+            label: 'Redirecciones permanentes (301)',
+            description: 'Quien entre por la dirección antigua llega a la nueva, y los buscadores trasladan su posición a la nueva.',
+            itemLabel: (p) => (p.fields.desde.value ? `${p.fields.desde.value} → ${p.fields.hacia.value}` : 'Redirección'),
+          }
+        ),
       },
     }),
 
@@ -435,11 +665,42 @@ export default config({
         }),
         condicionesEnvio: fields.text({
           label: 'Condiciones de envío',
-          description: 'Se muestra en «Cómo comprar esta obra» (¿Cómo llega a casa?) y en el desplegable «Envío» de cada ficha.',
+          description:
+            'Embalaje, plazos, envíos internacionales… Se muestra en todas las fichas: en «Condiciones de venta y envío» y en «Cómo comprar esta obra».',
+          multiline: true,
         }),
         edicionRevista: fields.text({
           label: 'Edición (portada Revista)',
           description: 'P. ej. «Nº 01 — Invierno 2026».',
+        }),
+        persona: fields.object(
+          {
+            nombre: fields.text({ label: 'Nombre', defaultValue: 'Jesús Senovilla' }),
+            profesion: fields.text({ label: 'Profesión', defaultValue: 'Pintor y grabador' }),
+            descripcion: fields.text({
+              label: 'Descripción breve',
+              description: 'Una o dos frases sobre el artista, para buscadores y asistentes de IA.',
+              multiline: true,
+            }),
+          },
+          { label: 'El artista (para buscadores)', description: 'Lo que leen Google y los asistentes de IA sobre el artista.' }
+        ),
+        otrosPerfiles: fields.array(fields.url({ label: 'Dirección (URL)' }), {
+          label: 'Otros perfiles',
+          description: 'Opcional: otras páginas sobre el artista (galerías, prensa…). Se suman a las redes de arriba.',
+          itemLabel: (p) => p.value || 'Perfil',
+        }),
+        botsIA: fields.multiselect({
+          label: 'Asistentes de IA que pueden leer la web',
+          description: 'Los marcados pueden leer la web para responder preguntas y citarla. Por defecto, todos.',
+          options: [
+            { label: 'ChatGPT (GPTBot)', value: 'GPTBot' },
+            { label: 'Claude (ClaudeBot)', value: 'ClaudeBot' },
+            { label: 'Perplexity (PerplexityBot)', value: 'PerplexityBot' },
+            { label: 'Google Gemini (Google-Extended)', value: 'Google-Extended' },
+            { label: 'Common Crawl (CCBot)', value: 'CCBot' },
+          ],
+          defaultValue: ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'CCBot'],
         }),
         seoTitulo: fields.text({ label: 'Título SEO por defecto' }),
         seoDescripcion: fields.text({ label: 'Descripción SEO por defecto', multiline: true }),

@@ -1,9 +1,10 @@
 ---
 /**
- * Sobre mí — enfoque editorial, sin trayectoria de premios ni exposiciones:
+ * Sobre mí — enfoque editorial:
  * 1. Cabecera: nombre, oficio y retrato (con un leve paralaje) con la firma.
  * 2. Manifiesto: la frase del panel, palabra a palabra al hacer scroll.
  * 3. Biografía (texto del panel) con la firma.
+ * 3b. Trayectoria: dónde trabaja, formación, exposiciones y premios (solo si están en el panel).
  * 4. En cifras: datos que salen del propio catálogo (obras, técnicas, años).
  * 5. En el taller: fotos del panel (solo si las hay).
  * 6. Las tres técnicas, que llevan a Técnicas.
@@ -29,6 +30,15 @@ const ajustes = await getAjustes();
 const obras = await getObras();
 const principales = await getTecnicas('principal');
 const subtecnicas = await getTecnicas('grabado');
+
+// ---- Trayectoria (campos opcionales del panel) ----
+const ok = (v?: string) => (v && !esMarcador(v) ? v : undefined);
+const porAnio = <T extends { anio?: string }>(xs: T[]) => [...xs].sort((a, b) => (b.anio ?? '').localeCompare(a.anio ?? ''));
+const lugar = ok(d.lugar);
+const formacion = porAnio(d.formacion.filter((f) => ok(f.titulo) || ok(f.centro)));
+const exposiciones = porAnio(d.exposiciones.filter((e) => ok(e.titulo)));
+const premios = porAnio(d.premios.filter((p) => ok(p.nombre)));
+const hayTrayectoria = !!lugar || formacion.length > 0 || exposiciones.length > 0 || premios.length > 0;
 
 // ---- En cifras (todo sale del catálogo) ----
 const anios = obras.map((o) => o.data.anio).filter((a): a is number => !!a);
@@ -164,6 +174,72 @@ const hrefContacto = emailValido ? `mailto:${ajustes.email}` : '/contacto';
             <Prosa>
               <Bio />
             </Prosa>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- 3b. Trayectoria -->
+  {
+    hayTrayectoria && (
+      <section class="tray" aria-labelledby="tray-h2">
+        <div class="tray__in">
+          <h2 id="tray-h2" class="eti">Trayectoria</h2>
+          <div class="tray__bloques">
+            {lugar && (
+              <div class="tray__bloque">
+                <h3 class="tray__titulo">Vive y trabaja en</h3>
+                <p class="tray__lugar">{lugar}</p>
+              </div>
+            )}
+            {exposiciones.length > 0 && (
+              <div class="tray__bloque">
+                <h3 class="tray__titulo">Exposiciones</h3>
+                <ul class="tray__lista">
+                  {exposiciones.map((e) => (
+                    <li>
+                      <span class="tray__anio">{e.anio}</span>
+                      <span>
+                        <strong>{e.titulo}</strong>
+                        {e.lugar && <>. {e.lugar}</>}
+                        <span class="tray__tipo"> · {e.tipo === 'colectiva' ? 'colectiva' : 'individual'}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {formacion.length > 0 && (
+              <div class="tray__bloque">
+                <h3 class="tray__titulo">Formación</h3>
+                <ul class="tray__lista">
+                  {formacion.map((f) => (
+                    <li>
+                      <span class="tray__anio">{f.anio}</span>
+                      <span>
+                        {f.titulo && <strong>{f.titulo}</strong>}
+                        {f.titulo && f.centro && '. '}
+                        {f.centro}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {premios.length > 0 && (
+              <div class="tray__bloque">
+                <h3 class="tray__titulo">Premios</h3>
+                <ul class="tray__lista">
+                  {premios.map((p) => (
+                    <li>
+                      <span class="tray__anio">{p.anio}</span>
+                      <span>{p.nombre}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -499,6 +575,69 @@ const hrefContacto = emailValido ? `mailto:${ajustes.email}` : '/contacto';
   .bio__texto :global(.prosa) {
     max-width: 680px;
     font-size: clamp(18px, 1.5vw, 21px);
+  }
+
+  /* ---------- 3b. Trayectoria ---------- */
+  .tray {
+    background: var(--textura), var(--paper);
+    padding: 0 var(--gutter) clamp(72px, 9vw, 120px);
+  }
+  .tray__in {
+    max-width: var(--container);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding-top: clamp(48px, 5vw, 72px);
+    border-top: 1px solid var(--line);
+  }
+  .tray__bloques {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 40px clamp(32px, 5vw, 72px);
+  }
+  .tray__bloque {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .tray__titulo {
+    font-weight: 400;
+    font-size: clamp(24px, 2.2vw, 30px);
+    line-height: 1.1;
+  }
+  .tray__lugar {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-soft);
+  }
+  .tray__lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-soft);
+  }
+  .tray__lista li {
+    display: grid;
+    grid-template-columns: 4.5em minmax(0, 1fr);
+    gap: 12px;
+  }
+  .tray__lista strong {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .tray__anio {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .tray__tipo {
+    color: var(--muted);
   }
 
   /* ---------- 4. En cifras ---------- */

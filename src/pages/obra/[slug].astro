@@ -15,7 +15,9 @@ import GaleriaObra from '../../components/ficha/GaleriaObra.astro';
 import TiraProceso from '../../components/ficha/TiraProceso.astro';
 import ComoComprar from '../../components/ficha/ComoComprar.astro';
 import AnteriorSiguiente from '../../components/ficha/AnteriorSiguiente.astro';
-import { getObras, slugTecnica, esMarcador, type Obra } from '../../lib/contenido';
+import TiraObras from '../../components/obra/TiraObras.astro';
+import { getObras, getRelacionadas, getSerieDe, slugTecnica, esMarcador, type Obra } from '../../lib/contenido';
+import { datosTecnicos, descripcionSeo, ladoEnPared, tituloSeo } from '../../lib/obra-datos';
 import { paletaDe } from '../../lib/portada';
 import { getAjustes } from '../../lib/ajustes';
 import { obraJsonLd } from '../../lib/datos-estructurados';
@@ -65,18 +67,20 @@ const altBase =
     .filter(Boolean)
     .join(', ');
 
+const TIPOS_VISTA = { detalle: 'Detalle', ambiente: 'En la pared', reverso: 'Reverso', otra: 'Vista' } as const;
 const vistas = [
   { imagen: d.imagen, etiqueta: esGrabado ? 'Estampa completa' : 'Obra completa' },
   ...(d.imagenPlancha ? [{ imagen: d.imagenPlancha, etiqueta: 'Plancha' }] : []),
-  ...d.vistas.map((v, i) => ({ imagen: v.imagen, etiqueta: v.etiqueta ?? `Vista ${i + 2}` })),
+  ...d.vistas.map((v, i) => ({
+    imagen: v.imagen,
+    etiqueta: v.etiqueta ?? (v.tipo === 'otra' ? `Vista ${i + 2}` : TIPOS_VISTA[v.tipo]),
+    alt: v.alt,
+  })),
 ];
 
-// Vista «en casa»: tamaño real si las medidas de la ficha se pueden leer
-// («50 × 60 cm»), si no uno típico de la técnica.
-const numeros = esMarcador(d.medidas)
-  ? []
-  : (d.medidas?.match(/\d+(?:[.,]\d+)?/g) ?? []).map((x) => parseFloat(x.replace(',', '.')));
-const ladoMedidas = numeros.length >= 2 ? Math.max(numeros[0], numeros[1]) : undefined;
+// Vista «en casa»: tamaño real si hay medidas (marco, papel, imagen o el texto
+// libre «50 × 60 cm»), si no uno típico de la técnica.
+const ladoMedidas = ladoEnPared(d);
 const aEscala = !!ladoMedidas && ladoMedidas >= 5 && ladoMedidas <= 300;
 const ambiente = {
   tipo: (t.discriminant === 'oleo' ? 'lienzo' : 'papel') as 'lienzo' | 'papel',
@@ -91,26 +95,32 @@ const ESTADOS = {
 } as const;
 const estado = d.estado !== 'sin-indicar' ? ESTADOS[d.estado] : undefined;
 
-const ficha = [
-  { dt: 'Técnica', dd: nombreConcreto },
-  { dt: 'Año', dd: d.anio ? String(d.anio) : undefined },
-  { dt: 'Medidas', dd: d.medidas },
-  { dt: esGrabado || t.discriminant === 'acuarela' ? 'Papel' : 'Soporte', dd: d.soporte },
-  { dt: 'Edición', dd: edicion },
-  { dt: 'Interpretación de', dd: d.interpretacionDe },
-].filter((f) => f.dd);
+// Datos técnicos (<dl>): solo los que están rellenos.
+const ficha = datosTecnicos(d, { tecnica: nombreConcreto, esGrabado, edicion });
+const hayMedidas = ficha.some((f) => f.dt.includes('alto × ancho'));
 
-const tieneDescripcion = !!obra.body?.trim();
+// Un texto pendiente entre [corchetes] no se publica.
+const tieneDescripcion = !!obra.body?.trim() && !esMarcador(obra.body.trim());
+const entradilla = d.entradilla && !esMarcador(d.entradilla) ? d.entradilla : undefined;
 const { Content: Descripcion } = await render(obra);
 const tieneTecnica = !!tecnicaConcreta?.body?.trim();
 const { Content: TextoTecnica } = tecnicaConcreta ? await render(tecnicaConcreta) : { Content: null };
 
-// Consulta por correo (o, si no hay correo válido, a la página de contacto).
+// Serie y obras relacionadas (misma serie primero, después misma técnica).
+const serie = await getSerieDe(obra);
+const relacionadas = await getRelacionadas(obra, 4);
+
+// «Me interesa esta obra»: correo con asunto y la dirección de la obra ya escritos
+// (o, si no hay correo válido, la página de contacto).
+const urlObra = new URL(`/obra/${obra.id}`, Astro.site ?? Astro.url).href;
 const emailValido = !!ajustes.email && !esMarcador(ajustes.email) && ajustes.email.includes('@');
-const asunto = `Consulta sobre «${d.titulo}»${d.anio ? ` (${d.anio})` : ''}`;
-const hrefConsulta = emailValido ? `mailto:${ajustes.email}?subject=${encodeURIComponent(asunto)}` : '/contacto';
-const textoConsulta = d.estado === 'vendida' ? 'Preguntar por una obra similar' : 'Consultar esta obra';
-const envio = ajustes.condicionesEnvio && !esMarcador(ajustes.condicionesEnvio) ? ajustes.condicionesEnvio : undefined;
+const asunto = `Consulta: ${d.titulo}`;
+const cuerpo = `Hola:\n\nMe interesa esta obra:\n${urlObra}\n\n`;
+const hrefConsulta = emailValido
+  ? `mailto:${ajustes.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
+  : '/contacto';
+const textoConsulta = d.estado === 'vendida' ? 'Preguntar por una obra similar' : 'Me interesa esta obra';
+const envio = ajustes.condicionesEnvio && !esMarcador(ajustes.condicionesEnvio) ? ajustes.condicionesEnvio.trim() : undefined;
 // «Cómo comprar» solo tiene sentido si la obra se puede comprar.
 const seVende = d.estado !== 'vendida' && d.estado !== 'no-a-la-venta';
 
@@ -119,21 +129,26 @@ let k = 0;
 const palabrasLetras = d.titulo.split(/\s+/).map((p) => [...p].map((ch) => ({ ch, retardo: 260 + k++ * 32 })));
 
 const og = await getImage({ src: d.imagen, width: 1200, format: 'jpg', quality: 78 });
-const descripcionSeo =
-  d.entradilla && !d.entradilla.startsWith('[')
-    ? d.entradilla
-    : `${d.titulo}: ${nombrePrincipal.toLowerCase()}${esGrabado ? ` (${nombreConcreto.toLowerCase()})` : ''}${d.anio ? `, ${d.anio}` : ''}. Obra de Jesús Senovilla.`;
+const tituloPagina = tituloSeo(obra, nombreConcreto);
+const descripcionPagina = descripcionSeo(obra, nombreConcreto);
+
+// Ruta: Inicio › Obra › Técnica (› técnica de grabado) › Título
+const miga = [
+  { nombre: 'Inicio', href: '/' },
+  { nombre: 'Obra', href: '/obra' },
+  { nombre: nombrePrincipal, href: `/tecnicas/${t.discriminant}` },
+  ...(sub ? [{ nombre: sub.data.nombre, href: `/tecnicas/${sub.id}` }] : []),
+];
 
 const jsonLd = Astro.site
   ? [
-      await obraJsonLd(obra, Astro.site, nombreConcreto, nombrePrincipal),
+      await obraJsonLd(obra, Astro.site, nombreConcreto, nombrePrincipal, serie),
       {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Obra', item: new URL('/obra', Astro.site).href },
-          { '@type': 'ListItem', position: 2, name: nombrePrincipal, item: new URL(`/tecnicas/${t.discriminant}`, Astro.site).href },
-          { '@type': 'ListItem', position: 3, name: d.titulo },
+          ...miga.map((m, i) => ({ '@type': 'ListItem', position: i + 1, name: m.nombre, item: new URL(m.href, Astro.site).href })),
+          { '@type': 'ListItem', position: miga.length + 1, name: d.titulo, item: urlObra },
         ],
       },
     ]
@@ -141,8 +156,8 @@ const jsonLd = Astro.site
 ---
 
 <BaseLayout
-  titulo={d.titulo}
-  descripcion={descripcionSeo}
+  tituloCompleto={tituloPagina}
+  descripcion={descripcionPagina}
   cabecera="superpuesta"
   paleta="ficha"
   imagenOg={og.src}
@@ -160,17 +175,17 @@ const jsonLd = Astro.site
         }
         <div class="panel__cabeza">
           <nav class="miga" aria-label="Ruta">
-            <a href="/obra">Obra</a>
-            <span aria-hidden="true">/</span>
-            <a href={`/tecnicas/${t.discriminant}`}>{nombrePrincipal}</a>
-            {
-              sub && (
-                <>
-                  <span aria-hidden="true">/</span>
-                  <a href={`/tecnicas/${sub.id}`}>{sub.data.nombre}</a>
-                </>
-              )
-            }
+            <ol>
+              {
+                miga.map((m) => (
+                  <li>
+                    <a href={m.href}>{m.nombre}</a>
+                    <span class="miga__sep" aria-hidden="true">›</span>
+                  </li>
+                ))
+              }
+              <li><span aria-current="page">{d.titulo}</span></li>
+            </ol>
           </nav>
           <p class="panel__pos">
             <span class="sr-only">Obra </span>{n2(indice)}<span class="panel__total"><span class="sr-only"> de</span> / {String(total).padStart(2, '0')}</span>
@@ -191,11 +206,18 @@ const jsonLd = Astro.site
             ))
           }
         </h1>
+        {
+          serie && (
+            <p class="panel__serie">
+              Serie <a href={`/serie/${serie.id}`}>{serie.data.titulo}</a>
+            </p>
+          )
+        }
 
         {
-          (d.entradilla || tieneDescripcion) && (
+          (entradilla || tieneDescripcion) && (
             <div class="panel__texto">
-              {d.entradilla && <p class="panel__entradilla">{d.entradilla}</p>}
+              {entradilla && <p class="panel__entradilla">{entradilla}</p>}
               {tieneDescripcion && (
                 <div class="panel__descripcion">
                   <Descripcion />
@@ -231,6 +253,7 @@ const jsonLd = Astro.site
               )
             }
           </dl>
+          {hayMedidas && <p class="cartela__nota">Medidas en centímetros: alto × ancho.</p>}
           {
             d.paleta && (
               <div class="cartela__colores">
@@ -266,9 +289,21 @@ const jsonLd = Astro.site
           }
           {
             seVende && (
-              <a class="desplegable desplegable--enlace" href="#comprar">
-                Cómo comprar · transferencia o Bizum <span aria-hidden="true">↓</span>
-              </a>
+              <details class="desplegable">
+                <summary>Condiciones de venta y envío</summary>
+                <div class="desplegable__cuerpo">
+                  <p>
+                    Se paga por transferencia bancaria o Bizum, después de confirmarte por escrito el precio final con el envío. La
+                    obra queda reservada para ti mientras tanto.
+                  </p>
+                  {envio && envio.split(/\n\s*\n/).map((p) => <p>{p}</p>)}
+                  <p>Si compras como particular, tienes 14 días desde que la recibes para devolverla.</p>
+                  <p class="desplegable__enlaces">
+                    <a class="desplegable__enlace" href="#comprar">Cómo comprar ↓</a>
+                    <a class="desplegable__enlace" href="/condiciones-de-venta">Condiciones de venta →</a>
+                  </p>
+                </div>
+              </details>
             )
           }
           {
@@ -276,16 +311,6 @@ const jsonLd = Astro.site
               <a class="desplegable desplegable--enlace" href="#proceso">
                 Cómo se hizo <span aria-hidden="true">↓</span>
               </a>
-            )
-          }
-          {
-            envio && (
-              <details class="desplegable">
-                <summary>Envío</summary>
-                <div class="desplegable__cuerpo">
-                  <p>{envio}</p>
-                </div>
-              </details>
             )
           }
           <details class="desplegable">
@@ -305,6 +330,20 @@ const jsonLd = Astro.site
   {seVende && <ComoComprar titulo={d.titulo} hrefConsulta={hrefConsulta} email={emailValido ? ajustes.email : undefined} envio={envio} taller={ajustes.taller && !esMarcador(ajustes.taller) ? ajustes.taller : undefined} />}
 
   <TiraProceso pasos={d.proceso} titulo={d.titulo} numero="" />
+
+  {
+    relacionadas.length > 0 && (
+      <section class="relacionadas" aria-labelledby="relacionadas-titulo">
+        <div class="relacionadas__cabeza">
+          <h2 id="relacionadas-titulo" class="relacionadas__titulo">Obras relacionadas</h2>
+          <a class="relacionadas__todas" href={serie ? `/serie/${serie.id}` : `/tecnicas/${slugTecnica(obra)}`}>
+            {serie ? `Toda la serie «${serie.data.titulo}»` : `Más en ${nombreConcreto.toLowerCase()}`} →
+          </a>
+        </div>
+        <TiraObras obras={relacionadas} etiqueta="Obras relacionadas" />
+      </section>
+    )
+  }
 
   {
     total > 1 && (
@@ -363,10 +402,25 @@ const jsonLd = Astro.site
     font-weight: 600;
     color: var(--muted);
   }
-  .miga {
+  .miga ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
     display: flex;
     flex-wrap: wrap;
     gap: 4px 8px;
+  }
+  .miga li {
+    display: inline-flex;
+    gap: 8px;
+    min-width: 0;
+  }
+  .miga__sep {
+    color: var(--muted);
+  }
+  .miga [aria-current] {
+    color: var(--ink);
+    overflow-wrap: anywhere;
   }
   .miga a,
   .desplegable__enlace,
@@ -531,6 +585,11 @@ const jsonLd = Astro.site
   .punto--acento {
     background: var(--accent);
   }
+  .cartela__nota {
+    margin: -6px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
   .cartela__colores {
     display: flex;
     align-items: center;
@@ -632,6 +691,54 @@ const jsonLd = Astro.site
   }
   .desplegable[open] .desplegable__cuerpo {
     animation: aparecer 0.45s ease both;
+  }
+  .desplegable__enlaces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+  .panel__serie {
+    margin: -14px 0 0;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--muted);
+    animation: aparecer 0.8s ease 0.4s both;
+  }
+  .panel__serie a {
+    margin-left: 6px;
+    color: var(--ink);
+    text-underline-offset: 4px;
+  }
+
+  /* ---------- Obras relacionadas ---------- */
+  .relacionadas {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(56px, 7vw, 96px) var(--gutter) clamp(40px, 5vw, 64px);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .relacionadas__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px 32px;
+  }
+  .relacionadas__titulo {
+    font-size: clamp(32px, 3.4vw, 48px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.012em;
+  }
+  .relacionadas__todas {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    text-underline-offset: 4px;
   }
 
   /* ---------- Móvil y tableta: una columna ---------- */

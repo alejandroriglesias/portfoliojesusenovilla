@@ -1,0 +1,104 @@
+{
+  "reglas": [
+    {
+      "desde": "/oleos/repollo",
+      "hacia": "/obra/repollo"
+    },
+    {
+      "desde": "/acuarelas/acuarela-1-2",
+      "hacia": "/obra/paisaje-abstracto"
+    },
+    {
+      "desde": "/grabados/rosa",
+      "hacia": "/obra/rosa"
+    },
+    {
+      "desde": "/category/oleos",
+      "hacia": "/tecnicas/oleo"
+    },
+    {
+      "desde": "/oleos",
+      "hacia": "/tecnicas/oleo"
+    },
+    {
+      "desde": "/category/acuarelas",
+      "hacia": "/tecnicas/acuarela"
+    },
+    {
+      "desde": "/acuarelas",
+      "hacia": "/tecnicas/acuarela"
+    },
+    {
+      "desde": "/category/grabados",
+      "hacia": "/tecnicas/grabado"
+    },
+    {
+      "desde": "/grabados",
+      "hacia": "/tecnicas/grabado"
+    },
+    {
+      "desde": "/category/grabados/aguafuerte",
+      "hacia": "/tecnicas/aguafuerte"
+    },
+    {
+      "desde": "/category/grabados/aguafuerteaguatinta",
+      "hacia": "/tecnicas/aguafuerte-y-aguatinta"
+    },
+    {
+      "desde": "/category/grabados/alcograbado",
+      "hacia": "/tecnicas/alcograbado"
+    },
+    {
+      "desde": "/category/grabados/carborundo",
+      "hacia": "/tecnicas/carborundo"
+    },
+    {
+      "desde": "/category/grabados/manera-negra",
+      "hacia": "/tecnicas/manera-negra"
+    },
+    {
+      "desde": "/category/grabados/punta-seca",
+      "hacia": "/tecnicas/punta-seca"
+    },
+    {
+      "desde": "/category/grabados/stock-gum",
+      "hacia": "/tecnicas/stock-gum"
+    },
+    {
+      "desde": "/category/grabados/zieglerografia",
+      "hacia": "/tecnicas/zieglerografia"
+    },
+    {
+      "desde": "/category/sin-categoria",
+      "hacia": "/obra"
+    },
+    {
+      "desde": "/tag/manera-negra",
+      "hacia": "/tecnicas/manera-negra"
+    },
+    {
+      "desde": "/portfolios",
+      "hacia": "/obra"
+    },
+    {
+      "desde": "/portfolio/test",
+      "hacia": "/obra"
+    },
+    {
+      "desde": "/pagina-ejemplo",
+      "hacia": "/"
+    },
+    {
+      "desde": "/feed",
+      "hacia": "/"
+    },
+    {
+      "desde": "/blog",
+      "hacia": "/"
+    },
+    {
+      "desde": "/blog/*",
+      "hacia": "/"
+    }
+  ]
+}

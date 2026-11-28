@@ -8,7 +8,7 @@ import AvisoCookies from '../components/AvisoCookies.astro';
 import { getImage } from 'astro:assets';
 import { getAjustes } from '../lib/ajustes';
 import { getObrasDestacadas } from '../lib/contenido';
-import { personaJsonLd } from '../lib/datos-estructurados';
+import { personaJsonLd, sitioJsonLd } from '../lib/datos-estructurados';
 import { rutaLimpia } from '../lib/rutas';
 // Fuentes que se ven nada más cargar: se precargan (mismo archivo que usa el CSS).
 import fuenteTitulos from '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2?url';
@@ -18,6 +18,10 @@ interface Props {
   /** false: sin el pie común (la portada lleva su propio pie superpuesto). */
   pie?: boolean;
   titulo?: string;
+  /** Título completo, sin añadir « — Jesús Senovilla» (p. ej. el de las fichas). */
+  tituloCompleto?: string;
+  /** Tipo Open Graph (website por defecto). */
+  tipoOg?: string;
   descripcion?: string;
   /** Variante de cabecera: sólida (por defecto) o superpuesta con difference. */
   cabecera?: 'solida' | 'superpuesta';
@@ -36,6 +40,8 @@ interface Props {
 const ajustes = await getAjustes();
 const {
   titulo,
+  tituloCompleto,
+  tipoOg = 'website',
   descripcion = ajustes.seoDescripcion,
   cabecera = 'solida',
   paleta = 'clara',
@@ -46,31 +52,27 @@ const {
   pie = true,
 } = Astro.props;
 
-// Imagen para redes: la de la página o, por defecto, la obra destacada.
-let og = imagenOg;
+// Imagen para redes (1200 px de ancho): la de la página o, por defecto, la obra destacada.
+let og = imagenOg ? { src: imagenOg, width: undefined as number | undefined, height: undefined as number | undefined } : undefined;
 if (!og) {
   const [destacada] = await getObrasDestacadas();
-  if (destacada) og = (await getImage({ src: destacada.data.imagen, width: 1200, format: 'jpg', quality: 78 })).src;
-}
-const ogAbsoluta = og ? new URL(og, Astro.site ?? Astro.url).href : undefined;
-const bloquesJsonLd = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
-// En la portada y en «Sobre mí», la ficha del artista (Person) y del sitio (WebSite).
-const ruta = rutaLimpia(Astro.url.pathname);
-if (Astro.site && !noindex && (ruta === '/' || ruta === '/sobre-mi')) {
-  bloquesJsonLd.push(await personaJsonLd(Astro.site));
-  if (ruta === '/') {
-    bloquesJsonLd.push({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'Jesús Senovilla',
-      url: Astro.site.href,
-      inLanguage: 'es',
-      author: { '@id': new URL('/#artista', Astro.site).href },
-    });
+  if (destacada) {
+    const img = await getImage({ src: destacada.data.imagen, width: 1200, format: 'jpg', quality: 78 });
+    og = { src: img.src, width: Number(img.attributes.width) || undefined, height: Number(img.attributes.height) || undefined };
   }
 }
+const ogAbsoluta = og ? new URL(og.src, Astro.site ?? Astro.url).href : undefined;
+const bloquesJsonLd = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+// En todas las páginas: el sitio (WebSite) y el artista (Person), enlazados por @id.
+if (Astro.site && !noindex) {
+  bloquesJsonLd.unshift(await sitioJsonLd(Astro.site), await personaJsonLd(Astro.site));
+}
 
-const tituloFinal = titulo ? `${titulo} — Jesús Senovilla` : ajustes.seoTitulo;
+const tituloFinal = tituloCompleto ?? (titulo ? `${titulo} — Jesús Senovilla` : ajustes.seoTitulo);
+// La web publicada en *.workers.dev es una copia de pruebas del dominio definitivo:
+// no debe indexarse. Además de esta comprobación en el navegador, _headers
+// manda «X-Robots-Tag: noindex» en ese dominio (lo que leen todos los buscadores).
+const robots = noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large';
 const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathname), Astro.site).href : undefined;
 ---
 
@@ -100,22 +102,31 @@ const canonica = Astro.site ? new URL(canonicaProp ?? rutaLimpia(Astro.url.pathn
     <title>{tituloFinal}</title>
     {descripcion && <meta name="description" content={descripcion} />}
     {canonica && <link rel="canonical" href={canonica} />}
-    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+    <meta name="robots" content={robots} data-robots />
+    <script is:inline>
+      // Copia de pruebas en *.workers.dev: que no se indexe (el dominio bueno es el de la canónica).
+      if (/\.workers\.dev$/.test(location.hostname)) document.querySelector('[data-robots]').setAttribute('content', 'noindex, follow');
+    </script>
     <!-- Emblema «J · SENOVILLA» del artista (scripts/generar-favicon.mjs) -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href={fuenteTitulos} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={fuenteTexto} as="font" type="font/woff2" crossorigin />
-    <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta property="og:type" content="website" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <meta property="og:type" content={tipoOg} />
     <meta property="og:site_name" content="Jesús Senovilla" />
     {canonica && <meta property="og:url" content={canonica} />}
     <meta property="og:locale" content="es_ES" />
     <meta property="og:title" content={tituloFinal} />
     {descripcion && <meta property="og:description" content={descripcion} />}
     {ogAbsoluta && <meta property="og:image" content={ogAbsoluta} />}
+    {ogAbsoluta && og?.width && <meta property="og:image:width" content={String(og.width)} />}
+    {ogAbsoluta && og?.height && <meta property="og:image:height" content={String(og.height)} />}
     <meta name="twitter:card" content={ogAbsoluta ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={tituloFinal} />
+    {descripcion && <meta name="twitter:description" content={descripcion} />}
+    {ogAbsoluta && <meta name="twitter:image" content={ogAbsoluta} />}
     <meta name="theme-color" media="(prefers-color-scheme: light)" content={paleta === 'oscura' ? '#0B0B0B' : '#FAFAF8'} data-color-dia />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131211" data-color-noche />
     <TransicionObras />

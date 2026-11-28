@@ -1,0 +1,152 @@
+---
+/** Página de serie: nombre, texto opcional y sus obras. */
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TarjetaObra from '../../components/obra/TarjetaObra.astro';
+import Prosa from '../../components/Prosa.astro';
+import { esMarcador, etiquetaTecnica, getObrasDeSerie, getSeries, type Serie } from '../../lib/contenido';
+import { coleccionJsonLd, migasJsonLd } from '../../lib/datos-estructurados';
+
+export const getStaticPaths = (async () => {
+  const series = await getSeries();
+  return series.map((serie) => ({ params: { slug: serie.id }, props: { serie } }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  serie: Serie;
+}
+
+const { serie } = Astro.props;
+const s = serie.data;
+const obras = await getObrasDeSerie(serie.id);
+const etiquetas = await Promise.all(obras.map(etiquetaTecnica));
+const tieneTexto = !!serie.body?.trim() && !esMarcador(serie.body.trim());
+const { Content: Texto } = await render(serie);
+const entradilla = s.entradilla && !esMarcador(s.entradilla) ? s.entradilla : undefined;
+const descripcion = entradilla ?? `Serie «${s.titulo}» de Jesús Senovilla: ${obras.length} ${obras.length === 1 ? 'obra' : 'obras'}.`;
+const migas = [
+  { nombre: 'Inicio', href: '/' },
+  { nombre: 'Obra', href: '/obra' },
+  { nombre: s.titulo, href: `/serie/${serie.id}` },
+];
+const jsonLd = Astro.site
+  ? [coleccionJsonLd(Astro.site, { url: `/serie/${serie.id}`, nombre: `Serie «${s.titulo}»`, descripcion, obras }), migasJsonLd(Astro.site, migas)]
+  : undefined;
+---
+
+<BaseLayout titulo={`Serie «${s.titulo}»`} descripcion={descripcion} jsonLd={jsonLd}>
+  <section class="cab" aria-labelledby="serie-h1">
+    <nav class="migas" aria-label="Ruta">
+      <ol>
+        <li><a href="/">Inicio</a><span aria-hidden="true">›</span></li>
+        <li><a href="/obra">Obra</a><span aria-hidden="true">›</span></li>
+        <li><span aria-current="page">{s.titulo}</span></li>
+      </ol>
+    </nav>
+    <p class="etiqueta">Serie · {obras.length} {obras.length === 1 ? 'obra' : 'obras'}</p>
+    <h1 id="serie-h1" class="cab__h1">{s.titulo}<span class="acento">.</span></h1>
+    {entradilla && <p class="cab__entradilla">{entradilla}</p>}
+    {
+      tieneTexto && (
+        <div class="cab__texto">
+          <Prosa>
+            <Texto />
+          </Prosa>
+        </div>
+      )
+    }
+  </section>
+
+  <section class="obras" aria-label={`Obras de la serie «${s.titulo}»`}>
+    {
+      obras.length === 0 ? (
+        <div class="vacio">
+          <p>Todavía no hay obras publicadas en esta serie.</p>
+          <a class="boton boton--borde" href="/obra">Ver toda la obra</a>
+        </div>
+      ) : (
+        <div class="mosaico">
+          {obras.map((o, i) => (
+            <TarjetaObra obra={o} etiqueta={etiquetas[i]} />
+          ))}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .cab {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(40px, 6vw, 72px) var(--gutter) 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .migas ol {
+    margin: 0 0 clamp(16px, 3vw, 40px);
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .migas li {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .migas a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: var(--ink);
+    text-underline-offset: 4px;
+  }
+  .cab__h1 {
+    font-weight: 400;
+    font-size: clamp(48px, 8vw, 128px);
+    line-height: 0.92;
+    letter-spacing: -0.015em;
+    overflow-wrap: anywhere;
+  }
+  .acento {
+    color: var(--accent);
+  }
+  .cab__entradilla {
+    margin: 8px 0 0;
+    max-width: 36em;
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--text-soft);
+  }
+  .cab__texto {
+    max-width: 40em;
+  }
+  .obras {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 24px var(--gutter) clamp(80px, 10vw, 144px);
+  }
+  .mosaico {
+    columns: 3 320px;
+    column-gap: 40px;
+  }
+  .vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 48px 0;
+    border-top: 1px solid var(--line);
+  }
+  .vacio p {
+    margin: 0;
+    font-size: 20px;
+    color: var(--muted);
+  }
+</style>

@@ -5,6 +5,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import TarjetaObra from '../../components/obra/TarjetaObra.astro';
 import SobreLaTecnica from '../../components/ficha/SobreLaTecnica.astro';
 import { etiquetaTecnica, getObrasDeTecnica, getTecnicas, type Tecnica } from '../../lib/contenido';
+import { coleccionJsonLd, migasJsonLd } from '../../lib/datos-estructurados';
 
 export const getStaticPaths = (async () => {
   const tecnicas = await getTecnicas();
@@ -24,11 +25,22 @@ const obras = await getObrasDeTecnica(tecnica.id);
 const etiquetas = await Promise.all(obras.map(etiquetaTecnica));
 const subtecnicas = esPrincipalGrabado ? await getTecnicas('grabado') : [];
 const nombrePlural = esGrabado ? t.nombre : `${t.nombre}s`;
+const descripcion = t.resumen && !t.resumen.startsWith('[') ? t.resumen : `Obras de Jesús Senovilla en ${t.nombre.toLowerCase()}.`;
+const migas = [
+  { nombre: 'Inicio', href: '/' },
+  { nombre: 'Obra', href: '/obra' },
+  ...(esGrabado ? [{ nombre: 'Grabado', href: '/tecnicas/grabado' }] : []),
+  { nombre: t.nombre, href: `/tecnicas/${tecnica.id}` },
+];
+const jsonLd = Astro.site
+  ? [coleccionJsonLd(Astro.site, { url: `/tecnicas/${tecnica.id}`, nombre: `${t.nombre} · Jesús Senovilla`, descripcion, obras }), migasJsonLd(Astro.site, migas)]
+  : undefined;
 ---
 
 <BaseLayout
   titulo={t.nombre}
-  descripcion={t.resumen && !t.resumen.startsWith('[') ? t.resumen : `Obras de Jesús Senovilla en ${t.nombre.toLowerCase()}.`}
+  descripcion={descripcion}
+  jsonLd={jsonLd}
 >
   <section class="cab" aria-labelledby="tecnica-h1">
     <nav class="migas" aria-label="Ruta">

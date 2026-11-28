@@ -1,0 +1,33 @@
+{
+  "intro": "Lo que suele preguntar quien se interesa por una obra. Si tu duda no está aquí, escríbeme y te contesto en persona.",
+  "preguntas": [
+    {
+      "pregunta": "¿Cómo puedo comprar una obra?",
+      "respuesta": "No hay tienda online: las obras las vendo yo, directamente. Escríbeme desde la ficha de la obra (botón «Me interesa esta obra») o a mi correo, diciendo cuál te interesa y dónde quieres recibirla.\n\nTe contesto por escrito con la disponibilidad, el precio final con el envío y el plazo de entrega, y la obra queda reservada para ti."
+    },
+    {
+      "pregunta": "¿Cómo se paga?",
+      "respuesta": "Por transferencia bancaria o por Bizum, una vez que estés de acuerdo con lo que te he confirmado por escrito. Los datos para el pago te los mando yo desde mi correo."
+    },
+    {
+      "pregunta": "¿Puedo ver más fotos de una obra?",
+      "respuesta": "Claro. Pídemelas y te mando las que necesites: detalles de cerca, con otra luz o junto a algo que dé idea del tamaño."
+    },
+    {
+      "pregunta": "¿Puedo visitar el taller y ver las obras en persona?",
+      "respuesta": "Sí. Escríbeme y quedamos en el taller para que veas las obras con calma. Si te llevas alguna, te ahorras el envío."
+    },
+    {
+      "pregunta": "¿Cómo se envían las obras?",
+      "respuesta": "Las obras viajan bien embaladas para protegerlas. Los gastos de envío te los indico antes de que pagues y, salvo que acordemos otra cosa, la obra te llega como máximo en 30 días desde la compra."
+    },
+    {
+      "pregunta": "¿Puedo devolver una obra?",
+      "respuesta": "Si compras como particular, tienes 14 días desde que la recibes para devolverla, sin dar explicaciones, y te devuelvo lo que pagaste. Solo corre de tu cuenta el envío de vuelta.\n\nNo se aplica a los encargos hechos a medida."
+    },
+    {
+      "pregunta": "¿Aceptas encargos?",
+      "respuesta": "[Explica si aceptas encargos, de qué tipo y con qué plazos. Mientras esté entre corchetes, esta pregunta no se muestra.]"
+    }
+  ]
+}

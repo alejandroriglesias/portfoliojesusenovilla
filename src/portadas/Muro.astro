@@ -10,6 +10,7 @@ import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ComunesTaller from '../components/portada/ComunesTaller.astro';
 import { getDatosPortada } from '../lib/portada';
+import { medidasPrincipales, medidasTexto } from '../lib/obra-datos';
 import type { Props as PropsPortada } from './tipos';
 
 type Props = PropsPortada;
@@ -59,7 +60,8 @@ const piezas = await Promise.all(
     const grande = await getImage({ src: img, width: Math.min(img.width, 1400), format: 'webp' });
     const io = obras.indexOf(o);
     const t = o.data.tecnica;
-    const extra = t.discriminant === 'grabado' ? t.value.edicion : o.data.medidas;
+    const m = medidasPrincipales(o.data);
+    const extra = t.discriminant === 'grabado' ? t.value.edicion : m ? medidasTexto(m) : undefined;
     return {
       obra: o,
       etiqueta: etiquetas[io],

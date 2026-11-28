@@ -9,7 +9,17 @@ import { z } from 'astro/zod';
  */
 
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
-const textoOpcional = z.string().optional().transform((v) => (v?.trim() ? v.trim() : undefined));
+const textoOpcional = z.string().nullish().transform((v) => (v?.trim() ? v.trim() : undefined));
+/** Número opcional (Keystatic guarda null si el campo está vacío). */
+const numeroOpcional = z
+  .number()
+  .nullish()
+  .transform((v) => (v == null || !(v > 0) ? undefined : v));
+/** Alto × ancho en cm; solo si están los dos. */
+const medidasCm = z
+  .object({ alto: numeroOpcional, ancho: numeroOpcional })
+  .nullish()
+  .transform((m) => (m?.alto && m?.ancho ? { alto: m.alto, ancho: m.ancho } : undefined));
 
 const SUBTECNICAS = [
   'aguafuerte',
@@ -67,13 +77,64 @@ const obras = defineCollection({
         .union([z.number().int(), z.string()])
         .nullish()
         .transform((v) => (v == null || v === '' ? undefined : Number(v))),
+      serie: textoOpcional,
+      medidasImagen: medidasCm,
+      medidasPapel: medidasCm,
       medidas: textoOpcional,
+      papel: z
+        .object({
+          marca: textoOpcional,
+          gramaje: numeroOpcional,
+          composicion: textoOpcional,
+          grano: z.enum(['sin-indicar', 'fino', 'medio', 'grueso']).nullish(),
+        })
+        .nullish()
+        .transform((p) => ({
+          marca: p?.marca,
+          gramaje: p?.gramaje,
+          composicion: p?.composicion,
+          grano: p?.grano && p.grano !== 'sin-indicar' ? p.grano : undefined,
+        })),
       soporte: textoOpcional,
+      enmarcado: z
+        .union([
+          z.object({
+            discriminant: z.literal(true),
+            value: z
+              .object({ alto: numeroOpcional, ancho: numeroOpcional, paspartu: z.boolean().default(false) })
+              .nullish(),
+          }),
+          z.object({ discriminant: z.literal(false), value: z.unknown().optional() }),
+        ])
+        .nullish()
+        .transform((e) =>
+          e?.discriminant
+            ? {
+                medidas: e.value?.alto && e.value?.ancho ? { alto: e.value.alto, ancho: e.value.ancho } : undefined,
+                paspartu: !!e.value?.paspartu,
+              }
+            : undefined
+        ),
+      certificado: z.boolean().default(false),
+      seo: z
+        .object({ titulo: textoOpcional, descripcion: textoOpcional })
+        .nullish()
+        .transform((s) => ({ titulo: s?.titulo, descripcion: s?.descripcion })),
+      direccionesAntiguas: z.array(z.string().nullish()).default([]),
       estado: z.enum(['sin-indicar', 'disponible', 'vendida', 'no-a-la-venta']).default('sin-indicar'),
       imagen: image(),
       alt: textoOpcional,
       imagenPlancha: image().nullish(),
-      vistas: z.array(z.object({ imagen: image(), etiqueta: textoOpcional })).default([]),
+      vistas: z
+        .array(
+          z.object({
+            imagen: image(),
+            tipo: z.enum(['detalle', 'ambiente', 'reverso', 'otra']).default('otra'),
+            etiqueta: textoOpcional,
+            alt: textoOpcional,
+          })
+        )
+        .default([]),
       proceso: z
         .array(z.object({ imagen: image(), titulo: textoOpcional, texto: textoOpcional }))
         .default([]),
@@ -121,6 +182,15 @@ const tecnicas = defineCollection({
     }),
 });
 
+const series = defineCollection({
+  loader: glob({ pattern: '**/*.mdoc', base: './src/content/series' }),
+  schema: z.object({
+    titulo: z.string(),
+    entradilla: textoOpcional,
+    orden: z.number().default(100),
+  }),
+});
+
 const sobreMi = defineCollection({
   loader: glob({ pattern: 'index.mdoc', base: './src/content/sobre-mi' }),
   schema: ({ image }) =>
@@ -129,6 +199,19 @@ const sobreMi = defineCollection({
       retrato: image().nullish(),
       firma: image().nullish(),
       taller: z.array(z.object({ imagen: image(), pie: textoOpcional })).default([]),
+      lugar: textoOpcional,
+      formacion: z.array(z.object({ anio: textoOpcional, titulo: textoOpcional, centro: textoOpcional })).default([]),
+      exposiciones: z
+        .array(
+          z.object({
+            anio: textoOpcional,
+            titulo: textoOpcional,
+            lugar: textoOpcional,
+            tipo: z.enum(['individual', 'colectiva']).default('individual'),
+          })
+        )
+        .default([]),
+      premios: z.array(z.object({ anio: textoOpcional, nombre: textoOpcional })).default([]),
     }),
 });
 
@@ -142,4 +225,4 @@ const legal = defineCollection({
   }),
 });
 
-export const collections = { obras, tecnicas, sobreMi, legal };
+export const collections = { obras, series, tecnicas, sobreMi, legal };

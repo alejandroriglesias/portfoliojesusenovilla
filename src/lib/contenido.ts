@@ -1,4 +1,5 @@
 import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
+import { apuntarNombre } from './nombres-imagenes';
 
 export type Obra = CollectionEntry<'obras'>;
 export type Tecnica = CollectionEntry<'tecnicas'>;
@@ -16,7 +17,41 @@ const porOrden = (a: Obra, b: Obra) =>
 
 export async function getObras() {
   const obras = await getCollection('obras', (o) => mostrarEjemplos || (!o.data.ejemplo && o.data.publicada));
+  if (import.meta.env.PROD) obras.forEach(apuntarNombres);
   return obras.sort(porOrden);
+}
+
+/** Nombres de archivo descriptivos para las fotos de la obra (ver nombres-imagenes.ts). */
+function apuntarNombres(o: Obra) {
+  const base = `${o.id}-${slugTecnica(o)}-jesus-senovilla`;
+  apuntarNombre(o.data.imagen, base);
+  apuntarNombre(o.data.imagenPlancha, `${o.id}-plancha-${slugTecnica(o)}-jesus-senovilla`);
+  o.data.vistas.forEach((v, i) => apuntarNombre(v.imagen, `${o.id}-${v.tipo === 'otra' ? `vista-${i + 1}` : v.tipo}-${slugTecnica(o)}-jesus-senovilla`));
+  o.data.proceso.forEach((p, i) => apuntarNombre(p.imagen, `${o.id}-proceso-${i + 1}-jesus-senovilla`));
+}
+
+// ---------- Series ----------
+export type Serie = CollectionEntry<'series'>;
+
+export async function getSeries() {
+  const series = await getCollection('series');
+  return series.sort((a, b) => a.data.orden - b.data.orden || a.data.titulo.localeCompare(b.data.titulo, 'es'));
+}
+
+export async function getSerieDe(obra: Obra) {
+  return obra.data.serie ? await getEntry('series', obra.data.serie) : undefined;
+}
+
+export async function getObrasDeSerie(id: string) {
+  return (await getObras()).filter((o) => o.data.serie === id);
+}
+
+/** Relacionadas: primero las de la misma serie, después las de la misma técnica concreta (máx. 4). */
+export async function getRelacionadas(obra: Obra, max = 4) {
+  const todas = (await getObras()).filter((o) => o.id !== obra.id);
+  const misma = obra.data.serie ? todas.filter((o) => o.data.serie === obra.data.serie) : [];
+  const tecnica = todas.filter((o) => !misma.includes(o) && slugTecnica(o) === slugTecnica(obra));
+  return [...misma, ...tecnica].slice(0, max);
 }
 
 export async function getObrasDestacadas() {

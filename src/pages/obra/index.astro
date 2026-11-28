@@ -11,6 +11,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SalaObras from '../../components/obra/SalaObras.astro';
 import IndiceObras from '../../components/obra/IndiceObras.astro';
 import { etiquetaTecnica, getObras, getTecnicas } from '../../lib/contenido';
+import { coleccionJsonLd } from '../../lib/datos-estructurados';
 
 const obras = await getObras();
 const etiquetas = await Promise.all(obras.map(etiquetaTecnica));
@@ -29,7 +30,12 @@ const pestanas = [
 ];
 ---
 
-<BaseLayout titulo="Obra" descripcion="Índice de la obra de Jesús Senovilla: óleo, acuarela y grabado." paleta="ficha">
+<BaseLayout
+  titulo="Obra"
+  descripcion="Índice de la obra de Jesús Senovilla: óleo, acuarela y grabado."
+  paleta="ficha"
+  jsonLd={Astro.site ? coleccionJsonLd(Astro.site, { url: '/obra', nombre: 'Obra de Jesús Senovilla', descripcion: 'Índice de la obra de Jesús Senovilla: óleo, acuarela y grabado.', obras }) : undefined}
+>
   <div class="obra" data-obra data-vista="sala">
     <header class="cabeza">
       <div class="cabeza__in">

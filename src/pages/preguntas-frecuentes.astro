@@ -1,0 +1,128 @@
+---
+/** Preguntas frecuentes (panel → Páginas → Preguntas frecuentes), con FAQPage para buscadores. */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPreguntas } from '../lib/preguntas';
+import { faqJsonLd, migasJsonLd } from '../lib/datos-estructurados';
+
+const { intro, preguntas } = await getPreguntas();
+const parrafos = (t: string) => t.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+const descripcion = intro ?? 'Cómo comprar una obra de Jesús Senovilla, envíos, devoluciones, encargos y visitas al taller.';
+const jsonLd = Astro.site
+  ? [
+      faqJsonLd(Astro.site, preguntas),
+      migasJsonLd(Astro.site, [
+        { nombre: 'Inicio', href: '/' },
+        { nombre: 'Preguntas frecuentes', href: '/preguntas-frecuentes' },
+      ]),
+    ]
+  : undefined;
+---
+
+<BaseLayout titulo="Preguntas frecuentes" descripcion={descripcion} jsonLd={jsonLd}>
+  <article class="faq">
+    <header class="faq__cabeza">
+      <h1 class="faq__titulo">Preguntas frecuentes</h1>
+      {intro && <p class="faq__intro">{intro}</p>}
+    </header>
+
+    <div class="faq__lista">
+      {
+        preguntas.map((p) => (
+          <section class="faq__item">
+            <h2 class="faq__pregunta">{p.pregunta}</h2>
+            <div class="faq__respuesta">
+              {parrafos(p.respuesta).map((t) => (
+                <p>{t}</p>
+              ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+
+    <p class="faq__pie">
+      ¿No encuentras lo que buscas? <a href="/contacto">Escríbeme</a> · <a href="/condiciones-de-venta">Condiciones de venta</a>
+    </p>
+  </article>
+</BaseLayout>
+
+<style>
+  .faq {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: clamp(48px, 7vw, 96px) var(--gutter) clamp(72px, 9vw, 128px);
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 40px clamp(40px, 7vw, 120px);
+    align-items: start;
+  }
+  .faq__cabeza {
+    position: sticky;
+    top: 112px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .faq__titulo {
+    font-weight: 400;
+    font-size: clamp(44px, 5.4vw, 80px);
+    line-height: 0.95;
+    letter-spacing: -0.015em;
+  }
+  .faq__intro {
+    margin: 0;
+    max-width: 30em;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--text-soft);
+  }
+  .faq__lista {
+    border-bottom: 1px solid var(--line);
+  }
+  .faq__item {
+    padding: 28px 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .faq__pregunta {
+    font-weight: 400;
+    font-size: clamp(22px, 2vw, 27px);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .faq__respuesta {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--text-soft);
+  }
+  .faq__respuesta p {
+    margin: 0 0 0.8em;
+  }
+  .faq__respuesta p:last-child {
+    margin-bottom: 0;
+  }
+  .faq__pie {
+    grid-column: 2;
+    margin: 0;
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .faq__pie a {
+    color: var(--ink);
+    font-weight: 600;
+    text-underline-offset: 4px;
+  }
+  @media (max-width: 860px) {
+    .faq {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .faq__cabeza {
+      position: static;
+    }
+    .faq__pie {
+      grid-column: 1;
+    }
+  }
+</style>

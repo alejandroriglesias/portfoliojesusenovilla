@@ -4,11 +4,13 @@ import react from '@astrojs/react';
 import markdoc from '@astrojs/markdoc';
 import keystatic from '@keystatic/astro';
 import cloudflare from '@astrojs/cloudflare';
-import sitemap from '@astrojs/sitemap';
 import vigilarEjemplos from './integraciones/vigilar-ejemplos.mjs';
 import redireccionesCloudflare from './integraciones/redirecciones-cloudflare.mjs';
+import nombresImagenes from './integraciones/nombres-imagenes.mjs';
 
-const SITIO = 'https://jesusenovilla.com';
+// Dominio definitivo: canónicas, sitemap, Open Graph y datos estructurados.
+// Se cambia con la variable de entorno SITE_URL (en Cloudflare: Settings → Build → Variables).
+const SITIO = (process.env.SITE_URL || 'https://jesusenovilla.com').replace(/\/+$/, '');
 
 // La web pública se genera estática; solo el panel /keystatic y su API
 // se sirven bajo demanda desde un Worker de Cloudflare.
@@ -27,13 +29,11 @@ export default defineConfig({
     react(),
     markdoc(),
     keystatic(),
-    sitemap({
-      // Fuera del sitemap: las portadas de comparación (noindex) y el panel.
-      filter: (url) => !/\/(inicio|keystatic)(\/|$)/.test(new URL(url).pathname),
-      i18n: undefined,
-    }),
-    // 301 desde las URL del antiguo WordPress (fase 6) → _redirects de Cloudflare.
+    // El sitemap lo genera src/pages/sitemap.xml.ts (con fechas e imágenes).
+    // 301 (WordPress, tabla del panel y direcciones antiguas de obras) → _redirects de Cloudflare.
     redireccionesCloudflare(),
+    // Nombres de archivo descriptivos para las fotos de las obras.
+    nombresImagenes(),
     vigilarEjemplos(),
   ],
   trailingSlash: 'never',
